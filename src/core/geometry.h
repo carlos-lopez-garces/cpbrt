@@ -127,7 +127,7 @@ template <typename T> inline Vector2<T> Min(const Vector2<T> &v1, const Vector2<
 }
 
 // Component-wise maximum.
-template <typename T> inline Vector2<T> Min(const Vector2<T> &v1, const Vector2<T> &v2) {
+template <typename T> inline Vector2<T> Max(const Vector2<T> &v1, const Vector2<T> &v2) {
     return Vector2<T>(
         std::max(v1.x, v2.x),
         std::max(v1.y, v2.y),
@@ -152,11 +152,11 @@ public:
     }
 
     Vector3<T> operator+(const Vector3<T> &v) const {
-        return Vector3<T>(x+v.x, y+x.y, z+v.z);
+        return Vector3<T>(x+v.x, y+v.y, z+v.z);
     }
 
     Vector3<T> operator-(const Vector3<T> &v) const {
-        return Vector3<T>(x-v.x, y-x.y, z-v.z);
+        return Vector3<T>(x-v.x, y-v.y, z-v.z);
     }
 
     Vector3<T> operator*(T s) const {
@@ -290,7 +290,7 @@ template <typename T> inline Vector3<T> Min(const Vector3<T> &v1, const Vector3<
 }
 
 // Component-wise maximum.
-template <typename T> inline Vector3<T> Min(const Vector3<T> &v1, const Vector3<T> &v2) {
+template <typename T> inline Vector3<T> Max(const Vector3<T> &v1, const Vector3<T> &v2) {
     return Vector3<T>(
         std::max(v1.x, v2.x),
         std::max(v1.y, v2.y),
@@ -314,4 +314,253 @@ template <typename T> inline void CoordinateSystem(
     }
 
     *v3 = Cross(v1, *v2);
+}
+
+template <typename T> class Point2 {
+public:
+    T x, y;
+
+    Point2() {
+        x = y = 0;
+    }
+
+    Point2(T x, T y) : x(x), y(y) {
+        Assert(!HasNaNs());
+    }
+
+    // Require explicit cast to convert from Point3 to Point2.
+    explicit Point2(const Point3<T> &p) : x(p.x), y(p.y) {
+        Assert(!HasNaNs());
+    }
+
+    // Require explicit type to convert from Point2<U> to Point2<T>.
+    template <typename U> explicit Point2(const Point2<U> &p)
+        : x((T)p.x), y((T)p.y)
+    {
+        Assert(!HasNaNs());
+    }
+
+    // Cast Point2<T> to Vector2<U>.
+    template <typename U> explicit operator Vector2<U>() const {
+        return Vector2<U>(x, y);
+    }
+
+    Point2<T> operator+(const Vector2<T> &v) const {
+        return Point2<T>(x+v.x, y+v.y);
+    }
+
+    Point2<T> &operator+=(const Vector2<T> &v) {
+        x += v.x;
+        y += v.y;
+        return *this;
+    }
+
+    // Addition of points only makes sense in the context of computing a weighted
+    // sum of points, with the sum of the weights being 1.
+    Point2<T> operator+(const Point2<T> &p) const {
+        return Point3<T>(x+p.x, y+p.y);
+    }
+
+    // Subtracting a point from this point results in the vector between them.
+    Vector2<T> operator-(const Point2<T> &p) const {
+        return Vector2<T>(x-p.x, y-p.y);
+    }
+
+    // Subtracting a vector from this point results in a displaced point.
+    Point2<T> operator-(const Vector2<T> &v) const {
+        return Point2<T>(x-v.x, y-v.y);
+    }
+
+    // Subtracting a vector from this point translates this point.
+    Point2<T> &operator-=(const Vector2<T> &v) {
+        x -= v.x;
+        y -= v.y;
+        return *this;
+    }
+
+    // Scalar multiplication of points only makes sense in the context of 
+    // computing a weighted sum of points, with the sum of the weights being 1.
+    Point2<T> operator*(T s) const {
+        return Point2<T>(s*x, s*y);
+    }
+
+    bool HasNaNs() {
+        return std::isnan(x) || std::isnan(y);
+    }
+};
+
+typedef Point2<Float> Point2f;
+typedef Point2<int> Point2i;
+
+template <typename T> inline Float Distance(const Point2<T> &p1, const Point2<T> &p2) {
+    return (p1-p2).Length();
+}
+
+template <typename T> inline Float DistanceSquared(const Point2<T> &p1, const Point2<T> &p2) {
+    return (p1-p2).LengthSquared();
+}
+
+template <typename T> inline Point2<T> operator*(T s, const Point2<T> &p) {
+    return p * s;
+}
+
+// Linear interpolation (0 <= t <= 1) and extrapolation (t < 0, t > 1).
+template <typename T> inline Point2<T> Lerp(Float t, const Point2<T> &p0, const Point2<T> &p1) {
+    return (1-t)*p0 + t*p1;
+}
+
+// Component-wise minimum.
+template <typename T> inline Point2<T> Min(const Point2<T> &p1, const Point2<T> &p2) {
+    return Point2<T>(
+        std::min(p1.x, p2.x),
+        std::min(p1.y, p2.y),
+    );
+}
+
+// Component-wise maximum.
+template <typename T> inline Point2<T> Max(const Point2<T> &p1, const Point2<T> &p2) {
+    return Point2<T>(
+        std::max(p1.x, p2.x),
+        std::max(p1.y, p2.y),
+    );
+}
+
+template <typename T> inline Point2<T> Floor(const Point2<T> &p) {
+    return Point2<T>(std::floor(p.x), std::floor(p.y));
+}
+
+template <typename T> inline Point2<T> Ceil(const Point2<T> &p) {
+    return Point2<T>(std::ceil(p.x), std::ceil(p.y));
+}
+
+template <typename T> inline Point2<T> Abs(const Point2<T> &p) {
+    return Point2<T>(std::abs(p.x), std::abs(p.y));
+}
+
+template <typename T> inline Point2<T> Permute(const Point2<T> &p, int x, int y) {
+    return Point2<T>(p[x], p[y]);
+}
+
+template <typename T> class Point3 {
+public:
+    T x, y, z;
+
+    Point3() {
+        x = y = z = 0;
+    }
+
+    Point3(T x, T y, T z) : x(x), y(y), z(z) {
+        Assert(!HasNaNs());
+    }
+
+    // Require explicit type to convert from Point3<U> to Point3<T>.
+    template <typename U> explicit Point3(const Point3<U> &p) 
+        : x((T)p.x), y((T)p.y), z((T)p.z) 
+    {
+        Assert(!HasNaNs());
+    }
+
+    // Cast Point3<T> to Vector3<U>.
+    template <typename U> explicit operator Vector3<U>() const {
+        return Vector3<U>(x, y, z);
+    }
+
+    Point3<T> operator+(const Vector3<T> &v) const {
+        return Point3<T>(x+v.x, y+v.y, z+v.z);
+    }
+
+    Point3<T> &operator+=(const Vector3<T> &v) {
+        x += v.x;
+        y += v.y;
+        z += v.z;
+        return *this;
+    }
+
+    // Addition of points only makes sense in the context of computing a weighted
+    // sum of points, with the sum of the weights being 1.
+    Point3<T> operator+(const Point3<T> &p) const {
+        return Point3<T>(x+p.x, y+p.y, z+p.z);
+    }
+
+    // Subtracting a point from this point results in the vector between them.
+    Vector3<T> operator-(const Point3<T> &p) const {
+        return Vector3<T>(x-p.x, y-p.y, z-p.z);
+    }
+
+    // Subtracting a vector from this point results in a displaced point.
+    Point3<T> operator-(const Vector3<T> &v) const {
+        return Point3<T>(x-v.x, y-v.y, z-v.z);
+    }
+
+    // Subtracting a vector from this point translates this point.
+    Point3<T> &operator-=(const Vector3<T> &v) {
+        x -= v.x;
+        y -= v.y;
+        z -= v.z;
+        return *this;
+    }
+
+    // Scalar multiplication of points only makes sense in the context of computing a weighted
+    // sum of points, with the sum of the weights being 1.
+    Point3<T> operator*(T s) const {
+        return Point3<T>(s*x, s*y, s*z);
+    }
+
+    bool HasNaNs() {
+        return std::isnan(x) || std::isnan(y);
+    }
+};
+
+typedef Point3<Float> Point3f;
+typedef Point3<int> Point3i;
+
+template <typename T> inline Float Distance(const Point3<T> &p1, const Point3<T> &p2) {
+    return (p1-p2).Length();
+}
+
+template <typename T> inline Float DistanceSquared(const Point3<T> &p1, const Point3<T> &p2) {
+    return (p1-p2).LengthSquared();
+}
+
+template <typename T> inline Point3<T> operator*(T s, const Point3<T> &p) {
+    return p * s;
+}
+
+// Linear interpolation (0 <= t <= 1) and extrapolation (t < 0, t > 1).
+template <typename T> inline Point3<T> Lerp(Float t, const Point3<T> &p0, const Point3<T> &p1) {
+    return (1-t)*p0 + t*p1;
+}
+
+// Component-wise minimum.
+template <typename T> inline Point3<T> Min(const Point3<T> &p1, const Point3<T> &p2) {
+    return Point3<T>(
+        std::min(p1.x, p2.x),
+        std::min(p1.y, p2.y),
+        std::min(p1.z, p2.z)
+    );
+}
+
+// Component-wise maximum.
+template <typename T> inline Point3<T> Max(const Point3<T> &p1, const Point3<T> &p2) {
+    return Point3<T>(
+        std::max(p1.x, p2.x),
+        std::max(p1.y, p2.y),
+        std::max(p1.z, p2.z)
+    );
+}
+
+template <typename T> inline Point3<T> Floor(const Point3<T> &p) {
+    return Point3<T>(std::floor(p.x), std::floor(p.y), std::floor(p.z));
+}
+
+template <typename T> inline Point3<T> Ceil(const Point3<T> &p) {
+    return Point3<T>(std::ceil(p.x), std::ceil(p.y), std::ceil(p.z));
+}
+
+template <typename T> inline Point3<T> Abs(const Point3<T> &p) {
+    return Point3<T>(std::abs(p.x), std::abs(p.y), std::abs(p.z));
+}
+
+template <typename T> inline Point3<T> Permute(const Point3<T> &p, int x, int y, int z) {
+    return Point3<T>(p[x], p[y], p[z]);
 }
