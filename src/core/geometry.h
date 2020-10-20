@@ -153,6 +153,9 @@ public:
         Assert(!HasNans());
     }
 
+    // Cast Normal3<T> to Vector3<T>.
+    explicit Vector3(const Normal3<T> &n);
+
     Vector3<T> operator+(const Vector3<T> &v) const {
         return Vector3<T>(x+v.x, y+v.y, z+v.z);
     }
@@ -565,4 +568,92 @@ template <typename T> inline Point3<T> Abs(const Point3<T> &p) {
 
 template <typename T> inline Point3<T> Permute(const Point3<T> &p, int x, int y, int z) {
     return Point3<T>(p[x], p[y], p[z]);
+}
+
+// Normals are not necessarily normalized.
+template <typename T> class Normal3 {
+public:
+    T x, y, z;
+
+    Normal3() {
+        x = y = z = 0;
+    }
+
+    Normal3(T x, T y, T z) : x(x), y(y), z(z) {
+        Assert(!HasNans());
+    }
+
+    explicit Normal3<T>(const Vector3<T> &v)
+        : x(v.x), y(v.y), z(v.z) 
+    {
+        Assert(!HasNaNs());
+    }
+
+    Normal3<T> operator+(const Normal3<T> &n) const {
+        return Normal3<T>(x+n.x, y+n.y, z+n.z);
+    }
+
+    Normal3<T> operator-(const Normal3<T> &n) const {
+        return Normal3<T>(x-n.x, y-n.y, z-n.z);
+    }
+
+    Normal3<T> operator*(T s) const {
+        return Normal3<T>(s*x, s*y, s*z);
+    }
+
+    Normal3<T> operator-() const {
+        return Normal3<T>(-x, -y, -z);
+    }
+
+    Float LengthSquared() const {
+        return x*x + y*y + z*z;
+    }
+
+    Float Length() const {
+        return std::sqrt(LengthSquared());
+    }
+
+    bool HasNaNs() {
+        return std::isnan(x) || std::isnan(y);
+    }
+};
+
+typedef Normal3<Float> Normal3f;
+
+template <typename T> inline Normal3<T> operator*(T s, const Normal3<T> &n) {
+    return n * s;
+}
+
+// Normals are not necessarily normalized.
+template <typename T> inline Normal3<T> Normalize(const Normal3<T> &n) {
+    return n / n.Length();
+}
+
+template <typename T> inline Vector3<T>::Vector3(const Normal3<T> &n)
+    : x(n.x), y(n.y), z(n.z)
+{
+    Assert(!HasNaNs());
+}
+
+template <typename T> inline T Dot(const Normal3<T> &n, const Vector3<T> &v) {
+    return n.x*v.x + n.y*v.y + n.z*v.z;
+}
+
+template <typename T> inline T AbsDot(const Normal3<T> &n, const Vector3<T> &v) {
+    return std::abs(Dot(n, v));
+}
+
+template <typename T> inline T Dot(const Vector3<T> &v, const Normal3<T> &n) {
+    return Dot(v, n);
+}
+
+template <typename T> inline T AbsDot(const Vector3<T> &v, const Normal3<T> &n) {
+    return std::abs(Dot(v, n));
+}
+
+// Flip a normal so that it lies in the same hemisphere as the vector.
+template <typename T> inline Normal3<T> FaceForward(
+    const Normal3<T> &n, const Vector3<T> &v
+) {
+    return (Dot(n, v) < 0.f) ? -n : n;
 }
