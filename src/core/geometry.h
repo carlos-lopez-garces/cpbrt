@@ -75,7 +75,7 @@ public:
         return (i == 0) ? x : y;
     }
 
-    T &operator[](int i) const {
+    T &operator[](int i) {
         Assert(i >= 0 && i <= 1);
         return (i == 0) ? x : y;
     }
@@ -180,14 +180,14 @@ public:
         return Vector3<T>(-x, -y, -z);
     }
 
-    Vector<T> &operator+=(const Vector3<T> &v) {
+    Vector3<T> &operator+=(const Vector3<T> &v) {
         x += v.x;
         y += v.y;
         z += v.z;
         return *this;
     }
 
-    Vector<T> &operator-=(const Vector3<T> &v) {
+    Vector3<T> &operator-=(const Vector3<T> &v) {
         x -= v.x;
         y -= v.y;
         z -= v.z;
@@ -225,7 +225,7 @@ public:
             : (i == 1) ? y : z;
     }
 
-    T &operator[](int i) const {
+    T &operator[](int i) {
         Assert(i >= 0 && i <= 2);
         return (i == 0) 
             ? x 
@@ -657,3 +657,75 @@ template <typename T> inline Normal3<T> FaceForward(
 ) {
     return (Dot(n, v) < 0.f) ? -n : n;
 }
+
+class Ray {
+public:
+    // Origin.
+    Point3f o;
+
+    // Direction.
+    Vector3f d;
+
+    // Restricts the ray to a segment of points [0, r(tMax)].
+    mutable float tMax;
+
+    Float time;
+
+    // The medium containing the ray's origin.
+    const Medium *medium;
+
+    // Point3F and Vector3f default constructors set the origin and direction to 0.
+    Ray() : tMax(Infinity), time(0.f), medium(nullptr) {}
+
+    Ray(
+        const Point3f &o,
+        const Vector3f &d,
+        Float tMax = Infinity,
+        Float time = 0.f,
+        const Medium *medium = nullptr
+    ) : o(o), d(d), tMax(tMax), time(time), medium(medium) {}
+
+    // Overloaded function call operator returns the point along the ray at t.
+    // Ex. Ray r(...); Float t = 1.3; Point3f p = r(t); 
+    Point3f operator()(Float t) const {
+        return o + d*t;
+    }
+};
+
+class RayDifferential : public Ray {
+public:
+    bool hasDifferentials;
+
+    // Auxiliary ray offset in the x direction.
+    Point3f rxOrigin;
+    Vector3f rxDirection;
+
+    // Auxiliary ray offset in the y direction.
+    Point3f ryOrigin;
+    Vector3f ryDirection;
+
+    RayDifferential() {
+        hasDifferentials = false;
+    }
+
+    RayDifferential(
+        const Point3f &o,
+        const Vector3f &d,
+        Float tMax = Infinity,
+        Float time = 0.f,
+        const Medium *medium = nullptr
+    ) : Ray(o, d, tMax, time, medium) {
+        hasDifferentials = false;
+    }
+
+    RayDifferential(const Ray &ray) : Ray(ray) {
+        hasDifferentials = false;
+    }
+
+    void ScaleDifferentials(Float s) {
+        rxOrigin = o + (rxOrigin-o)*s;
+        ryOrigin = o + (ryOrigin-o)*s;
+        rxDirection = d + (rxDirection-d)*s;
+        ryDirection = d + (ryDirection-d)*s;
+    }
+};
