@@ -7,6 +7,8 @@
 #include <string>
 #include <vector>
 
+#include "error.h"
+
 // Global forward declarations.
 
 // Choose between float and double for most floating-point declarations
