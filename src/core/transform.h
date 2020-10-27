@@ -1,4 +1,5 @@
 #include "cpbrt.h"
+#include "geometry.h"
 
 class Matrix4x4 {
 private:
@@ -106,5 +107,23 @@ public:
 
     bool operator!=(const Transform &t) const {
         return m != t.m || mInv != t.mInv;
+    }
+
+    Transform Translate(const Vector3f &delta) const {
+        Matrix4x4 mat(
+            1, 0, 0, delta.x,
+            0, 1, 0, delta.y,
+            0, 0, 1, delta.z,
+            0, 0, 0, 1
+        );
+
+        Matrix4x4 matInv(
+            1, 0, 0, -delta.x,
+            0, 1, 0, -delta.y,
+            0, 0, 1, -delta.z,
+            0, 0, 0, 1
+        );
+
+        return Transform(mat, matInv);
     }
 };
