@@ -1,4 +1,4 @@
-#include "pbrt.h"
+#include "cpbrt.h"
 
 template <typename T> class Vector2 {
 public:

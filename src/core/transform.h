@@ -1,4 +1,4 @@
-#include "pbrt.h"
+#include "cpbrt.h"
 
 class Matrix4x4 {
 private:

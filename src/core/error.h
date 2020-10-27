@@ -6,7 +6,7 @@
 #ifndef PBRT_CORE_ERROR_H
 #define PBRT_CORE_ERROR_H
 
-#include "pbrt.h"
+#include "cpbrt.h"
 
 // Error Reporting Declarations.
 
