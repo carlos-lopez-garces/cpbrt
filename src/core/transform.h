@@ -14,7 +14,7 @@ public:
         m[3][0] = 0; m[3][1] = 0; m[3][2] = 0; m[3][3] = 1;
     }
 
-    Matrix4x4(Float m[4][4]) {
+    Matrix4x4(const Float m[4][4]) {
         memcpy(this->m, m, 16*sizeof(Float));
     }
 
@@ -54,4 +54,57 @@ public:
 
     Matrix4x4 Inverse() const;
     friend Matrix4x4 Inverse(const Matrix4x4 &mat);
+};
+
+class Transform {
+private:
+    // Row-major order.
+    Matrix4x4 m;
+
+    // Inverse of m.
+    Matrix4x4 mInv;
+
+public:
+    // Identity transformation (matrix defaults to identity).
+    // The identity matrix is its own inverse.
+    Transform() {}
+
+    Transform(const Float m[4][4]) {
+        this->m = Matrix4x4(m);
+
+        mInv = this->m.Inverse();
+    }
+
+    Transform(const Matrix4x4 &mat) : m(mat), mInv(mat.Inverse()) {}
+
+    // Let the caller supply the inverse. If the caller passes an inverse written
+    // by hand, the saved expense of computing it is significant.
+    Transform(const Matrix4x4 &mat, const Matrix4x4 &matInv) : m(mat), mInv(matInv) {}
+
+    Transform Inverse() const {
+        return Transform(mInv, m);
+    }
+
+    friend Transform Inverse(const Transform &t) {
+        return t.Inverse();
+    }
+
+    Transform Transpose() const {
+        return Transform(m.Transpose(), mInv.Transpose());
+    }
+
+    bool IsIdentity() const {
+        return m == Matrix4x4();
+    }
+
+    bool operator==(const Transform &t) const {
+        // The inverse of a matrix is unique; the second condition is unnecessary
+        // unless the inverse wasn't computed with Matrix4x4::Inverse() and happens
+        // to be wrong.
+        return m == t.m && mInv == t.mInv;
+    }
+
+    bool operator!=(const Transform &t) const {
+        return m != t.m || mInv != t.mInv;
+    }
 };
