@@ -2,6 +2,7 @@
 
 class Matrix4x4 {
 private:
+    // Row-major order.
     Float m[4][4];
 
 public:
@@ -14,7 +15,7 @@ public:
     }
 
     Matrix4x4(Float m[4][4]) {
-        memcpy(this->m, m, 16 * sizeof(Float));
+        memcpy(this->m, m, 16*sizeof(Float));
     }
 
     Matrix4x4(
@@ -50,4 +51,7 @@ public:
 
     Matrix4x4 Transpose() const;
     friend Matrix4x4 Transpose(const Matrix4x4 &mat);
+
+    Matrix4x4 Inverse() const;
+    friend Matrix4x4 Inverse(const Matrix4x4 &mat);
 };
