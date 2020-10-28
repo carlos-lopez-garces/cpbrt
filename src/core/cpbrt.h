@@ -27,3 +27,5 @@ typedef float Float;
 #else
 static CPBRT_CONSTEXPR Float Infinity = std::numeric_limits<Float>::infinity();
 #endif // _MSC_VER
+
+static CPBRT_CONSTEXPR Float Pi = 3.14159265358979323846;
