@@ -126,4 +126,34 @@ public:
 
         return Transform(mat, matInv);
     }
+
+    Transform Scale(Float sx, Float sy, Float sz) const {
+        Matrix4x4 mat(
+            sx, 0, 0, 0,
+            0, sy, 0, 0,
+            0, 0, sz, 0,
+            0, 0, 0, 1
+        );
+
+        Matrix4x4 matInv(
+            1/sx, 0, 0, 0,
+            0, 1/sy, 0, 0,
+            0, 0, 1/sz, 0,
+            0, 0, 0, 1
+        );
+
+        return Transform(mat, matInv);
+    }
+
+    // TODO: define operator().
+    // Determines if the transformation has a scaling factor on any dimension,
+    // (only when its matrix is the identity does it not have a scaling factor).
+    bool HasScale() const {
+        Float la2 = (*this)(Vector3f(1, 0, 0)).LengthSquared();
+        Float lb2 = (*this)(Vector3f(0, 1, 0)).LengthSquared();
+        Float lc2 = (*this)(Vector3f(0, 0, 1)).LengthSquared();
+#define NOT_ONE(x) ((x) < .999f || (x) > 1.001f)
+        return (NOT_ONE(la2) || NOT_ONE(lb2) || NOT_ONE(lc2));
+#undef  NOT_ONE
+    }
 };
