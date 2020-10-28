@@ -28,4 +28,14 @@ typedef float Float;
 static CPBRT_CONSTEXPR Float Infinity = std::numeric_limits<Float>::infinity();
 #endif // _MSC_VER
 
-static CPBRT_CONSTEXPR Float Pi = 3.14159265358979323846;
+static /*CPBRT_CONSTEXPR*/ const Float Pi = 3.14159265358979323846;
+
+// Global inline functions.
+
+inline Float Radians(Float deg) {
+    return deg * Pi / 180.f;
+}
+
+inline Float Degrees(Float rad) {
+    return rad * 180.f / Pi;
+}
