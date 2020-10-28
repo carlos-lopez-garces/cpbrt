@@ -156,4 +156,58 @@ public:
         return (NOT_ONE(la2) || NOT_ONE(lb2) || NOT_ONE(lc2));
 #undef  NOT_ONE
     }
+
+    Transform RotateX(Float theta) const {
+        Float sinTheta = std::sin(Radians(theta));
+        Float cosTheta = std::cos(Radians(theta));
+
+        Matrix4x4 mat(
+            1,        0,         0, 0,
+            0, cosTheta, -sinTheta, 0,
+            0, sinTheta,  cosTheta, 0,
+            0,        0,         0, 1
+        );
+
+        // A rotation matrix is orthogonal and orthognal matrices have the
+        // property that their transpose is also their inverse.
+        Matrix4x4 matInv = mat.Transpose();
+
+        return Transform(mat, matInv);
+    }
+
+    Transform RotateY(Float theta) const {
+        Float sinTheta = std::sin(Radians(theta));
+        Float cosTheta = std::cos(Radians(theta));
+
+        Matrix4x4 mat(
+            cosTheta,  0, sinTheta, 0,
+                   0,  1,        0, 0,
+           -sinTheta,  0, cosTheta, 0,
+                   0,  0,        0, 1
+        );
+
+        // A rotation matrix is orthogonal and orthognal matrices have the
+        // property that their transpose is also their inverse.
+        Matrix4x4 matInv = mat.Transpose();
+
+        return Transform(mat, matInv);
+    }
+
+    Transform RotateZ(Float theta) const {
+        Float sinTheta = std::sin(Radians(theta));
+        Float cosTheta = std::cos(Radians(theta));
+
+        Matrix4x4 mat(
+            cosTheta, -sinTheta, 0, 0,
+            sinTheta,  cosTheta, 0, 0,
+                   0,         0, 1, 0,
+                   0,         0, 0, 1
+        );
+
+        // A rotation matrix is orthogonal and orthognal matrices have the
+        // property that their transpose is also their inverse.
+        Matrix4x4 matInv = mat.Transpose();
+
+        return Transform(mat, matInv);
+    }
 };
