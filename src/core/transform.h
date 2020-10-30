@@ -210,4 +210,35 @@ public:
 
         return Transform(mat, matInv);
     }
+
+    Transform Rotate(Float theta, const Vector3f & axis) const {
+        Float sinTheta = std::sin(theta);
+        Float cosTheta = std::cos(theta);
+
+        Vector3f a = Normalize(axis);
+        Matrix4x4 mat(
+            // Rotation of first standard basis vector.
+            a.x * a.x + (1 - a.x * a.x) * cosTheta,
+            a.x * a.y * (1 - cosTheta) - a.z * sinTheta,
+            a.x * a.z * (1 - cosTheta) + a.y * sinTheta,
+            0,
+
+            // Rotation of second standard basis vector.
+            a.x * a.y * (1 - cosTheta) + a.z * sinTheta,
+            a.y * a.y + (1 - a.y * a.y) * cosTheta,
+            a.y * a.z * (1 - cosTheta) - a.x * sinTheta,
+            0,
+
+            // Rotation of third standard basis vector.
+            a.x * a.z * (1 - cosTheta) - a.y * sinTheta,
+            a.y * a.z * (1 - cosTheta) + a.x * sinTheta,
+            a.z * a.z + (1 - a.z * a.z) * cosTheta,
+            0,
+
+            // Last row.
+            0, 0, 0, 1
+        );
+
+        return Transform(mat, mat.Transpose());
+    }
 };
