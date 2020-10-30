@@ -2,11 +2,10 @@
 #include "geometry.h"
 
 class Matrix4x4 {
-private:
+public:
     // Row-major order.
     Float m[4][4];
 
-public:
     Matrix4x4() {
         // Identity matrix.
         m[0][0] = 1; m[0][1] = 0; m[0][2] = 0; m[0][3] = 0;
@@ -240,5 +239,41 @@ public:
         );
 
         return Transform(mat, mat.Transpose());
+    }
+
+    // Transforms a point in camera space to world space. The camera space's frame is
+    // (pos, ?, up, look), where the iHat basis vector is implicitly defined by the others. 
+    Transform LookAt(const Point3f &pos, const Point3f &look, const Vector3f &up) const {
+        Matrix4x4 cameraToWorld;
+
+        Vector3f forward = Normalize(look - pos);
+        Vector3f left = Normalize(Cross(Normalize(up), forward));
+        Vector3f newUp = Cross(forward, left);
+
+        // 1st column.
+        cameraToWorld.m[0][0] = left.x;
+        cameraToWorld.m[1][0] = left.y;
+        cameraToWorld.m[2][0] = left.z;
+        cameraToWorld.m[3][0] = 0.f;
+
+        // 2nd column.
+        cameraToWorld.m[0][1] = newUp.x;
+        cameraToWorld.m[1][1] = newUp.y;
+        cameraToWorld.m[2][1] = newUp.z;
+        cameraToWorld.m[3][1] = 0.f;
+
+        // 3rd column.
+        cameraToWorld.m[0][2] = forward.x;
+        cameraToWorld.m[1][2] = forward.y;
+        cameraToWorld.m[2][2] = forward.z;
+        cameraToWorld.m[3][2] - 0.f;
+
+        // 4th column.
+        cameraToWorld.m[0][3] = pos.x;
+        cameraToWorld.m[1][3] = pos.y;
+        cameraToWorld.m[2][3] = pos.z;
+        cameraToWorld.m[3][3] = 1.f;
+
+        return Transform(cameraToWorld.Inverse(), cameraToWorld);
     }
 };
