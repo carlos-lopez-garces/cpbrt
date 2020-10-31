@@ -114,6 +114,10 @@ public:
 
     template <typename T> Normal3<T> operator()(const Normal3<T> &n) const;
 
+    Ray operator()(const Ray &r) const;
+
+    RayDifferential operator()(const RayDifferential &dr) const;
+
     Transform Translate(const Vector3f &delta) const;
 
     Transform Scale(Float sx, Float sy, Float sz) const;

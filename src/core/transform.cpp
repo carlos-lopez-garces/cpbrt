@@ -79,6 +79,21 @@ template <typename T> inline Normal3<T> Transform::operator()(const Normal3<T> &
     );
 }
 
+inline Ray Transform::operator()(const Ray &r) const {
+    return Ray((*this)(r.o), (*this)(r.d), r.tMax, r.time, r.medium);
+}
+
+inline RayDifferential Transform::operator()(const RayDifferential &rd) const {
+    Ray transformedRay = (*this)((Ray) rd);
+    RayDifferential transformedDiff = RayDifferential(transformedRay);
+    transformedDiff.hasDifferentials = rd.hasDifferentials;
+    transformedDiff.rxOrigin = (*this)(rd.rxOrigin);
+    transformedDiff.rxDirection = (*this)(rd.rxDirection);
+    transformedDiff.ryOrigin = (*this)(rd.ryOrigin);
+    transformedDiff.ryDirection = (*this)(rd.ryDirection);
+    return transformedDiff;
+}
+
 Transform Transform::Translate(const Vector3f &delta) const {
     Matrix4x4 mat(
         1, 0, 0, delta.x,

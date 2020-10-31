@@ -703,6 +703,8 @@ public:
         const Medium *medium = nullptr
     ) : o(o), d(d), tMax(tMax), time(time), medium(medium) {}
 
+    Ray(const Ray& r) : o(r.o), d(r.d), tMax(r.tMax), time(r.time), medium(r.medium) {}
+
     // Overloaded function call operator returns the point along the ray at t.
     // Ex. Ray r(...); Float t = 1.3; Point3f p = r(t); 
     Point3f operator()(Float t) const {
