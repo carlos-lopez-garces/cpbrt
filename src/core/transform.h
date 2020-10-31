@@ -148,4 +148,6 @@ public:
     // Transforms a point in camera space to world space. The camera space's frame is
     // (pos, ?, up, look), where the iHat basis vector is implicitly defined by the others. 
     Transform LookAt(const Point3f &pos, const Point3f &look, const Vector3f &up) const;
+
+    bool SwapsHandedness() const;
 };
