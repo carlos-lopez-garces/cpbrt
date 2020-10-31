@@ -118,6 +118,8 @@ public:
 
     RayDifferential operator()(const RayDifferential &dr) const;
 
+    template <typename T> Bounds3<T> operator()(const Bounds3<T> &aabb) const;
+
     Transform Translate(const Vector3f &delta) const;
 
     Transform Scale(Float sx, Float sy, Float sz) const;

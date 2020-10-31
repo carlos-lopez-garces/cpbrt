@@ -94,6 +94,18 @@ inline RayDifferential Transform::operator()(const RayDifferential &rd) const {
     return transformedDiff;
 }
 
+template <typename T> inline Bounds3<T> Transform::operator()(const Bounds3<T> &aabb) const {
+    Bounds3<T> transformedAABB((*this)(aabb.Corner(0)));
+    transformedAABB = Union(transformedAABB, (*this)(aabb.Corner(1));
+    transformedAABB = Union(transformedAABB, (*this)(aabb.Corner(2));
+    transformedAABB = Union(transformedAABB, (*this)(aabb.Corner(3));
+    transformedAABB = Union(transformedAABB, (*this)(aabb.Corner(4));
+    transformedAABB = Union(transformedAABB, (*this)(aabb.Corner(5));
+    transformedAABB = Union(transformedAABB, (*this)(aabb.Corner(6));
+    transformedAABB = Union(transformedAABB, (*this)(aabb.Corner(7));
+    return transformedAABB;
+}
+
 Transform Transform::Translate(const Vector3f &delta) const {
     Matrix4x4 mat(
         1, 0, 0, delta.x,
