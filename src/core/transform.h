@@ -108,6 +108,12 @@ public:
         return m != t.m || mInv != t.mInv;
     }
 
+    template <typename T> Point3<T> operator()(const Point3<T> &p) const;
+
+    template <typename T> Vector3<T> operator()(const Vector3<T> &v) const;
+
+    template <typename T> Normal3<T> operator()(const Normal3<T> &n) const;
+
     Transform Translate(const Vector3f &delta) const;
 
     Transform Scale(Float sx, Float sy, Float sz) const;

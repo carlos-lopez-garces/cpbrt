@@ -42,6 +42,43 @@ Matrix4x4 Mul(const Matrix4x4 &mat1, const Matrix4x4 &mat2) {
 
 // Transform method definitions.
 
+template <typename T> inline Point3<T> Transform::operator()(const Point3<T> &p) const {
+    T homogeneousX = (m.m[0][0] * p.x) + (m.m[0][1] * p.y) + (m.m[0][2] * p.z) + m.m[0][3];
+    T homogeneousY = (m.m[1][0] * p.x) + (m.m[1][1] * p.y) + (m.m[1][2] * p.z) + m.m[1][3];
+    T homogeneousZ = (m.m[2][0] * p.x) + (m.m[2][1] * p.y) + (m.m[2][2] * p.z) + m.m[2][3];
+    T weight       = (m.m[3][0] * p.x) + (m.m[3][1] * p.y) + (m.m[3][2] * p.z) + m.m[3][3];
+
+   if (weight != 1.0f) {
+       return Vector3<T>(
+           homogeneousX, 
+           homogeneousY,
+           homogeneousZ
+       ) / weight;
+   }
+   return Vector3<T>(homogeneousX, homogeneousY, homogeneousZ);
+};
+
+template <typename T> inline Vector3<T> Transform::operator()(const Vector3<T> &v) const {
+    // No need to use the homogeneous representation of vectors to transform them,
+    // because their weight, 0, causes entry (mv)30 to be 0.
+    return Vector3<T>(
+        (m.m[0][0] * v.x) + (m.m[0][1] * v.y) + (m.m[0][2] * v.z),
+        (m.m[1][0] * v.x) + (m.m[1][1] * v.y) + (m.m[1][2] * v.z),
+        (m.m[2][0] * v.x) + (m.m[2][1] * v.y) + (m.m[2][2] * v.z)
+    );
+};
+
+template <typename T> inline Normal3<T> Transform::operator()(const Normal3<T> &n) const {
+    // The transform doesn't maintain the orthogonality of the normal and the surface 
+    // (the tangent to the surface). The inverse transpose does.
+    Matrix4x4 mInvTransp = mInv.Transpose();
+    return Normal3<T>(
+        (mInvTransp[0][0] * n.x) + (mInvTransp[0][1] * n.y) + (mInvTransp[0][2] * n.z),
+        (mInvTransp[1][0] * n.x) + (mInvTransp[1][1] * n.y) + (mInvTransp[1][2] * n.z),
+        (mInvTransp[2][0] * n.x) + (mInvTransp[2][1] * n.y) + (mInvTransp[2][2] * n.z)
+    );
+}
+
 Transform Transform::Translate(const Vector3f &delta) const {
     Matrix4x4 mat(
         1, 0, 0, delta.x,
