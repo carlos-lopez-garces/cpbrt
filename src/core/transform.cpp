@@ -106,6 +106,11 @@ template <typename T> inline Bounds3<T> Transform::operator()(const Bounds3<T> &
     return transformedAABB;
 }
 
+inline Transform Transform::operator*(const Transform &t) const {
+    // The inverse of the product is the product of the inverses in reverse order.
+    return Transform(m*t.m, t.mInv*mInv);
+}
+
 Transform Transform::Translate(const Vector3f &delta) const {
     Matrix4x4 mat(
         1, 0, 0, delta.x,

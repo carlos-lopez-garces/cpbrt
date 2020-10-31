@@ -114,6 +114,8 @@ public:
 
     template <typename T> Normal3<T> operator()(const Normal3<T> &n) const;
 
+    Transform operator*(const Transform &t) const;
+
     Ray operator()(const Ray &r) const;
 
     RayDifferential operator()(const RayDifferential &dr) const;
