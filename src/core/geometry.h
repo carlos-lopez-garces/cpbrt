@@ -12,6 +12,14 @@ public:
         Assert(!HasNaNs());
     }
 
+    bool operator==(const Vector2<T> &v) const {
+        return x == v.x && y == v.y;
+    }
+
+    bool operator!=(const Vector2<T> &v) const {
+        return x != v.x || y != v.y;
+    }
+
     Vector2<T> operator+(const Vector2<T> &v) const {
         return Vector2<T>(x+v.x, y+v.y);
     }
@@ -155,6 +163,14 @@ public:
 
     // Cast Normal3<T> to Vector3<T>.
     explicit Vector3(const Normal3<T> &n);
+
+    bool operator==(const Vector3<T> &v) const {
+        return x == v.x && y == v.y && z == v.z;
+    }
+
+    bool operator!=(const Vector3<T> &v) const {
+        return x != v.x || y != v.y || z != v.z;
+    }
 
     Vector3<T> operator+(const Vector3<T> &v) const {
         return Vector3<T>(x+v.x, y+v.y, z+v.z);
@@ -350,6 +366,14 @@ public:
         return Vector2<U>(x, y);
     }
 
+    bool operator==(const Point2<T> &p) const {
+        return x == p.x && y == p.y;
+    }
+
+    bool operator!=(const Point2<T> &p) const {
+        return x != p.x || y != p.y;
+    }
+
     Point2<T> operator+(const Vector2<T> &v) const {
         return Point2<T>(x+v.x, y+v.y);
     }
@@ -479,6 +503,14 @@ public:
         return Vector3<U>(x, y, z);
     }
 
+    bool operator==(const Point3<T> &p) const {
+        return x == p.x && y == p.y && z == p.z;
+    }
+
+    bool operator!=(const Point3<T> &p) const {
+        return x != p.x || y != p.y || y != p.z;
+    }
+
     Point3<T> operator+(const Vector3<T> &v) const {
         return Point3<T>(x+v.x, y+v.y, z+v.z);
     }
@@ -605,6 +637,14 @@ public:
         : x(v.x), y(v.y), z(v.z) 
     {
         Assert(!HasNaNs());
+    }
+
+    bool operator==(const Normal3<T> &p) const {
+        return x == p.x && y == p.y && z == p.z;
+    }
+
+    bool operator!=(const Normal3<T> &p) const {
+        return x != p.x || y != p.y || y != p.z;
     }
 
     Normal3<T> operator+(const Normal3<T> &n) const {
