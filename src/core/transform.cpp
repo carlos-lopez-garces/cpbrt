@@ -106,6 +106,12 @@ template <typename T> inline Bounds3<T> Transform::operator()(const Bounds3<T> &
     return transformedAABB;
 }
 
+SurfaceInteraction Transform::operator()(const SurfaceInteraction &si) const {
+    SurfaceInteraction transformedSI;
+    // TODO: implement when ready to handle floating-point errors.
+    return transformedSI;
+}
+
 inline Transform Transform::operator*(const Transform &t) const {
     // The inverse of the product is the product of the inverses in reverse order.
     return Transform(m*t.m, t.mInv*mInv);

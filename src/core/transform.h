@@ -1,5 +1,6 @@
 #include "cpbrt.h"
 #include "geometry.h"
+#include "interaction.h"
 
 class Matrix4x4 {
 public:
@@ -114,13 +115,15 @@ public:
 
     template <typename T> Normal3<T> operator()(const Normal3<T> &n) const;
 
-    Transform operator*(const Transform &t) const;
-
     Ray operator()(const Ray &r) const;
 
     RayDifferential operator()(const RayDifferential &dr) const;
 
     template <typename T> Bounds3<T> operator()(const Bounds3<T> &aabb) const;
+
+    SurfaceInteraction operator()(const SurfaceInteraction &si) const;
+
+    Transform operator*(const Transform &t) const;
 
     Transform Translate(const Vector3f &delta) const;
 
