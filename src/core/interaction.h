@@ -1,5 +1,6 @@
 #include "cpbrt.h"
 #include "geometry.h"
+#include "transform.h"
 
 class Interaction {
 public:
