@@ -1033,6 +1033,9 @@ public:
         *center = (pMax + pMin) / 2;
         *radius = Inside(*center, *this) ? Distance(*center, pMax) : 0;
     }
+
+    bool IntersectP(const Ray &ray, Float *hitt0, Float *hitt1) const;
+    bool IntersectP(const Ray &ray, const Vector3f &reciprocalDir, const int dirIsNeg[3]) const;
 };
 
 typedef Bounds3<Float> Bounds3f;
