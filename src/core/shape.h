@@ -51,4 +51,6 @@ public:
         Surface isect;
         return Intersect(ray, &tHit, &isect, testAlphaTexture);
     }
+
+    virtual Float Area() const = 0;
 };
