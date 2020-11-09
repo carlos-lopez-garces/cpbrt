@@ -1034,6 +1034,7 @@ public:
         *radius = Inside(*center, *this) ? Distance(*center, pMax) : 0;
     }
 
+    // P is for "predicate".
     bool IntersectP(const Ray &ray, Float *hitt0, Float *hitt1) const;
     bool IntersectP(const Ray &ray, const Vector3f &reciprocalDir, const int dirIsNeg[3]) const;
 };

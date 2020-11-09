@@ -31,4 +31,24 @@ public:
         // world-space AABB.
         return (*ObjectToWorld)(ObjectBound());
     }
+
+    // Returns the details of the closest intersection between the ray and this Shape's geometry.
+    // The input ray is always in world space and the returned intersection details should be in
+    // world space as well.
+    virtual bool Intersect(
+        const Ray &ray,
+        Float *tHit,
+        SurfaceInteraction *isect,
+        bool testAlphaTexture = true
+    ) const = 0;
+
+    // Tells whether an intersection occurs, without returning details. P is for "predicate".
+    // This method should be an efficient way to tell if an intersection occurs. This default
+    // implementation is not efficient because it calls Intersect, which computes the details
+    // of the intersection. Classes implementing this interface should not do that, in general.
+    virtual bool IntersectP(const Ray &ray, bool testAlphaTexture = true) const {
+        Float tHit = ray.tMax;
+        Surface isect;
+        return Intersect(ray, &tHit, &isect, testAlphaTexture);
+    }
 };
