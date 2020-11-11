@@ -50,6 +50,8 @@ public:
     // (x,y,z) points on the Shape.
     const Shape *shape = nullptr;
 
+    const Primitive *primitive = nullptr;
+
     // Shading geometry. Perturbed normal and perturbed point and normal partial derivatives
     // are used by certain shading operations, such as bump mapping. The true normal is
     // Interaction::n and the true derivatives are elsewhere here in SurfaceInteraction.
@@ -60,6 +62,9 @@ public:
         Normal3f dndu;
         Normal3f dndv;
     } shading;
+
+    BSDF *bsdf = nullptr;
+    BSSRDF *bssrdf = nullptr;
 
     SurfaceInteraction() {}
 
