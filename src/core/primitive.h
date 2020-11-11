@@ -1,13 +1,16 @@
+#include <memory>
+
 #include "geometry.h"
 #include "interaction.h"
+#include "shape.h"
 
 class Primitive {
 public:
     virtual Bounds3f WorldBound() const = 0;
 
-    virtual bool Intersect(const Ray &r, SurfaceInteraction &si) const = 0;
+    virtual bool Intersect(const Ray &ray, SurfaceInteraction &si) const = 0;
     // P is for "predicate". No intersection details are returned.
-    virtual bool IntersectP(const Ray &r) const = 0;
+    virtual bool IntersectP(const Ray &ray) const = 0;
 
     virtual const AreaLight *GetAreaLight() const = 0;
 
@@ -22,4 +25,26 @@ public:
         TransportMode mode,
         bool allowMultipleLobes
     ) const = 0;
+};
+
+class GeometricPrimitive : public Primitive {
+public:
+
+private:
+    std::shared_ptr<Shape> shape;
+
+    std::shared_ptr<Material> material;
+
+    // Null when non-emissive.
+    std::shared_ptr<AreaLight> areaLight;
+
+    // Participating medium inside or outside the Primitive.
+    MediumInterface mediumInterface;
+
+    Primitive(
+        const std::shared_ptr<Shape> &shape,
+        const std::shared_ptr<Material> &material,
+        const std::shared_ptr<AreaLight> &areaLight,
+        const MediumInterface &mediumInterface)
+    :   shape(shape), material(material), areaLight(areaLight), mediumInterface(mediumInterface) {}
 };
