@@ -47,3 +47,19 @@ public:
         const MediumInterface &mediumInterface)
     :   shape(shape), material(material), areaLight(areaLight), mediumInterface(mediumInterface) {}
 };
+
+class TransformedPrimitive : public Primitive {
+private:
+    std::shared_ptr<Primitive> primitive;
+    // Places the primitive in the scene, in world-space.
+    // Should really be an AnimatedTransform, but I don't want to support animations.
+    const Transform PrimitiveToWorld;
+
+public:
+    TransformedPrimitive(
+        std::shared_ptr<Primitive> &primitive,
+        const Transform &PrimitiveToWorld
+    ) : primitive(primitive), PrimitiveToWorld(PrimitiveToWorld) {}
+
+    bool Intersect(const Ray &ray, SurfaceInteraction *si) const;
+};

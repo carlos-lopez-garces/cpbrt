@@ -41,3 +41,8 @@ void GeometricPrimitive::ComputeScatteringFunctions(
         material->ComputeScatteringFunctions(si, arena, mode, allowMultipleLobes);
     }
 }
+
+bool TransformedPrimitive::Intersect(const Ray &ray, SurfaceInteraction *si) const {
+    // TODO: need to implement AnimatedTransform.
+    return false;
+}
