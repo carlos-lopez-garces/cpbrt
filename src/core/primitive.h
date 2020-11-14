@@ -28,8 +28,6 @@ public:
 };
 
 class GeometricPrimitive : public Primitive {
-public:
-
 private:
     std::shared_ptr<Shape> shape;
 
@@ -41,6 +39,7 @@ private:
     // Participating medium inside or outside the Primitive.
     MediumInterface mediumInterface;
 
+public:
     Primitive(
         const std::shared_ptr<Shape> &shape,
         const std::shared_ptr<Material> &material,
