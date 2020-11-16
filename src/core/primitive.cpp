@@ -46,3 +46,29 @@ bool TransformedPrimitive::Intersect(const Ray &ray, SurfaceInteraction *si) con
     // TODO: need to implement AnimatedTransform.
     return false;
 }
+
+// Doesn't apply to an Aggregate. See SurfaceInteraction::primitive instead,
+// where the Aggregate places the intersected Primitive.
+const AreaLight *Aggregate::GetAreaLight() const {
+    // TODO: log fatal error.
+    return nullptr;
+}
+
+// Doesn't apply to an Aggregate. See SurfaceInteraction::primitive instead,
+// where the Aggregate places the intersected Primitive.
+const Material *Aggregate::GetMaterial() const {
+    // TODO: log fatal error.
+    return nullptr;
+}
+
+// Doesn't apply to an Aggregate. See SurfaceInteraction::primitive instead,
+// where the Aggregate places the intersected Primitive.
+void Aggregate::ComputeScatteringFunctions(
+    SurfaceInteraction *si,
+    MemoryArena &arena,
+    TransportMode mode,
+    bool allowMultipleLobes
+) const {
+    // TODO: log fatal error.
+    return nullptr;
+}

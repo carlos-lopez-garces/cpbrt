@@ -63,3 +63,20 @@ public:
 
     bool Intersect(const Ray &ray, SurfaceInteraction *si) const;
 };
+
+class Aggregate : public Primitive {
+public:
+    // Doesn't apply. Shouldn't be called.
+    const AreaLight *GetAreaLight() const;
+
+    // Doesn't apply. Shouldn't be called.
+    const Material *GetMaterial() const;
+
+    // Doesn't apply. Shouldn't be called.
+    void ComputeScatteringFunctions(
+        SurfaceInteraction *si,
+        MemoryArena &arena,
+        TransportMode mode,
+        bool allowMultipleLobes
+    ) const;
+};
