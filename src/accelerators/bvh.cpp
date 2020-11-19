@@ -146,6 +146,8 @@ BVHBuildNode *BVHAccel::recursiveBuild(
             // Partition primitives based on splitMethod. Note that if splitMethod is HLBVH
             // recursiveBuild wouldn't have been invoked by the BVHAccel constructor. 
             switch (splitMethod){
+
+                // Partition primitives through node's midpoint.
                 case SplitMethod::Middle: {
                     // The midpoint of the interval between the centroids that are farthest apart
                     // along the dominant axis.
@@ -168,10 +170,29 @@ BVHBuildNode *BVHAccel::recursiveBuild(
                         break;
                     }
                     
-                    // No partitioning ocurred. Fall through to next split method.  
+                    // No partitioning ocurred; this is supposed to occur when all the primitives have
+                    // overlapping bounding boxes. Fall through to next split method.
                 }
+
+                // Partition primitives into equally sized subsets.
                 case SplitMethod::EqualCounts: {
-                    // TODO.
+                    // Re-establish the original mid primitive position in case execution fell through from
+                    // the previous split method.
+                    mid = (start + end) / 2;
+
+                    // Partition the primitiveInfo array into 2 subsets of equal size: primitives whose
+                    // centroids lie to the left of the centroid of the primitive in the middle will be
+                    // put in the 1st partition; in the 2nd one otherwise. Note that this isn't a full
+                    // O(nlogn) sort: there's no order relation among the primitives of a partition, other
+                    // than being to the left or to the right of the centroid of the mid primitive. O(n).
+                    std::nth_element(
+                        &primitiveInfo[start],
+                        &primitiveInfo[mid],
+                        &primitiveInfo[end-1]+1,
+                        [dim](const BVHPrimitive &a, const BVHPrimitive &b) {
+                            return a.centroid[dim] < b.centroid[dim];
+                        }
+                    );
                 }
                 case SplitMethod::SAH:
                 default: {
