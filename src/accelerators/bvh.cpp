@@ -147,7 +147,28 @@ BVHBuildNode *BVHAccel::recursiveBuild(
             // recursiveBuild wouldn't have been invoked by the BVHAccel constructor. 
             switch (splitMethod){
                 case SplitMethod::Middle: {
-                    // TODO.
+                    // The midpoint of the interval between the centroids that are farthest apart
+                    // along the dominant axis.
+                    Float pmid = (centroidBounds.pMin[dim] + centroidBounds.pMax[dim]) / 2;
+                    
+                    // Partition the primitiveInfo array into 2 subsets: primitives whose centroids
+                    // lie to the left of the midpoint will be put in the 1st partition; in the 2nd one
+                    // otherwise. midPtr will mark the end of the 1st partition and the beginning of the
+                    // 2nd one.
+                    BVHPrimitiveInfo *midPtr = std::partition(
+                        &primitiveInfo[start],
+                        &primitiveInfo[end-1]+1,
+                        [dim, pmid](const BVHPrimitiveInfo &pi) {
+                            return pi.centroid[dim] < pmid;
+                        }
+                    );
+
+                    mid = midPtr - &primitiveInfo[0];
+                    if (mid != start && mid != end) {
+                        break;
+                    }
+                    
+                    // No partitioning ocurred. Fall through to next split method.  
                 }
                 case SplitMethod::EqualCounts: {
                     // TODO.
