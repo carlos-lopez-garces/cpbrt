@@ -863,6 +863,11 @@ public:
         );
     }
 
+    // When p lies inside the box, its offset is its position relative to the pMin and pMax
+    // corners of the box along each of the axes. The offset is of the form 
+    // ([0.0, 1.0], [0.0, 1.0]), the offset of a point exactly at pMin being (0.0, 0.0) and
+    // the offset of one exactly at pMax being (1.0, 1.0). For example, a point with offset
+    // (0.2, 0.7) is closer to pMin along the x-axis and closer to pMax along the y-axis.
     Vector2<T> Offset(const Point2<T> &p) const {
         Vector2<T> o = p - pMin;
         if (pMax.x > pMin.x) {
@@ -1015,6 +1020,12 @@ public:
         );
     }
 
+    // When p lies inside the box, its offset is its position relative to the pMin and pMax
+    // corners of the box along each of the axes. The offset is of the form 
+    // ([0.0, 1.0], [0.0, 1.0], [0.0, 1.0]), the offset of a point exactly at pMin being 
+    // (0.0, 0.0, 0.0) and the offset of one exactly at pMax being (1.0, 1.0, 1.0). For 
+    // example, a point with offset (0.2, 0.7, 0.5) is closer to pMin along the x-axis,
+    // closer to pMax along the y-axis, and halfway between pMin and pMax along the z-axis.
     Vector3<T> Offset(const Point3<T> &p) const {
         Vector3<T> o = p - pMin;
         if (pMax.x > pMin.x) {
