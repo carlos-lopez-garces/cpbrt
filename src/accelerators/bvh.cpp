@@ -194,9 +194,126 @@ BVHBuildNode *BVHAccel::recursiveBuild(
                         }
                     );
                 }
+
+                // Partition primitives using approximate surface area heuristic.
                 case SplitMethod::SAH:
                 default: {
+                    if (nPrimitives <= 4) {
+                        // TODO: Partition primitives into equally sized subsets.
+                    } else {
+                        // Split the dominant axis into a constant number of buckets of equal length.
+                        constexpr int nBuckets = 12;
+                        struct BucketInfo{
+                            int count = 0;
+                            Bounds3f bounds;
+                        };
+                        BucketInfo buckets[nBuckets];
 
+                        // Place primitives into buckets.
+                        for (int i = start; i < end; ++i) {
+                            // Bounds.Offset returns the position of the primitive's centroid relative
+                            // to the extent of the bound's dominant axis. For example, a primitive centroid
+                            // lying at 1 quarter of the extent of the bound's x-axis has an offset of 0.25.
+                            //
+                            // Note that b is an integer such that 0 <= b <= 12 that maps a continuous
+                            // offset to one of the 12 discrete buckets.
+                            int b = nBuckets * centroidBounds.Offset(primitiveInfo[i].centroid)[dim];
+                            
+                            if (b == nBuckets) {
+                                b = nBuckets - 1;
+                            }
+                            buckets[b].count++;
+                            buckets[b].bounds = Union(buckets[b].bounds, primitiveInfo[i].bounds);
+                        }
+
+                        // Stores the cost of each candidate partitioning. 
+                        Float cost[nBuckets - 1];
+
+                        // Instead of computing the actual cost of computation, a guess of their relative costs
+                        // is used. Ray-primitive intersection is guessed to be 8 times higher than node traversal,
+                        // which is basically a ray-AABB intersection test. A single ray-primitive intersection's
+                        // cost is given by the primitive's surface area.
+                        Float nodeTraversalRelativeCost = 0.125f;
+                        Float primitiveIntersectionRelativeCost = 1.0f;
+
+                        // Each candidate partitioning splits the primitives at one of the bucket boundaries.
+                        for (int i = 0; i < nBuckets - 1; ++i) {
+                            // b0 is the AABB of the 1st partition, b1 is the AABB of the 2nd partition.
+                            Bounds3f b0, b1;
+                            int count0 = 0, count1 = 0;
+
+                            // 1st partition includes buckets 0 to i.
+                            for (int j = 0; j <= i; ++j) {
+                                b0 = Union(b0, buckets[j].bounds);
+                                count0 += buckets[j].count;
+                            }
+
+                            // 2nd partition includes buckets i to nBuckets-1.
+                            for (int j = i+1; j < nBuckets; ++j) {
+                                b1 = Union(b1, buckets[j].bounds);
+                                count1 += buckets[j].count;
+                            }
+
+                            // Let 'bounds' be this interior node and let its 2 children be b0 and b1. The conditional
+                            // probability that a ray will intersect b0 given that 'bounds' has been intersected is the
+                            // ratio of their surface areas. Likewise for b1.
+                            //
+                            // p(b0|bounds) = b0.SurfaceArea() / bounds.SurfaceArea()
+                            // 
+                            // p(b1|bounds) = b1.SurfaceArea() / bounds.SurfaceArea()
+                            //
+                            // So, the ratio approaches 1 as b0.SurfaceArea() approaches bounds.SurfaceArea() (likewise
+                            // for b1). The larger the volume of 'bounds' occupied by b1 is, the greater the conditional
+                            // probability is.
+                            cost[i] 
+                                = nodeTraversalRelativeCost
+                                  + (
+                                      count0 * primitiveIntersectionRelativeCost * b0.SurfaceArea() 
+                                      + count1 * primitiveIntersectionRelativeCost * b1.SurfaceArea()
+                                  ) / bounds.SurfaceArea();
+                        }
+
+                        // Find bucket (partition boundary) to split at that minimizes SAH.
+                        Float minCost = cost[0];
+                        int minCostSplitBucket = 0;
+                        for (int i = 1; i < nBuckets - 1; ++i) {
+                            if (cost[i] < minCost) {
+                                minCost = cost[i];
+                                minCostSplitBucket = i;
+                            }
+                        }
+
+                        // Either split primitives at selected SAH bucket and continue the recursion, or create leaf node.
+                        Float leafCost = nPrimitives * primitiveIntersectionRelativeCost;
+                        if (nPrimitives > maxPrimsInNode || minCost < leafCost) {
+                            // Even if creating a leaf node has an estimated lesser cost, maxPrimsInNode restricts the
+                            // number of primitives, so splitting (at the minimal-cost bucket boundary) is required.
+                            BVHPrimitiveInfo *midPtr = std::partition(
+                                &primitiveInfo[start],
+                                &primitiveInfo[end-1]+1,
+                                [=](const BVHPrimitiveInfo &pi) {
+                                    int b = nBuckets * centroidBounds.Offset(pi.centroid)[dim];
+                                    if (b == nBuckets) {
+                                        b = nBuckets - 1;
+                                    }
+                                    return b <= minCostSplitBucket;
+                                }
+                            );
+
+                            mid = midPtr - &primitiveInfo[0];
+                        } else {
+                            // Create leaf node.
+                            int firstPrimOffset = orderedPrims.size();
+                            for (int i = start; i < end; ++i) {
+                                int primNum = primitiveInfo[i].primitiveNumber;
+                                orderedPrims.push_back(primitives[primNum]);
+                            }
+                            
+                            node->InitLeaf(firstPrimOffset, nPrimitives, bounds);
+                            
+                            return node;
+                        }
+                    }
                 } 
             }
 
