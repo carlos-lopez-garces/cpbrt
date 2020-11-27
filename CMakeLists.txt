@@ -7,3 +7,14 @@ IF ( HAVE_CONSTEXPR )
 ELSE ()
   ADD_DEFINITIONS ( -D CPBRT_CONSTEXPR=const )
 ENDIF ()
+
+# Check if binary constants are supported by the compiler.
+# Otherwise, code will have to use HEX in bit-level operations.
+# Binary constant: 0b00000011000000000000000011111111
+# Corresponding HEX: 0x30000ff
+CHECK_CXX_SOURCE_COMPILES (
+  "int main() { int x = 0b101011; }"
+  HAVE_BINARY_CONSTANTS )
+IF ( HAVE_BINARY_CONSTANTS )
+  ADD_DEFINITIONS ( -D CPBRT_HAVE_BINARY_CONSTANTS )
+ENDIF ()
