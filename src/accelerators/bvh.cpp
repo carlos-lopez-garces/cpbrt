@@ -1,6 +1,7 @@
 #include "bvh.h"
 
 struct BVHPrimitiveInfo {
+    // Index of primitive in BVHAccel::primitives.
     size_t primitiveNumber;
     Bounds3f bounds;
     Point3f centroid;
@@ -45,6 +46,110 @@ struct BVHBuildNode {
     }
 };
 
+struct LBVHTreelet {
+    // Linear array index where the primitives of this Morton cluster / treelet start.
+    int startIndex;
+    int nPrimitives;
+    BVHBuildNode *buildNodes;
+};
+
+struct MortonPrimitive {
+    // Index of the primitive in the primitiveInfo array.
+    int primitiveIndex;
+    uint32_t mortonCode;
+};
+
+// Takes a 32-bit value and returns the result of shifting the ith bit to be at the 
+// 3ith bit, leaving zeros in other bits.
+inline uint32_t LeftShift3(uint32_t x) {
+    CHECK_LE(x, (1 << 10));
+    if (x == (1 << 10)) --x;
+#ifdef CPBRT_HAVE_BINARY_CONSTANTS
+    x = (x | (x << 16)) & 0b00000011000000000000000011111111;
+    // x = ---- --98 ---- ---- ---- ---- 7654 3210
+    x = (x | (x << 8)) & 0b00000011000000001111000000001111;
+    // x = ---- --98 ---- ---- 7654 ---- ---- 3210
+    x = (x | (x << 4)) & 0b00000011000011000011000011000011;
+    // x = ---- --98 ---- 76-- --54 ---- 32-- --10
+    x = (x | (x << 2)) & 0b00001001001001001001001001001001;
+    // x = ---- 9--8 --7- -6-- 5--4 --3- -2-- 1--0
+#else
+    x = (x | (x << 16)) & 0x30000ff;
+    // x = ---- --98 ---- ---- ---- ---- 7654 3210
+    x = (x | (x << 8)) & 0x300f00f;
+    // x = ---- --98 ---- ---- 7654 ---- ---- 3210
+    x = (x | (x << 4)) & 0x30c30c3;
+    // x = ---- --98 ---- 76-- --54 ---- 32-- --10
+    x = (x | (x << 2)) & 0x9249249;
+    // x = ---- 9--8 --7- -6-- 5--4 --3- -2-- 1--0
+#endif // CPBRT_HAVE_BINARY_CONSTANTS
+    return x;
+}
+
+// The Morton encoding of a coordinate interleaves the bits of the z, y, and x components,
+// ...z3y3x3z2y2x2z1y1x1.
+inline uint32_t EncodeMorton3(const Vector3f &v) {
+    return (LeftShift3(v.z) << 2) | (LeftShift(v.y) << 1) | LeftShift(v.x);
+}
+
+static void RadixSort(std::vector<MortonPrimitive> *mortonPrims) {
+    std::vector<MortonPrimitive> tmpMortonPrims(mortonPrims->size());
+    constexpr int bitsPerPass = 6;
+    constexpr int nBits = 30;
+    constexpr int nPasses = nBits / bitsPerPass;
+
+    // Sort bitsPerPass bits per pass. A 30-bit long Morton code is sorted digit by digit, starting
+    // at the low bits, 6 bits at a time. It takes 5 passes to sort the 30 bits 6 bits at a time.
+    //
+    // To sort in passes, 2 arrays are needed: mortonPrims and tmpMortonPrims; in the 1st pass,
+    // mortonPrims is the unsorted input array and tmpMortonPrims will be a 6-bit-sorted
+    // output array; in the 2nd pass, tmpMortonPrims is the partially-sorted input array and
+    // mortonPrims will be a 12-bit-sorted output array; etc. The alternation continues pass after
+    // pass.
+    for (int pass = 0; pass < nPasses; ++pass) {
+        int lowBit = pass * bitsPerPass;
+
+        // 'in' is a reference to the input array to be sorted. It alternates on every pass.
+        std::vector<MortonPrimitive> &in = (pass & 1) ? tmpMortonPrims : *mortonPrims;
+        // 'out' is a reference to the array that will store the sorted values. It alternates too.
+        std::vector<MortonPrimitive> &out = (pass & 1) ? *mortonPrims : tempvector;
+
+        constexpr int bitMask = (1 << bitsPerPass) - 1;
+
+        // 2^bitsPerPass buckets.
+        constexpr int nBuckets = 1 << bitsPerPass;
+        // Count the Morton primitives that will land on each bucket.
+        int bucketCount[nBuckets] = { 0 };
+        for (const MortonPrimitive &mp : in) {
+            int bucket = (mp.mortonCode >> lowBit) & bitMask;
+            ++bucketCount[bucket];
+        }
+
+        // The output array will store the Morton primitives of a given bucket contiguously.
+        // The bucket counters are used to calculate the starting index of 'out' at which
+        // the Morton primitives of a given bucket will be stored.
+        int outIndex[nBuckets];
+        outIndex[0] = 0;
+        for (int i = 1; i < nBuckets; ++i) {
+            outIndex[i] = outIndex[i - 1] + bucketCount[i - 1];
+        }
+
+        // Store sorted Morton primitives at the calculated indices of the output array.
+        for (const MortonPrimitive &mp : in) {
+            int bucket = (mp.mortonCode >> lowBit) & bitmask;
+            // As Morton primitives of a given bucket get stored at the bucket's output index,
+            // the bucket's output index needs to get advanced for the next primitive of the
+            // same bucket.
+            out[outIndex[bucket]++] = mp;
+        }
+    }
+
+    // Due to the alternation, the fully-sorted array may be mortonPrims or tmpMortonPrims.
+    if (nPasses & 1) {
+        std::swap(*mortonPrims, tmpMortonPrims);
+    }
+}
+
 BVHAccel(
     const std::vector<std::shared_ptr<Primitive>> &p,
     int maxPrimsInNode = 1,
@@ -65,7 +170,7 @@ BVHAccel(
     int totalNodes = 0;
     MemoryArena arena(1024 * 1024);
 
-    // Primitives in leaf nodes will occupy contiguous ranges here.
+    // Primitives in leaf nodes will occupy contiguous intervals here.
     std::vector<std::shared_ptr<Primitive>> orderedPrims;
     
     BVHBuildNode *root;
@@ -212,8 +317,8 @@ BVHBuildNode *BVHAccel::recursiveBuild(
                         // Place primitives into buckets.
                         for (int i = start; i < end; ++i) {
                             // Bounds.Offset returns the position of the primitive's centroid relative
-                            // to the extent of the bound's dominant axis. For example, a primitive centroid
-                            // lying at 1 quarter of the extent of the bound's x-axis has an offset of 0.25.
+                            // to the extent of the bound's along each of the axes. For example, a primitive
+                            // centroid lying at 1 quarter of the extent of the bound's x-axis has an offset of 0.25.
                             //
                             // Note that b is an integer such that 0 <= b <= 12 that maps a continuous
                             // offset to one of the 12 discrete buckets.
@@ -324,5 +429,340 @@ BVHBuildNode *BVHAccel::recursiveBuild(
         }
     }
     
+    return node;
+}
+
+BVHBuildNode *BVHAccel::HLBVHBuild(
+    MemoryArena &arena,
+    const std::vector<BVHPrimitiveInfo> &primitiveInfo,
+    int *totalNodes,
+    std::vector<std::shared_ptr<Primitive>> &orderedPrims
+) const {
+    // Compute bounding box of all primitive centroids.
+    Bounds3f bounds;
+    for (const BVHPrimitiveInfo &pi : primitiveInfo) {
+        bounds = Union(bounds, pi.centroid);
+    }
+
+    // Compute Morton codes of primitives. Each worker thread is given 512 primitives to
+    // process. 
+    std::vector<MortonPrimitive> mortonPrims(primitiveInfo.size());
+    ParallelFor(
+        [&](int i) {
+            // Bottom 10 bits of x, bottom 10 bits of y, and bottom 10 bits of z so that the total
+            // 30 bits fit in a 32-bit variable.
+            constexpr int mortonBits = 10;
+
+            // 2^10.
+            constexpr int mortonScale = 1 << mortonBits;
+            
+            mortonPrims[i].primitiveIndex = primitiveInfo[i].primitiveNumber;
+
+            Vector3f centroidOffset = bounds.Offset(primitiveInfo[i].centroid);
+
+            // Bounds offsets are floating-point numbers in [0, 1], but the Morton transformation takes 
+            // a coordinate with integer components, so the offsets are discretized by mapping them
+            // to regularly-spaced integers in the range [0, 1024] by scaling them by mortonScale=2^10.
+            mortonPrims[i].mortonCode = EncodeMorton3(centroidOffset * mortonScale);
+        },
+        primitiveInfo.size(),
+        512
+    );
+
+    // Radix sort Morton primitives. Sorted Morton codes have special properties that allow for spatial
+    // reasoning about the relative positions of the primitives.
+    RadixSort(&mortonPrims);
+
+    // Create treelets for Morton clusters (primitives with nearby centroids along the Morton curve)
+    // at bottom of BVH.
+    //
+    // Take a binary string of 3 bits as example. Let the 2 upper bits be 2^2  groups: 00X, 01X, 10X, and 11X.
+    // Each group has members XX0 and XX1.
+    //
+    // Now take the 30-bit Morton code binary strings. Let the 12 upper bits be 2^12 groups. The remaining
+    // low 18 bits represent the 2^18 members of each of the 2^12 groups.
+    //
+    // Spatially, a group is a cell of a grid in 3-space, a subvolume.
+    //
+    // All the primitives of a Morton cluster lie in the same cell.
+
+    // Find intervals of primitives for each treelet.
+    std::vector<LBVHTreelet> treeletsToBuild;
+    for (int start = 0, end = 1; end <= (int)mortonPrims.size(); ++end) {
+#ifdef CPBRT_HAVE_BINARY_CONSTANTS
+        uint32_t mask = 0b00111111111111000000000000000000;
+#else
+        uint32_t mask = 0x3ffc0000;
+#endif
+
+        // Morton codes of the same cell have the same 12 upper bits. A cell is wrapped up when the 12 upper bits
+        // change from the last Morton primitive to the current one, or when the current one is the last one. A
+        // treelet is created for the cluster in the interval [start, end] of mortonPrims.
+        if (end == (int)mortonPrims.size()
+            || ((mortonPrims[start].mortonCode & mask) != (mortonPrims[end].mortonCode & mask))
+        ) {
+            // Allocate treelet and add it to the array.
+            int nPrimitives = end - start;
+            int maxBVHNodes = 2 * nPrimitives;
+
+            // Passing false to the allocator prevents the constructor of BVHBuildNode from being invoked. 
+            BVHBuildNode *nodes = arena.Alloc<BVHBuildNode>(maxBVHNodes, false);
+            // For the time being, the treelet's buildNodes pointer will point at the start of the interval of
+            // the cluster on mortonPrims's memory. This pointer will later point to the root of the LBVH that
+            // will be built for this treelet.
+            treeletsToBuild.push_back({start, nPrimitives, nodes});
+
+            start = end;
+        }
+    }
+
+    // Create LBVHs for treelets in parallel. 
+    //
+    // atomicTotal and orderedPrimsOffset will be updated by parallel or concurrent threads, so they need to be
+    // accessed atomically.
+    //
+    // The lower [17, 0] bits split the primitives at an ever finer level of granularity [17 -> 0]. At these levels,
+    // the primitives are always split at the midpoint of the axis that corresponds to the Morton code bit
+    // (...ZYXZYX...ZYX).
+    std::atomic<int> atomicTotal(0);
+    std::atomic<int> orderedPrimsOffset(0);
+    orderedPrims.resize(primitives.size());
+    ParallelFor(
+        [&](int i) {
+            // Generate ith LBVH treelet.
+            int nodesCreated = 0;
+            const int firstBitIndex = 29 - 12;
+            LBVHTreelet &treelet = treeletsToBuild[i];
+            treelet.buildNodes = emitLBVH(
+                treelet.buildNodes,
+                primitiveInfo,
+                &mortonPrims[treelet.startIndex],
+                treelet.nPrimitives,
+                &nodesCreated,
+                orderedPrims,
+                &orderedPrimsOffset,
+                firstBitIndex
+            );
+            atomicTotal += nodesCreated;
+        },
+        treeletsToBuild.size()
+    );
+    *totalNodes = atomicTotal;
+
+    std::vector<BVHBuildNode *> finishedTreelets;
+    for (LBVHTreelet &treelet : treeletsToBuild) {
+        finishedTreelets.push_back(treelet.buildNodes);
+    }
+
+    // The upper [29, 16] bits split at an ever lower level of granularity [29 <- 16]. At these levels,
+    // treelets are split using the surface area heuristic (SAH).
+    return buildUpperSAH(arena, finishedTreelets, 0, finishedTreelets.size(), totalNodes);
+}
+
+// emitLBVH is invoked on a Morton cluster. All the primitives lie in the same grid cell or
+// subvolume in 3-space.
+BVHBuildNode *BVHAccel::emitLBVH(
+    BVHBuildNode *&buildNodes,
+    const std::vector<BVHPrimitiveInfo> &primitiveInfo,
+    MortonPrimitive *mortonPrims,
+    int nPrimitives,
+    int *totalNodes,
+    std::vector<std::shared_ptr<Primitive>> &orderedPrims,
+    // Initially 0.
+    std::atomic<int> *orderedPrimsOffset,
+    // Initially 17, the first low bit that is not a group.
+    int bitIndex
+) const {
+    // bitIndex counts down from 17 to -1. Every time it decreases, the primitives get further
+    // subdivided by 2 and split into 2 groups:
+    //
+    // bitIndex=17: XXXXXXXXXXXX0................. and XXXXXXXXXXXX1.................
+    // bitIndex=16: XXXXXXXXXXXXX0................ and XXXXXXXXXXXXX1................
+    // ...
+    // bitIndex=0:  XXXXXXXXXXXXXXXXXXXXXXXXXXXXX0 and XXXXXXXXXXXXXXXXXXXXXXXXXXXXX1
+    //
+    // Since a Morton code interleaves the bits of the coordinate's components ZYXZYX...ZYX,
+    // a different split axis is used every time bitIndex decreases. Primitives where the bit's
+    // value is 0 go in one group and the ones with 1 go in the other group. If all of the
+    // primitives have the same value at the bit, the primitives won't be split along this axis
+    // at this level, and the algorithm proceeds to the next lower bit.
+    if (bitIndex == -1 || nPrimitives < maxPrimsInNode) {
+        // Create and return leaf node for LBVH treelet of this split Morton subcluster.
+        (*totalNodes)++;
+        BVHBuildNode *node = buildNodes++;
+        Bounds3f bounds;
+        // fetch_add atomically reads the current offset and adds the input count to it.
+        // This effectively reserves an interval of orderedPrims addresses for the current
+        // Morton subcluster while avoiding data races with other concurrent or parallel
+        // threads.
+        int firstPrimOffset = orderedPrimsOffset->fetch_add(nPrimitives);
+        if (int i = 0; i < nPrimitives; ++i) {
+            int primitiveIndex = mortonPrims[i].primitiveIndex;
+            orderedPrims[firstPrimOffset + i] = primitives[primitiveIndex];
+            bounds = Union(bounds, primitiveInfo[primitiveIndex].bounds);
+        }
+        node->InitLeaf(firstPrimOffset, nPrimitives, bounds);
+        return node;
+    } else {
+        int mask = 1 << bitIndex;
+
+        // Advance to next lower bit if all the primitives lie on the same side of this bit's axis.
+        if ((mortonPrims[0].mortonCode & mask) == (mortonPrims[nPrimitives-1].mortonCode & mask)) {
+            return emitLBVH(
+                buildNodes,
+                primitiveInfo,
+                mortonPrims,
+                nPrimitives,
+                totalNodes,
+                orderedPrims,
+                orderedPrimsOffset,
+                bitIndex - 1
+            );
+        }
+        
+        // Find split point for this bit's axis using a binary search. The split point is the unique, but
+        // possibly non-existent, point where this bit's value changes from 0 to 1 across Morton codes.
+        // All the primitives to the left of the split point have a bit value of 0, whereas the ones to
+        // the right have a 1.
+        int searchStart = 0;
+        int searchEnd = nPrimitives-1;
+        while (searchStart+1 != searchEnd) {
+            int mid = (searchStart + searchEnd) / 2;
+            if ((mortonPrims[searchStart].mortonCode & mask) == (mortonPrims[mid].mortonCode & mask)) {
+                searchStart = mid;
+            } else {
+                searchEnd = mid;
+            }
+        }
+        int splitOffset = searchEnd;
+
+        // Create interior LBVH node that splits along this bit's axis the primitives into its 2 children.
+        (*totalNodes)++;
+        BVHBuildNode *node = buildNodes++;
+        BVHBuildNode *lbvh[2] = {
+            emitLBVH(
+                buildNodes,
+                primitiveInfo,
+                mortonPrims,
+                splitOffset,
+                totalNodes,
+                orderedPrims,
+                orderedPrimsOffset,
+                bitIndex-1
+            ),
+            emitLBVH(
+                buildNodes,
+                primitiveInfo,
+                &mortonPrims[splitOffset],
+                nPrimitives-splitOffset,
+                totalNodes,
+                orderedPrims,
+                orderedPrimsOffset,
+                bitIndex-1
+            )
+        };
+        int axis = bitIndex % 3;
+        node->InitInterior(axis, lbvh[0], lbvh[1]);
+        return node;
+    }
+}
+
+BVHBuildNode *BVHAccel::buildUpperSAH(
+    MemoryArena &arena,
+    std::vector<BVHBuildNode *> &treeletRoots,
+    int start, int end,
+    int *totalNodes
+) const {
+    CHECK_LT(start, end);
+    int nNodes = end - start;
+    if (nNodes == 1) {
+        return treeletRoots[start];
+    }
+    (*totalNodes)++;
+    BVHBuildNode *node = arena.Alloc<BVHBuildNode>();
+
+    // Compute bounds of all nodes under this HLBVH node.
+    Bounds3f bounds;
+    for (int i = start; i < end; ++i) {
+        bounds = Union(bounds, treeletRoots[i]->bounds);
+    }
+
+    // Compute bound of HLBVH node centroids, choose split dimension _dim_.
+    Bounds3f centroidBounds;
+    for (int i = start; i < end; ++i) {
+        Point3f centroid = (treeletRoots[i]->bounds.pMin + treeletRoots[i]->bounds.pMax) * 0.5f;
+        centroidBounds = Union(centroidBounds, centroid);
+    }
+    int dim = centroidBounds.MaximumExtent();
+    // FIXME: if this hits, what do we need to do?
+    // Make sure the SAH split below does something?
+    CHECK_NE(centroidBounds.pMax[dim], centroidBounds.pMin[dim]);
+
+    // Allocate _BucketInfo_ for SAH partition buckets.
+    PBRT_CONSTEXPR int nBuckets = 12;
+    struct BucketInfo {
+        int count = 0;
+        Bounds3f bounds;
+    };
+    BucketInfo buckets[nBuckets];
+
+    // Initialize _BucketInfo_ for HLBVH SAH partition buckets.
+    for (int i = start; i < end; ++i) {
+        Float centroid = (treeletRoots[i]->bounds.pMin[dim] + treeletRoots[i]->bounds.pMax[dim]) * 0.5f;
+        int b = nBuckets * ((centroid - centroidBounds.pMin[dim]) / (centroidBounds.pMax[dim] - centroidBounds.pMin[dim]));
+        if (b == nBuckets) {
+            b = nBuckets - 1;
+        }
+        CHECK_GE(b, 0);
+        CHECK_LT(b, nBuckets);
+        buckets[b].count++;
+        buckets[b].bounds = Union(buckets[b].bounds, treeletRoots[i]->bounds);
+    }
+
+    // Compute costs for splitting after each bucket.
+    Float cost[nBuckets - 1];
+    for (int i = 0; i < nBuckets - 1; ++i) {
+        Bounds3f b0, b1;
+        int count0 = 0, count1 = 0;
+        for (int j = 0; j <= i; ++j) {
+            b0 = Union(b0, buckets[j].bounds);
+            count0 += buckets[j].count;
+        }
+        for (int j = i + 1; j < nBuckets; ++j) {
+            b1 = Union(b1, buckets[j].bounds);
+            count1 += buckets[j].count;
+        }
+        cost[i] = .125f + (count0 * b0.SurfaceArea() + count1 * b1.SurfaceArea()) / bounds.SurfaceArea();
+    }
+
+    // Find bucket to split at that minimizes SAH metric.
+    Float minCost = cost[0];
+    int minCostSplitBucket = 0;
+    for (int i = 1; i < nBuckets - 1; ++i) {
+        if (cost[i] < minCost) {
+            minCost = cost[i];
+            minCostSplitBucket = i;
+        }
+    }
+
+    // Split nodes and create interior HLBVH SAH node.
+    BVHBuildNode **pmid = std::partition(
+        &treeletRoots[start], &treeletRoots[end - 1] + 1,
+        [=](const BVHBuildNode *node) {
+            Float centroid = (node->bounds.pMin[dim] + node->bounds.pMax[dim]) * 0.5f;
+            int b = 
+                nBuckets * ((centroid - centroidBounds.pMin[dim]) / (centroidBounds.pMax[dim] - centroidBounds.pMin[dim]));
+            if (b == nBuckets) b = nBuckets - 1;
+            CHECK_GE(b, 0);
+            CHECK_LT(b, nBuckets);
+            return b <= minCostSplitBucket;
+        });
+    int mid = pmid - &treeletRoots[0];
+    CHECK_GT(mid, start);
+    CHECK_LT(mid, end);
+    node->InitInterior(
+        dim, this->buildUpperSAH(arena, treeletRoots, start, mid, totalNodes),
+        this->buildUpperSAH(arena, treeletRoots, mid, end, totalNodes)
+    );
     return node;
 }

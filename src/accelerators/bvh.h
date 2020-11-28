@@ -3,6 +3,10 @@
 
 #include "core/primitive.h"
 
+struct BVHPrimitiveInfo;
+struct MortonPrimitive;
+struct LinearBVHNode;
+
 class BVHAccel : public Aggregate {
 private:
     // Maximum number of primitives that can be stored in a node, up to 255.
@@ -39,4 +43,30 @@ public:
         // array.
         std::vector<std::shared_ptr<Primitive>> &orderedPrims
     );
+
+    BVHBuildNode *HLBVHBuild(
+        MemoryArena &arena,
+        const std::vector<BVHPrimitiveInfo> &primitiveInfo,
+        int *totalNodes,
+        std::vector<std::shared_ptr<Primitive>> &orderedPrims
+    ) const;
+
+    BVHBuildNode *emitLBVH(
+        BVHBuildNode *&buildNodes,
+        const std::vector<BVHPrimitiveInfo> &primitiveInfo,
+        MortonPrimitive *mortonPrims,
+        int nPrimitives,
+        int *totalNodes,
+        std::vector<std::shared_ptr<Primitive>> &orderedPrims,
+        std::atomic<int> *orderedPrimsOffset,
+        int bitIndex
+    ) const;
+
+    BVHBuildNode *buildUpperSAH(
+        MemoryArena &arena,
+        std::vector<BVHBuildNode *> &treeletRoots,
+        int start,
+        int end,
+        int *totalNodes
+    ) const;
 };
