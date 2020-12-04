@@ -333,8 +333,21 @@ BVHBuildNode *BVHAccel::recursiveBuild(
                 // Partition primitives using approximate surface area heuristic.
                 case SplitMethod::SAH:
                 default: {
-                    if (nPrimitives <= 4) {
-                        // TODO: Partition primitives into equally sized subsets.
+                    if (nPrimitives <= 2) {
+                        // Partition the primitiveInfo array into 2 subsets of equal size: primitives whose
+                        // centroids lie to the left of the centroid of the primitive in the middle will be
+                        // put in the 1st partition; in the 2nd one otherwise. Note that this isn't a full
+                        // O(nlogn) sort: there's no order relation among the primitives of a partition, other
+                        // than being to the left or to the right of the centroid of the mid primitive. O(n).
+                        mid = (start + end) / 2;
+                        std::nth_element(
+                            &primitiveInfo[start],
+                            &primitiveInfo[mid],
+                            &primitiveInfo[end-1]+1,
+                            [dim](const BVHPrimitive &a, const BVHPrimitive &b) {
+                                return a.centroid[dim] < b.centroid[dim];
+                            }
+                        );
                     } else {
                         // Split the dominant axis into a constant number of buckets of equal length.
                         constexpr int nBuckets = 12;
