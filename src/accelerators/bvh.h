@@ -15,7 +15,13 @@ private:
     // Algorithm to use for subdividing primitives.
     const SplitMethod splitMethod;
 
+    // Before construction, the primitives lie in an undefined order. After construction,
+    // the order is determined by the split method. The primitives of a leaf node will
+    // lie contiguously.
     std::vector<std::shared_ptr<Primitive>> primitives;
+
+    // Binary tree in linear array representation and depth-first, built during construction. 
+    LinearBVHNode *nodes = nullptr;
 
 public:
     // Primitive subdivision algorithms.
@@ -69,4 +75,10 @@ public:
         int end,
         int *totalNodes
     ) const;
+
+    int flattenBVHTree(BVHBuildNode *node, int *offset);
+
+    bool Intersect(const Ray &ray, SurfaceInteraction *si) const;
+
+    bool IntersectP(const Ray &ray) const;
 };

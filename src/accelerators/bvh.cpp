@@ -46,6 +46,32 @@ struct BVHBuildNode {
     }
 };
 
+struct LinearBVHNode {
+    // AABB that encompasses this subtree's or leaf's primitives.
+    Bounds3f bounds;
+
+    union {
+        // If node is leaf.
+        int primitivesOffset;
+        // If node is interior, its first child lies right next to it, so there's no
+        // need to store its offset, only the offset to its second child.
+        int secondChildOffset;
+    };
+
+    // Interior nodes don't refer to primitives directly, only to their 2 children
+    // nodes. Only leaf nodes refer to primitives directly. 
+    uint16_t nPrimitives;
+    
+    // The axis along which the primitives were partitioned at this node, x, y, or z.
+    // Only for interior nodes.
+    uint8_t axis;
+
+    // Make efficient use of cache by ensuring the struct is 32 bytes in size: if this
+    // node is cache-line aligned, the next one in the array will also be, and none
+    // will straddle cache lines.
+    uint8_t pad[1]; 
+};
+
 struct LBVHTreelet {
     // Linear array index where the primitives of this Morton cluster / treelet start.
     int startIndex;
@@ -184,7 +210,11 @@ BVHAccel(
 
     primitives.swap(orderedPrims);
 
-    // TODO: compute representation of depth-first traversal of BVH tree.
+    // Build linear array representation of binary tree in depth-first order.
+    // TODO: implement AllocAligned.
+    nodes = AllocAligned<LinearBVHNode>(totalNodes);
+    int offset = 0;
+    flattenBVHTree(root, &offset);
 }
 
 BVHBuildNode *BVHAccel::recursiveBuild(
@@ -756,7 +786,8 @@ BVHBuildNode *BVHAccel::buildUpperSAH(
             CHECK_GE(b, 0);
             CHECK_LT(b, nBuckets);
             return b <= minCostSplitBucket;
-        });
+        }
+    );
     int mid = pmid - &treeletRoots[0];
     CHECK_GT(mid, start);
     CHECK_LT(mid, end);
@@ -765,4 +796,183 @@ BVHBuildNode *BVHAccel::buildUpperSAH(
         this->buildUpperSAH(arena, treeletRoots, mid, end, totalNodes)
     );
     return node;
+}
+
+// Takes a linked representation of the BVH binary tree and flattens it into a linear
+// array binary tree in depth-first order.
+int BVHAccel::flattenBVHTree(BVHBuildNode *node, int *offset) {
+    LinearBVHNode *linearNode = &nodes[*offset];
+
+    // This effectively places this node at this offset of the linear array binary tree.
+    linearNode->bounds = node->bounds;
+
+    // Remember this node's offset (to return it) and advance it for the next recursive
+    // calls.
+    int nodeOffset = (*offset)++;
+
+    if (node->nPrimitives > 0) {
+        // Leaf node.
+        linearNode->primitivesOffset = node->firstPrimOffset;
+        linearNode->nPrimitives = node->nPrimitives;
+    } else {
+        // Interior node.
+        linearNode->axis = node->splitAxis;
+        linearNode->nPrimitives = 0;
+        
+        // The first child subtree will lie on a contiguous segment just next to this
+        // node's offset.
+        //
+        // Upon return, offset will be the next one after this child subtree's last
+        // linear node.
+        flattenBVHTree(node->children[0], offset);
+
+        // The second child subtree will lie after all of the linear nodes of the first
+        // child subtree. The returned offset (that of the second child node itself) is
+        // recorded in this linear node.
+        linearNode->secondChildOffset = flattenBVHTree(node->children[1], offset);
+    }
+
+    return nodeOffset;
+}
+
+// Traverses the BVH to find the closest intersection.
+bool BVHAccel::Intersect(const Ray &ray, SurfaceInteraction *si) const {
+    bool hit = false;
+    Vector3f reciprocalDir(1/ray.d.x, 1/ray.d.y, 1/ray.d.z);
+    int dirIsNeg[3] = { reciprocalDir.x < 0, reciprocalDir.y < 0, reciprocalDir.z < 0 };
+
+    // toVisitOffset points at the top of nodesToVisit, which acts as a stack (of offsets
+    // to linear nodes). When traversing an interior node, the closer of the 2 children will
+    // be visited immediately and the farther one will be pushed onto the stack to be
+    // processed next as soon as the closer child has been traversed completely.
+    int toVisitOffset = 0;
+    int nodesToVisit[64];
+    int currentNodeIndex = 0;
+
+    // Follow ray through BVH (linear) nodes to find primitive intersections.
+    while (true) {
+        const LinearBVHNode *node = &nodes[currentNodeIndex];
+
+        if (node->bounds.IntersectP(ray, reciprocalDir, dirIsNeg)) {
+            // The ray intersects the node's AABB.
+
+            if (node->nPrimitives > 0) {
+                // Leaf node. Test primitives for intersection (recall that only leaf nodes
+                // store primitives).
+                for (int i = 0; i < node->nPrimitives; ++i) {
+                    // The ray's extent, tMax, is shortened every time a closer intersection is
+                    // found. Subsequent farther intersections get efficiently discarded.
+                    if (primitives[node->primitivesOffset + i]->Intersect(ray, si)) {
+                        hit = true;
+                    }
+                    
+                    // Keep going, this intersection might not be the closest one.
+                }
+
+                if (toVisitOffset == 0) {
+                    break;
+                }
+
+                // Next node to visit.
+                currentNodeIndex = nodesToVisit[--toVisitOffset];
+            } else {
+                // Interior node. First, determine which of its 2 children the ray intersects
+                // first (if at all). By traversing the closer child first, it is more likely that
+                // the closest intersection will be found, which would shorten the ray's extent,
+                // tMax, causing subsequent intersections with the farther child to be discarded
+                // efficiently.
+                // 
+                // Put farther BVH node on nodesToVisit stack.
+                if (dirIsNeg[node->axis]) {
+                    // Visit the second child node first. Put the other one on the stack.
+                    nodesToVisit[toVisitOffset++] = currentNodeIndex + 1;
+                    currentNodeIndex = node->secondChildOffset;
+                } else {
+                    // Visit the first child node first. Put the other one on the stack.
+                    nodesToVisit[toVisitOffset++] = node->secondChildOffset;
+                    currentNodeIndex = currentNodeIndex + 1;
+                }
+            }
+        } else {
+            // The ray didn't intersect the node's AABB.
+
+            if (toVisitOffset == 0) {
+                break;
+            }
+
+            // Next node to visit.
+            currentNodeIndex = nodesToVisit[--toVisitOffset];
+        }
+    }
+
+    return hit;
+}
+
+// Tells whether the ray intersects a primitive. The traversal of the BVH stops at the
+// first primitive intersection.
+bool BVHAccel::IntersectP(const Ray &ray) const {
+    Vector3f reciprocalDir(1/ray.d.x, 1/ray.d.y, 1/ray.d.z);
+    int dirIsNeg[3] = { reciprocalDir.x < 0, reciprocalDir.y < 0, reciprocalDir.z < 0 };
+
+    // toVisitOffset points at the top of nodesToVisit, which acts as a stack (of offsets
+    // to linear nodes). When traversing an interior node, the closer of the 2 children will
+    // be visited immediately and the farther one will be pushed onto the stack to be
+    // processed next as soon as the closer child has been traversed completely without having
+    // found an intersection.
+    int toVisitOffset = 0;
+    int nodesToVisit[64];
+    int currentNodeIndex = 0;
+
+    // Follow ray through BVH (linear) nodes to find the 1st primitive intersection.
+    while (true) {
+        const LinearBVHNode *node = &nodes[currentNodeIndex];
+
+        if (node->bounds.IntersectP(ray, reciprocalDir, dirIsNeg)) {
+            // The ray intersects the node's AABB.
+
+            if (node->nPrimitives > 0) {
+                // Leaf node. Test primitives for intersection (recall that only leaf nodes
+                // store primitives).
+                for (int i = 0; i < node->nPrimitives; ++i) {
+                    // One intersection is enough.
+                    if (primitives[node->primitivesOffset + i]->IntersectP(ray)) {
+                        return true;
+                    }
+                }
+
+                if (toVisitOffset == 0) {
+                    break;
+                }
+
+                // Next node to visit.
+                currentNodeIndex = nodesToVisit[--toVisitOffset];
+            } else {
+                // Interior node. First, determine which of its 2 children the ray intersects
+                // first (if at all). By traversing the closer child first, it is more likely that
+                // the first intersection will be found quicker.
+                // 
+                // Put farther BVH node on nodesToVisit stack.
+                if (dirIsNeg[node->axis]) {
+                    // Visit the second child node first. Put the other one on the stack.
+                    nodesToVisit[toVisitOffset++] = currentNodeIndex + 1;
+                    currentNodeIndex = node->secondChildOffset;
+                } else {
+                    // Visit the first child node first. Put the other one on the stack.
+                    nodesToVisit[toVisitOffset++] = node->secondChildOffset;
+                    currentNodeIndex = currentNodeIndex + 1;
+                }
+            }
+        } else {
+            // The ray didn't intersect the node's AABB.
+
+            if (toVisitOffset == 0) {
+                break;
+            }
+
+            // Next node to visit.
+            currentNodeIndex = nodesToVisit[--toVisitOffset];
+        }
+    }
+
+    return false;
 }
