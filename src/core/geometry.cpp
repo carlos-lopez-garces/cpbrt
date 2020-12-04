@@ -50,5 +50,5 @@ template <typename T> inline bool Bounds3<T>::IntersectP(
     const int dirIsNeg[3]
 ) const {
     // TODO: implement.
-    retur false;
+    return false;
 }
