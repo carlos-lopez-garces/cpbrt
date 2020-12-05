@@ -19,6 +19,19 @@ typedef double Float;
 typedef float Float;
 #endif // CPBRT_FLOAT_AS_DOUBLE
 
+// Rather than being an abstract data type, Spectrum is an alias of the chosen
+// concrete implementation. This allows 1) other types and structs to have members
+// of type Spectrum that aren't pointers to dynamically-allocated objects, and
+// 2) for inlining short functions, which would otherwise be virtual invocations
+// resolved at run-time.
+class RGBSpectrum;
+class SampledSpectrum;
+#ifdef CPBRT_SAMPLED_SPECTRUM
+typedef SampledSpectrum Spectrum;
+#else
+typedef RGBSpectrum Spectrum;
+#endif // CPBRT_SAMPLED_SPECTRUM
+
 // Global constants.
 
 // Only so that you don't have to type std::numeric_limits<Float> ... 
