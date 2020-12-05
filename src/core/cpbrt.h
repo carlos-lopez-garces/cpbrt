@@ -39,3 +39,14 @@ inline Float Radians(Float deg) {
 inline Float Degrees(Float rad) {
     return rad * 180.f / Pi;
 }
+
+template <typename T, typename U, typename V>
+inline T Clamp(T val, U low, V high) {
+    if (val < low) {
+        return low;
+    }
+    else if (val > high) {
+        return high;
+    }
+    return val;
+}
