@@ -63,3 +63,7 @@ inline T Clamp(T val, U low, V high) {
     }
     return val;
 }
+
+inline Float Lerp(Float t, Float v1, Float v2) {
+    return (1-t)*v1 + t*v2;
+}
