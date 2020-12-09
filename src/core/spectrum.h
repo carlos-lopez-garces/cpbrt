@@ -2,6 +2,30 @@
 
 #include "cpbrt.h"
 
+static const int sampledLambdaStart = 400;
+static const int sampledLambdaEnd = 700;
+static const int nSpectralSamples = 60;
+
+// Determines whether the samples are sorted in order of increasing wavelength.
+extern bool SpectrumSamplesSorted(const Float *lambda, int n);
+
+// Sorts the samples in order of increasing wavelength.
+extern void SortSpectrumSamples(Float *lambda, Float *values, int n);
+
+// Computes the average value of the samples contained in the wavelength subinterval
+// [lambdaStart, lambdaEnd].
+extern Float AverageSpectrumSamples(
+    const Float *lambda, 
+    const Float *values,
+    int n,
+    Float lambdaStart,
+    Float lambdaEnd
+);
+
+inline Spectrum Lerp(Float t, const Spectrum &sp1, const Spectrum &sp2) {
+    return (1 - t)*sp1 + t*sp2;
+}
+
 template <int nSpectrumSamples> class CoefficientSpectrum {
 public:
     static const int nSamples = nSpectrumSamples;
@@ -192,7 +216,30 @@ inline CoefficientSpectrum<nSpectrumSamples> Pow(
     return ret;
 }
 
+class SampledSpectrum : public CoefficientSpectrum<nSpectralSamples> {
+public:
+    SampledSpectrum(Float v = 0.f) : CoefficientSpectrum(v) {}
 
-inline Spectrum Lerp(Float t, const Spectrum &sp1, const Spectrum &sp2) {
-    return (1 - t)*sp1 + t*sp2;
-}
+    // n (wavelength, value) pairs.
+    static SampledSpectrum FromSampled(const Float *lambda, const Float *values, int n) {
+        // Sort samples in order of increasing wavelength.
+        if (!SpectrumSamplesSorted(lambda, n)) {
+            std::vector<Float> sortedLambda(&lambda[0], &lambda[n]);
+            std::vector<Float> sortedValues(&values[0], &values[n]);
+            SortSpectrumSamples(&sortedLambda[0], &sortedValues[0], n);
+            return FromSampled(&sortedLambda[0], &sortedValues[0], n);
+        }
+
+        SampledSpectrum r;
+        for (int i = 0; i < nSpectralSamples; ++i) {
+            // i and i+1 are the endpoints of the ith wavelength subinterval.
+            // lambda0 and lambda1 are the wavelengths of these endpoints.
+            Float lambda0 = Lerp(Float(i) / nSpectralSamples, Float(sampledLambdaStart), Float(sampledLambdaEnd));
+            Float lambda1 = Lerp(Float(i+1) / nSpectralSamples, Float(sampledLambdaStart), Float(sampledLambdaEnd));
+
+            r.c[i] = AverageSpectrumSamples(lambda, values, n, lambda0, lambda1);
+        }
+        return r;
+    }
+private:
+};
