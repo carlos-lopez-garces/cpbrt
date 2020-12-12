@@ -6,6 +6,17 @@ static const int sampledLambdaStart = 400;
 static const int sampledLambdaEnd = 700;
 static const int nSpectralSamples = 60;
 
+// Values of the CIE XYZ color-matching curves X(lambda), Y(lambda), Z(lambda)
+// for 471 wavelength samples in the [360nm, 830nm] interval.
+static const int nCIESamples = 471;
+extern const Float CIE_lambda[nCIESamples];
+extern const Float CIE_X[nCIESamples];
+extern const Float CIE_Y[nCIESamples];
+extern const Float CIE_Z[nCIESamples];
+// Definite integral of the CIE Y (luminance) color-matching curve over the [360nm, 830nm]
+// integration interval.
+static const Float CIE_Y_integral = 106.856895;
+
 // Determines whether the samples are sorted in order of increasing wavelength.
 extern bool SpectrumSamplesSorted(const Float *lambda, int n);
 
@@ -217,8 +228,47 @@ inline CoefficientSpectrum<nSpectrumSamples> Pow(
 }
 
 class SampledSpectrum : public CoefficientSpectrum<nSpectralSamples> {
+private:
+    // n samples of the CIE X(lambda), Y(lambda), and Z(lambda) 
+    // color-matching curves, where n = nSpectralSamples.
+    //
+    // The sampled XYZ curves CIE_X, CIE_Y, and CIE_Z are sampled at 1nm intervals.
+    // This SampledSpectrum is sampled at (sampledLambdaEnd-sampledLambdaStart)/nSpectralSamples
+    // nm intervals, for which the CIE_X, CIE_Y, and CIE_Z curve arrays may not have samples. So
+    // the average of the CIE_X, CIE_Y, and CIE_Z samples contained by one of this SampledSpectrum's
+    // intervals is computed and regarded as the CIE X, Y, Z value of that interval. 
+    static SampledSpectrum X;
+    static SampledSpectrum Y;
+    static SampledSpectrum Z;
+    
 public:
     SampledSpectrum(Float v = 0.f) : CoefficientSpectrum(v) {}
+
+    static void Init() {
+        // Sample the XYZ color-matching curves at (sampledLambdaEnd-sampledLambdaStart)/nSpectralSamples
+        // nm intervals.
+        for (int i = 0; i < nSpectralSamples; ++i) {
+            Float lambda0 = Lerp(
+                Float(i) / Float(nSpectralSamples),
+                sampledLambdaStart, 
+                sampledLambdaEnd
+            );
+
+            Float lambda1 = Lerp(
+                Float(i+1) / Float(nSpectralSamples),
+                sampledLambdaStart,
+                sampledLambdaEnd
+            );
+
+            // The XYZ value of the interval is the average of the CIE_X, CIE_Y, and CIE_Z samples
+            // contained by the interval.
+            X.c[i] = AverageSpectrumSamples(CIE_lambda, CIE_X, nCIESamples, lambda0, lambda1);
+            Y.c[i] = AverageSpectrumSamples(CIE_lambda, CIE_Y, nCIESamples, lambda0, lambda1);
+            Z.c[i] = AverageSpectrumSamples(CIE_lambda, CIE_Z, nCIESamples, lambda0, lambda1);
+        }
+
+        // TODO: Compute RGB to spectrum functions for SampledSpectrum.
+    }
 
     // n (wavelength, value) pairs.
     static SampledSpectrum FromSampled(const Float *lambda, const Float *values, int n) {
@@ -241,5 +291,51 @@ public:
         }
         return r;
     }
-private:
+
+    // Maps this spectrum's SPD to its equivalent XYZ tristimulus value.
+    //
+    // X is defined as the definite integral of the product of the SPD and the CIE X curve,
+    // and is approximated by the corresponding Riemann sum over n=nSpectralSamples subintervals.
+    //
+    // Y and Z are defined analogously. 
+    void ToXYZ(Float xyz[3]) const {
+        xyz[0] = xyz[1] = xyz[2] = 0.f;
+
+        // Sum of the products of this spectrum's SPDs and the XYZ color-matching curves.
+        for (int i = 0; i < nSpectralSamples; ++i) {
+            xyz[0] += c[i] * X.c[i];
+            xyz[1] += c[i] * Y.c[i];
+            xyz[2] += c[i] * Z.c[i];
+        }
+
+        Float lambdaDelta = Float(sampledLambdaEnd-sampledLambdaStart) / Float(nSpectralSamples);
+
+        // Riemman sums that approximate the definite integrals of the products of the SPDs 
+        // and the XYZ color-matching curves.
+        xyz[0] *= lambdaDelta;
+        xyz[1] *= lambdaDelta;
+        xyz[2] *= lambdaDelta;
+
+        // ?
+        xyz[0] *= 1.f / CIE_Y_integral;
+        xyz[1] *= 1.f / CIE_Y_integral;
+        xyz[2] *= 1.f / CIE_Y_integral;
+    }
+
+    // XYZ y tristimulus value.
+    Float y() const {
+        Float yy = 0.f;
+
+        for (int i = 0; i < nSpectralSamples; ++i) {
+            yy += c[i] * Y.c[i];
+        }
+
+        Float lambdaDelta = Float(sampledLambdaEnd-sampledLambdaStart) / Float (nSpectralSamples);
+
+        // Riemann sum.
+        yy *= lambdaDelta;
+
+        // ?
+        return yy / CIE_Y_integral;
+    }
 };
