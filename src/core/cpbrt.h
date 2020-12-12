@@ -19,6 +19,10 @@ typedef double Float;
 typedef float Float;
 #endif // CPBRT_FLOAT_AS_DOUBLE
 
+struct Options {
+
+};
+
 // Rather than being an abstract data type, Spectrum is an alias of the chosen
 // concrete implementation. This allows 1) other types and structs to have members
 // of type Spectrum that aren't pointers to dynamically-allocated objects, and
