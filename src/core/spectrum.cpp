@@ -144,6 +144,27 @@ Float AverageSpectrumSamples(
     return sum / (lambdaEnd - lambdaStart);
 }
 
+// Computes the SPD value of the input wavelength by linearly interpolating the SPD samples
+// of the 2 endpoints of the wavelength subinterval that contains the input wavelength.
+Float InterpolateSpectrumSamples(const Float *lambda, const Float *values, int n, Float l) {
+    // The SPD is regarded to be constant outside the wavelength interval and equal to the
+    // value at the neareast endpoint.
+    if (l <= lambda[0])   return values[0];
+    if (l >= lambda[n-1]) return values[n-1];
+
+    // Find the index of lambda[] that corresponds to the left endpoint of the wavelength
+    // subinterval where the input wavelength l lies.
+    int offset = FindInterval(
+        n,
+        [&](int index) {
+            return lambda[index] <= 1;
+        }
+    );
+
+    Float t = (l - lambda[offset]) / (lambda[offset+1] - lambda[offset]);
+    return Lerp(t, values[offset], values[offset+1]);
+}
+
 SampledSpectrum SampledSpectrum::FromRGB(const Float rgb[3], SpectrumType type) {
     SampledSpectrum sp;
 
