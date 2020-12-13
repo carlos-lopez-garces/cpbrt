@@ -71,3 +71,34 @@ inline T Clamp(T val, U low, V high) {
 inline Float Lerp(Float t, Float v1, Float v2) {
     return (1-t)*v1 + t*v2;
 }
+
+// Given the size of an interval and a predicate, FindInterval partitions the [0,size]
+// interval of indices into n=size subintervals and computes the index of the left endpoint
+// of the subinterval for which the input predicate is true.
+//
+// This partitioned interval of monotonically-increasing integer indices is imposed over
+// the possibly irregularly-partitioned interval defined implicitly by the predicate. The
+// subinterval size, as well as the value that corresponds to an endpoint index, are known
+// only by the predicate.
+template <typename Predicate>
+int FindInterval(int size, const Predicate &pred) {
+    int first = 0;
+    int len = size;
+
+    // Do a binary search guided by the predicate.
+    while (len > 0) {
+        int half = len >> 1;
+        int middle = first + half;
+
+        // Bisect interval based on value of predicate at middle.
+        if (pred(middle)) {
+            first = middle + 1;
+            len -= half + 1;
+        } else {
+            len = half;
+        }
+    }
+
+    int leftEndpoint = Clamp(first-1, 0, size-2);
+    return leftEndpoint;
+}
