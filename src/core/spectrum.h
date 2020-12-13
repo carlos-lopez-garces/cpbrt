@@ -6,6 +6,11 @@ static const int sampledLambdaStart = 400;
 static const int sampledLambdaEnd = 700;
 static const int nSpectralSamples = 60;
 
+enum class SpectrumType { 
+    Reflectance,
+    Illuminant
+};
+
 // Values of the CIE XYZ color-matching curves X(lambda), Y(lambda), Z(lambda)
 // for 471 wavelength samples in the [360nm, 830nm] interval.
 static const int nCIESamples = 471;
@@ -16,6 +21,34 @@ extern const Float CIE_Z[nCIESamples];
 // Definite integral of the CIE Y (luminance) color-matching curve over the [360nm, 830nm]
 // integration interval.
 static const Float CIE_Y_integral = 106.856895;
+
+// Precomputed SPD samples for RGB primaries and colors that are mixes of primaries exclusively,
+// used for mapping RGB tristimulus values to SPDs.
+//
+// Among the infinitely many metameric SPDs that map to the same RGB tristimulus value, the
+// sampled SPDs chosen for these colors are smooth (as opposed to spiky) and constant
+// when r=g=b.
+//
+// SampledSpectrums resample these SPDs at their number of samples.
+static const int nRGB2SpectSamples = 32;
+extern const Float RGB2SpectLambda[nRGB2SpectSamples];
+// For reflected light.
+extern const Float RGBRefl2SpectWhite[nRGB2SpectSamples];
+extern const Float RGBRefl2SpectCyan[nRGB2SpectSamples];
+extern const Float RGBRefl2SpectMagenta[nRGB2SpectSamples];
+extern const Float RGBRefl2SpectYellow[nRGB2SpectSamples];
+extern const Float RGBRefl2SpectRed[nRGB2SpectSamples];
+extern const Float RGBRefl2SpectGreen[nRGB2SpectSamples];
+extern const Float RGBRefl2SpectBlue[nRGB2SpectSamples];
+// For emitted light. The CIE illumninant D65 SPD is used for white, and the sampled SPDs for
+// the rest of the precomputed colors are defined in reference to this white. 
+extern const Float RGBIllum2SpectWhite[nRGB2SpectSamples];
+extern const Float RGBIllum2SpectCyan[nRGB2SpectSamples];
+extern const Float RGBIllum2SpectMagenta[nRGB2SpectSamples];
+extern const Float RGBIllum2SpectYellow[nRGB2SpectSamples];
+extern const Float RGBIllum2SpectRed[nRGB2SpectSamples];
+extern const Float RGBIllum2SpectGreen[nRGB2SpectSamples];
+extern const Float RGBIllum2SpectBlue[nRGB2SpectSamples];
 
 // Determines whether the samples are sorted in order of increasing wavelength.
 extern bool SpectrumSamplesSorted(const Float *lambda, int n);
@@ -32,6 +65,39 @@ extern Float AverageSpectrumSamples(
     Float lambdaStart,
     Float lambdaEnd
 );
+
+// Linearly maps XYZ SPD coefficients to RGB SPD coefficients.
+inline void XYZToRGB(const Float xyz[3], Float rgb[3]) {
+    // Let R(lambda), B(lambda), and G(lambda) be spectral response curves and X(lambda),
+    // Y(lambda), and Z(lambda) be the CIE XYZ color-matching curves. Let I be the integral
+    // symbol.
+    //
+    // Then the input xyz vector is mapped to a unique rgb vector via matrix multiplication:
+    // 
+    // [r]   [I RX  I RY  I RZ][x]
+    // [g] = [I GX  I GY  I GZ][y]
+    // [b]   [I BX  I BY  I BZ][z]
+    rgb[0] =  3.240479f*xyz[0] - 1.537150f*xyz[1] - 0.498535f*xyz[2];
+    rgb[1] = -0.969256f*xyz[0] + 1.875991f*xyz[1] + 0.041556f*xyz[2];
+    rgb[2] =  0.055648f*xyz[0] - 0.204043f*xyz[1] + 1.057311f*xyz[2];
+}
+
+// Linearly maps RGB SPD coefficients to XYZ SPD coefficients.
+inline void RGBToXYZ(const Float rgb[3], Float xyz[3]) {
+    // Let R(lambda), B(lambda), and G(lambda) be spectral response curves and X(lambda),
+    // Y(lambda), and Z(lambda) be the CIE XYZ color-matching curves. Let I be the integral
+    // symbol.
+    //
+    // Then the input rgb vector is mapped to a unique xyz vector via matrix multiplication:
+    // 
+    //                         -1
+    // [x]   [I RX  I RY  I RZ]  [r]
+    // [y] = [I GX  I GY  I GZ]  [g]
+    // [z]   [I BX  I BY  I BZ]  [b]
+    xyz[0] = 0.412453f*rgb[0] + 0.357580f*rgb[1] + 0.180423f*rgb[2];
+    xyz[1] = 0.212671f*rgb[0] + 0.715160f*rgb[1] + 0.072169f*rgb[2];
+    xyz[2] = 0.019334f*rgb[0] + 0.119193f*rgb[1] + 0.950227f*rgb[2];
+}
 
 inline Spectrum Lerp(Float t, const Spectrum &sp1, const Spectrum &sp2) {
     return (1 - t)*sp1 + t*sp2;
@@ -240,9 +306,36 @@ private:
     static SampledSpectrum X;
     static SampledSpectrum Y;
     static SampledSpectrum Z;
+
+    // SPDs for RGB primaries and colors that are mixes of primaries exclusively.
+    // All these SPDs exist at the namespace scope with 32 samples. This SampledSpectrum resamples
+    // the same SPDs at n = nSpectralSamples samples.
+    static SampledSpectrum rgbRefl2SpectWhite;
+    static SampledSpectrum rgbRefl2SpectCyan;
+    static SampledSpectrum rgbRefl2SpectMagenta;
+    static SampledSpectrum rgbRefl2SpectYellow;
+    static SampledSpectrum rgbRefl2SpectRed;
+    static SampledSpectrum rgbRefl2SpectGreen;
+    static SampledSpectrum rgbRefl2SpectBlue;
+    static SampledSpectrum rgbIllum2SpectWhite;
+    static SampledSpectrum rgbIllum2SpectCyan;
+    static SampledSpectrum rgbIllum2SpectMagenta;
+    static SampledSpectrum rgbIllum2SpectYellow;
+    static SampledSpectrum rgbIllum2SpectRed;
+    static SampledSpectrum rgbIllum2SpectGreen;
+    static SampledSpectrum rgbIllum2SpectBlue;
     
 public:
     SampledSpectrum(Float v = 0.f) : CoefficientSpectrum(v) {}
+
+    SampledSpectrum(const CoefficientSpectrum<nSpectralSamples> &v) 
+        : CoefficientSpectrum<nSpectralSamples>(v) {}
+
+    SampledSpectrum(const RGBSpectrum &rsp, SpectrumType type) {
+        Float rgb[3];
+        rsp.ToRGB(rgb);
+        *this = SampledSpectrum::FromRGB(rgb, type);
+    };
 
     static void Init() {
         // Sample the XYZ color-matching curves at (sampledLambdaEnd-sampledLambdaStart)/nSpectralSamples
@@ -267,7 +360,27 @@ public:
             Z.c[i] = AverageSpectrumSamples(CIE_lambda, CIE_Z, nCIESamples, lambda0, lambda1);
         }
 
-        // TODO: Compute RGB to spectrum functions for SampledSpectrum.
+        // Resample the (namespace-level) precomputed RGB SPDs at n = nSpectralSamples samples.
+        for (int i = 0; i < nSpectralSamples; ++i) {
+            Float lambda0 = Lerp(Float(i) / nSpectralSamples, sampledLambdaStart, sampledLambdaEnd);
+            Float lambda1 = Lerp(Float(i+1) / nSpectralSamples, sampledLambdaStart, sampledLambdaEnd);
+
+            rgbRefl2SpectWhite.c[i]   = AverageSpectrumSamples(RGB2SpectLambda, RGBRefl2SpectWhite, nRGB2SpectSamples, lambda0, lambda1);
+            rgbRefl2SpectCyan.c[i]    = AverageSpectrumSamples(RGB2SpectLambda, RGBRefl2SpectCyan, nRGB2SpectSamples, lambda0, lambda1);
+            rgbRefl2SpectMagenta.c[i] = AverageSpectrumSamples(RGB2SpectLambda, RGBRefl2SpectMagenta, nRGB2SpectSamples, lambda0, lambda1);
+            rgbRefl2SpectYellow.c[i]  = AverageSpectrumSamples(RGB2SpectLambda, RGBRefl2SpectYellow, nRGB2SpectSamples, lambda0, lambda1);
+            rgbRefl2SpectRed.c[i]     = AverageSpectrumSamples(RGB2SpectLambda, RGBRefl2SpectRed, nRGB2SpectSamples, lambda0, lambda1);
+            rgbRefl2SpectGreen.c[i]   = AverageSpectrumSamples(RGB2SpectLambda, RGBRefl2SpectGreen, nRGB2SpectSamples, lambda0, lambda1);
+            rgbRefl2SpectBlue.c[i]    = AverageSpectrumSamples(RGB2SpectLambda, RGBRefl2SpectBlue, nRGB2SpectSamples, lambda0, lambda1);
+
+            rgbIllum2SpectWhite.c[i]   = AverageSpectrumSamples(RGB2SpectLambda, RGBIllum2SpectWhite, nRGB2SpectSamples, lambda0, lambda1);
+            rgbIllum2SpectCyan.c[i]    = AverageSpectrumSamples(RGB2SpectLambda, RGBIllum2SpectCyan, nRGB2SpectSamples, lambda0, lambda1);
+            rgbIllum2SpectMagenta.c[i] = AverageSpectrumSamples(RGB2SpectLambda, RGBIllum2SpectMagenta, nRGB2SpectSamples, lambda0, lambda1);
+            rgbIllum2SpectYellow.c[i]  = AverageSpectrumSamples(RGB2SpectLambda, RGBIllum2SpectYellow, nRGB2SpectSamples, lambda0, lambda1);
+            rgbIllum2SpectRed.c[i]     = AverageSpectrumSamples(RGB2SpectLambda, RGBIllum2SpectRed, nRGB2SpectSamples, lambda0, lambda1);
+            rgbIllum2SpectGreen.c[i]   = AverageSpectrumSamples(RGB2SpectLambda, RGBIllum2SpectGreen, nRGB2SpectSamples, lambda0, lambda1);
+            rgbIllum2SpectBlue.c[i]    = AverageSpectrumSamples(RGB2SpectLambda, RGBIllum2SpectBlue, nRGB2SpectSamples, lambda0, lambda1);
+        }
     }
 
     // n (wavelength, value) pairs.
@@ -337,5 +450,27 @@ public:
 
         // ?
         return yy / CIE_Y_integral;
+    }
+
+    // Maps this SPD's coefficients to RGB coefficients by first mapping them to XYZ.
+    void ToRGB(Float rgb[3]) const {
+        Float xyz[3];
+
+        // This spectrum's XYZ coefficients.
+        ToXYZ(xyz);
+
+        // Map this spectrum's XYZ coefficients to RGB.
+        XYZToRGB(xyz, rgb);
+    }
+
+    // TODO: implement.
+    RGBSpectrum ToRGBSpectrum() const;
+
+    static SampledSpectrum FromRGB(const Float rgb[3], SpectrumType type);
+
+    static SampledSpectrum FromXYZ(const Float xyz[3], SpectrumType type = SpectrumType::Reflectance) {
+        Float rgb[3];
+        XYZToRGB(xyz, rgb);
+        return FromRGB(rgb, type);
     }
 };

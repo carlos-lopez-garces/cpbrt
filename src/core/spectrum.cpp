@@ -144,6 +144,88 @@ Float AverageSpectrumSamples(
     return sum / (lambdaEnd - lambdaStart);
 }
 
+SampledSpectrum SampledSpectrum::FromRGB(const Float rgb[3], SpectrumType type) {
+    SampledSpectrum sp;
+
+    if (type == SpectrumType::Reflectance) {
+        // Map RGB to reflectance spectrum.
+
+        if (rgb[0] <= rgb[1] && rgb[0] <= rgb[2]) {
+            // The R channel has the smallest value.
+            sp += rgb[0] * rgbRefl2SpectWhite;
+            if (rgb[1] <= rgb[2]) {
+                sp += (rgb[1] - rgb[0]) * rgbRefl2SpectCyan;
+                sp += (rgb[2] - rgb[1]) * rgbRefl2SpectBlue;
+            } else {
+                sp += (rgb[2] - rgb[0]) * rgbRefl2SpectCyan;
+                sp += (rgb[1] - rgb[2]) * rgbRefl2SpectGreen;
+            }
+        } else if (rgb[1] <= rgb[0] && rgb[1] <= rgb[2]) {
+            // The G channel has the smallest value.
+            sp += rgb[1] * rgbRefl2SpectWhite;
+            if (rgb[0] <= rgb[2]) {
+                sp += (rgb[0] - rgb[1]) * rgbRefl2SpectMagenta;
+                sp += (rgb[2] - rgb[0]) * rgbRefl2SpectBlue;
+            } else {
+                sp += (rgb[2] - rgb[1]) * rgbRefl2SpectMagenta;
+                sp += (rgb[0] - rgb[2]) * rgbRefl2SpectRed;
+            }
+        } else {
+            // The B channel has the smallest value.
+            sp += rgb[2] * rgbRefl2SpectWhite;
+            if (rgb[0] <= rgb[1]) {
+                sp += (rgb[0] - rgb[2]) * rgbRefl2SpectYellow;
+                sp += (rgb[1] - rgb[0]) * rgbRefl2SpectGreen;
+            } else {
+                sp += (rgb[1] - rgb[2]) * rgbRefl2SpectYellow;
+                sp += (rgb[0] - rgb[1]) * rgbRefl2SpectRed;
+            }
+        }
+
+        // ?
+        sp *= 0.94f;
+    } else {
+        // Map RGB to illuminant spectrum.
+
+        if (rgb[0] <= rgb[1] && rgb[0] <= rgb[2]) {
+            // The R channel has the smallest value.
+            sp += rgb[0] * rgbIllum2SpectWhite;
+            if (rgb[1] <= rgb[2]) {
+                sp += (rgb[1] - rgb[0]) * rgbIllum2SpectCyan;
+                sp += (rgb[2] - rgb[1]) * rgbIllum2SpectBlue;
+            } else {
+                sp += (rgb[2] - rgb[0]) * rgbIllum2SpectCyan;
+                sp += (rgb[1] - rgb[2]) * rgbIllum2SpectGreen;
+            }
+        } else if (rgb[1] <= rgb[0] && rgb[1] <= rgb[2]) {
+            // The G channel has the smallest value.
+            sp += rgb[1] * rgbIllum2SpectWhite;
+            if (rgb[0] <= rgb[2]) {
+                sp += (rgb[0] - rgb[1]) * rgbIllum2SpectMagenta;
+                sp += (rgb[2] - rgb[0]) * rgbIllum2SpectBlue;
+            } else {
+                sp += (rgb[2] - rgb[1]) * rgbIllum2SpectMagenta;
+                sp += (rgb[0] - rgb[2]) * rgbIllum2SpectRed;
+            }
+        } else {
+            // The B channel has the smallest value.
+            sp += rgb[2] * rgbIllum2SpectWhite;
+            if (rgb[0] <= rgb[1]) {
+                sp += (rgb[0] - rgb[2]) * rgbIllum2SpectYellow;
+                sp += (rgb[1] - rgb[0]) * rgbIllum2SpectGreen;
+            } else {
+                sp += (rgb[1] - rgb[2]) * rgbIllum2SpectYellow;
+                sp += (rgb[0] - rgb[1]) * rgbIllum2SpectRed;
+            }
+        }
+
+        // ?
+        sp *= 0.86445f;
+    }
+
+    return sp.Clamp();
+}
+
 // CIE XYZ wavelength samples for color-matching curves.
 const Float CIE_lambda[nCIESamples] = {
     360, 361, 362, 363, 364, 365, 366, 367, 368, 369, 370, 371, 372, 373, 374,
