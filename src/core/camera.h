@@ -60,7 +60,12 @@ protected:
     Transform ScreenToRaster;
     Transform RasterToScreen;
 
+    // Aperture. If 0, the camera behaves like in the pinhole model and every point is
+    // imaged in focus regardless of its depth. If >0, only the points at depths in the
+    // lens' depth of field are imaged in focus; the rest are blurred.
     Float lensRadius;
+
+    // Camera space scene depth of plane of focus.
     Float focalDistance;
 public:
     ProjectiveCamera(
@@ -69,16 +74,14 @@ public:
         const Bounds2f  &screenWindow,
         Float shutterOpen,
         Float shutterClose,
-        Float lensr,
-        Float focald,
+        Float lensRadius,
+        Float focalDistance,
         Film *film,
         const Medium *medium
     ) : Camera(CameraToWorld, shutterOpen, shutterClose, film, medium),
-        CameraToScreen(CameraToScreen) {
-        // Initialize depth of field parameters.
-        lensRadius = lensr;
-        focalDistance = focald;
-
+        CameraToScreen(CameraToScreen),
+        lensRadius(lensRadius),
+        focalDistance(focalDistance) {
         // Compute projective camera transformations.
 
         // The ScreenToRaster transformation translates the screen space origin to 

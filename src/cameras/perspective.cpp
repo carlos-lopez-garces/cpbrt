@@ -38,7 +38,32 @@ Float PerspectiveCamera::GenerateRay(const CameraSample &sample, Ray *ray) const
     // camera space.
     *ray = Ray(Point3f(0, 0, 0), Normalize(Vector3f(pCamera)));
 
-    // TODO: Modify ray for depth of field.
+    // Modify ray for effect of lens and depth of field. Note that this function operates
+    // in camera space, not in screen or raster space, and its execution takes place
+    // before the projection, so none of the effects of the perspective transformation
+    // are relevant here. 
+    if (lensRadius > 0) {
+        // TODO: implement ConcentricSampleDisk.
+        // TODO: if the point being sampled is on the focal plane or in the DoF range,
+        // does ConcentricSampleDisk with the input sample.pLens also return a jittered
+        // output? Wouldn't that cause the point to be imaged out of focus?
+        //
+        // pLens is a randomized point on the lens that gives the ray its origin.
+        Point2f pLens = lensRadius * ConcentricSampleDisk(sample.pLens);
+
+        // A ray uses the parametric definition of the line. We denote the ray's
+        // parameter with t.
+        //
+        // ft is the ray's parameter that yields a point on the focal plane along the ray.
+        Float ft = focalDistance / ray->d.z;
+        Point3f pFocus = (*ray)(ft);
+
+        // Given a CameraSample, all the rays generated for it will point at the exact same
+        // point of focus in the scene, but their origins will be randomized over the disk 
+        // surface of the lens.
+        ray->o = Point3f(pLens.x, pLens.y, 0);
+        ray->d = Normalize(pFocus - ray->o);
+    }
 
     ray->time = Lerp(sample.time, shutterOpen, shutterClose);
     ray->medium = medium;
@@ -63,10 +88,29 @@ Float PerspectiveCamera::GenerateRayDifferential(
     // camera space.
     *rd = RayDifferential(Point3f(0, 0, 0), Normalize(Vector3f(pCamera)));
 
-    // TODO: Modify ray for depth of field.
+    // Modify main ray for effect of lens and depth of field. See comments in GenerateRay().
+    if (lensRadius > 0) {
+        Point2f pLens = lensRadius * ConcentricSampleDisk(sample.pLens);
+
+        Float ft = focalDistance / rd->d.z;
+        Point3f pFocus = (*rd)(ft);
+
+        rd->o = Point3f(pLens.x, pLens.y, 0);
+        rd->d = Normalize(pFocus - rd->o);
+    }
 
     if (lensRadius > 0) {
-        // TODO: Compute PerspectiveCamera ray differentials accounting for lens.
+        // Compute PerspectiveCamera ray differentials accounting for lens.
+        Point2f pLens = lensRadius * ConcentricSampleDisk(sample.pLens);
+        Float ft = focalDistance / rd->d.z;
+
+        Point3f pFocus = pCamera + dxCamera + (ft * Vector3f(0, 0, 1));
+        rd->rxOrigin = Point3f(pLens.x, pLens.y, 0);
+        rd->rxDirection = Normalize(pFocus - rd->rxOrigin);
+
+        pFocus = pCamera + dyCamera + (ft * Vector3f(0, 0, 1));
+        rd->ryOrigin = Point3f(pLens.x, pLens.y, 0);
+        rd->ryDirection = Normalize(pFocus - rd->ryOrigin);
     } else {
         rd->rxOrigin = rd->o;
         rd->ryOrigin = rd->o;
