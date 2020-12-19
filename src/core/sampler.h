@@ -4,9 +4,13 @@
 
 #include "camera.h"
 #include "geometry.h"
+#include "rng.h"
 
-// Samples are multi-dimensional vectors of at least 5 dimensions, (x, y, t, u, v, ...):
-// image/film/raster coordinates x and y, time, and lens coordinates u and v. 
+// Samples are collections of multi-dimensional vectors of at least 5 dimensions, (x, y, t, u, v, ...):
+// image/film/raster coordinates x and y, time, and lens coordinates u and v.
+//
+// Samplers aren't aware of the meaning of each dimension. They don't need to: every dimension is a
+// [0,1) floating-point number, without exception.
 class Sampler {
 private:
     // Offset into sampleArray1D of the start of the array of values of the current sample. 
@@ -18,28 +22,24 @@ private:
 protected:
     Point2i currentPixel;
 
-    // From [0, samplesPerPixel).
+    // From [0, samplesPerPixel). See sampleArray1D and sampleArray2D.
     int64_t currentPixelSampleIndex;
 
-    // Collection of arrays of 1D samples, where a sample is an array of 1D values. The size
-    // of each array in sampleArray1D is recorded in samples1DArraySizes and corresponds to the 
-    // _number of 1D samples PER sample PER pixel_.
+    // Collection of arrays of 1D samples, organized by dimension. The number of dimensions
+    // for a sample is recorded in samples1DArraySizes.
     //
     // Sizes: [m, n, p]
     // Arrays: [
-    //    [sample 1: value 1, ..., value m], ... [sample samplesPerPixel: value 1, ..., value m],
-    //    [sample 1: value 1, ..., value n], ... [sample samplesPerPixel: value 1, ..., value n],
-    //    [sample 1: value 1, ..., value p], ... [sample samplesPerPixel: value 1, ..., value p]
+    //    [dimension 1: for sample 1, ..., for sample samplesPerPixel], ... [dimension m: for sample 1, ..., for sample samplesPerPixel],
+    //    [dimension 1: for sample 1, ..., for sample samplesPerPixel], ... [dimension n: for sample 1, ..., for sample samplesPerPixel],
+    //    [dimension 1: for sample 1, ..., for sample samplesPerPixel], ... [dimension p: for sample 1, ..., for sample samplesPerPixel]
     // ]
+    //
+    // currentPixelSampleIndex is with respect to the array of a given dimension.
     std::vector<int> samples1DArraySizes;
     std::vector<std::vector<Float>> sampleArray1D;
 
-    // Collection of arrays of 2D samples, where a sample is an array of 2D values. The size
-    // of each array in sampleArray2D is recorded in samples2DArraySizes and corresponds to the 
-    // _number of 2D samples PER sample PER pixel_.
-    //
-    // Sizes: [m, n, p]
-    // Arrays: [[(sample 1), ..., (sample m)], [(sample 1), ..., (sample n)], [(sample 1), ..., (sample p)]]
+    // Collection of arrays of 2D samples, organized by dimension. See sampleArray1D.
     std::vector<int> samples2DArraySizes;
     std::vector<std::vector<Point2f>> sampleArray2D;
 
@@ -103,4 +103,28 @@ public:
     const Point2f *Get2DArray(int n);
 
     virtual std::unique_ptr<Sampler> Clone(int seed) = 0;
+};
+
+// PixelSampler generates at once all of the dimensions of all of the vectors of all of the samples
+// of a pixel.
+//
+// PixelSampler delegates the implementation of StartPixel() to its subclasses. These subclasses
+// should fill in the samples1D, samples2D, sampleArray1D, and sampleArray2D arrays.
+class PixelSampler : public Sampler {
+protected:
+    int current1DDimension = 0;
+    std::vector<std::vector<Float>> samples1D;
+
+    int current2DDimension = 0;
+    std::vector<std::vector<Point2f>> samples2D;
+
+    RNG rng;
+
+public:
+    PixelSampler(int64_t samplesPerPixel, int nSampledDimensions) : Sampler(samplesPerPixel) {
+        for (int i = 0; i < nSampledDimensions; ++i) {
+            samples1D.push_back(std::vector<Float>(samplesPerPixel));
+            samples2D.push_back(std::vector<Point2f>(samplesPerPixel));
+        }
+    }
 };
