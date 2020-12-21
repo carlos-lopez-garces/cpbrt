@@ -25,21 +25,20 @@ protected:
     // From [0, samplesPerPixel). See sampleArray1D and sampleArray2D.
     int64_t currentPixelSampleIndex;
 
-    // Collection of arrays of 1D samples, organized by dimension. The number of dimensions
-    // for a sample is recorded in samples1DArraySizes.
+    // Collection of array-samples of 1D samples. An array-sample is a multi-1D-valued sample.
+    // The size of each array-sample is recorded in samples1DArraySizes.
     //
     // Sizes: [m, n, p]
-    // Arrays: [
-    //    [dimension 1: for sample 1, ..., for sample samplesPerPixel], ... [dimension m: for sample 1, ..., for sample samplesPerPixel],
-    //    [dimension 1: for sample 1, ..., for sample samplesPerPixel], ... [dimension n: for sample 1, ..., for sample samplesPerPixel],
-    //    [dimension 1: for sample 1, ..., for sample samplesPerPixel], ... [dimension p: for sample 1, ..., for sample samplesPerPixel]
-    // ]
     //
-    // currentPixelSampleIndex is with respect to the array of a given dimension.
+    // Array-samples: [
+    //      [1D sample 1, ... 1D sample m],
+    //      [1D sample 1, ... 1D sample n],
+    //      [1D sample 1, ... 1D sample p],
+    // ] 
     std::vector<int> samples1DArraySizes;
     std::vector<std::vector<Float>> sampleArray1D;
 
-    // Collection of arrays of 2D samples, organized by dimension. See sampleArray1D.
+    // Collection of array-samples of 1D samples. See sampleArray1D.
     std::vector<int> samples2DArraySizes;
     std::vector<std::vector<Point2f>> sampleArray2D;
 
@@ -74,16 +73,16 @@ public:
 
     CameraSample GetCameraSample(const Point2i &pRaster);
 
-    // Generates an array of n samples per sample per pixel of the next dimension. Most
-    // samplers can generate higher-quality sequences of samples if they generate them at
-    // once rather than across a series of Get1D() calls, by accounting for the distribution
-    // of sample values across all elements of the array and across the samples in a pixel. 
+    // Allocates an array-sample of size n. Most samplers can generate higher-quality
+    // sequences of samples if they generate them at once rather than across a series of
+    // Get1D() calls, by accounting for the distribution of sample values across all
+    // elements of the array and across the samples in a pixel. 
     void Request1DArray(int n);
 
-    // Generates an array of n samples per sample per pixel of the next 2 dimensions. Most
-    // samplers can generate higher-quality sequences of samples if they generate them at
-    // once rather than across a series of Get2D() calls, by accounting for the distribution
-    // of sample values across all elements of the array and across the samples in a pixel.
+    // Allocates an array-sample of size n. Most samplers can generate higher-quality
+    // sequences of samples if they generate them at once rather than across a series of
+    // Get2D() calls, by accounting for the distribution of sample values across all
+    // elements of the array and across the samples in a pixel.
     void Request2DArray(int n);
 
     // Adjusts the input array size to the sampler's ideal size. Calls to Request1DArray()
@@ -94,12 +93,12 @@ public:
         return n;
     }
 
-    // Returns a pointer to the start of the array requested previously with a Request1DArray()
-    // call for the same size n and the current dimension.
+    // Returns a pointer to the start of the array-sample requested previously with a
+    // Request1DArray() call for the same size n.
     const Float *Get1DArray(int n);
 
-    // Returns a pointer to the start of the array requested previously with a Request2DArray()
-    // call for the same size n and the current dimension.
+    // Returns a pointer to the start of the array-sample requested previously with a
+    // Request2DArray() call for the same size n.
     const Point2f *Get2DArray(int n);
 
     virtual std::unique_ptr<Sampler> Clone(int seed) = 0;
@@ -113,9 +112,21 @@ public:
 class PixelSampler : public Sampler {
 protected:
     int current1DDimension = 0;
+
+    // Collection of arrays of samplesPerPixel 1D samples, organized by dimension.
+    //
+    // [
+    //    [dimension 1: for sample 1, ..., for sample samplesPerPixel], ... [dimension m: for sample 1, ..., for sample samplesPerPixel],
+    //    [dimension 1: for sample 1, ..., for sample samplesPerPixel], ... [dimension n: for sample 1, ..., for sample samplesPerPixel],
+    //    [dimension 1: for sample 1, ..., for sample samplesPerPixel], ... [dimension p: for sample 1, ..., for sample samplesPerPixel]
+    // ]
+    //
+    // currentPixelSampleIndex is with respect to the array of a given dimension.
     std::vector<std::vector<Float>> samples1D;
 
     int current2DDimension = 0;
+
+    // Collection of arrays of samplesPerPixel 2D samples, organized by dimension. See samples1D.
     std::vector<std::vector<Point2f>> samples2D;
 
     RNG rng;
