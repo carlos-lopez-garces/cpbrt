@@ -841,7 +841,7 @@ public:
         return pMax - pMin;
     }
 
-    T SurfaceArea() const {
+    T Area() const {
         Vector2<T> d = Diagonal();
         return d.x*d.y;
     }
