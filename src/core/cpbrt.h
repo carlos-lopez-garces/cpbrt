@@ -102,3 +102,27 @@ int FindInterval(int size, const Predicate &pred) {
     int leftEndpoint = Clamp(first-1, 0, size-2);
     return leftEndpoint;
 }
+
+inline uint32_t FloatToBits(float f) {
+    uint32_t bits;
+    memcpy(&bits, &f, sizeof(float));
+    return bits;
+}
+
+inline uint64_t FloatToBits(double f) {
+    uint64_t bits;
+    memcpy(&bits, &f, sizeof(double));
+    return bits;
+}
+
+inline float BitsToFloat(uint32_t bits) {
+    float f;
+    memcpy(&f, &bits, sizeof(uint32_t));
+    return f;
+}
+
+inline double BitsToFloat(uint64_t bits) {
+    double f;
+    memcpy(&f, &bits, sizeof(uint64_t));
+    return f;
+}
