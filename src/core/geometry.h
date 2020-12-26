@@ -817,6 +817,11 @@ public:
           pMax(Vector2(Max(p1, p2)))
     {}
 
+    // Cast between Bounds2 types.
+    template <typename U> explicit operator Bounds2<U>() const {
+        return Bounds2<U>((Point2<U>) pMin, (Point2<U>) pMax);
+    }
+
     Point2<T> operator[](int i) const {
         Assert(i == 0 || i == 1);
         return (i == 0) ? pMin : pMax;
