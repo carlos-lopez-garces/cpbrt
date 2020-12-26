@@ -1,13 +1,24 @@
 #include <algorithm>
+#ifdef CPBRT_HAVE_ALLOCA_H
+#include <alloca.h>
+#endif
 #include <cinttypes>
 #include <cmath>
 #include <iostream>
 #include <limits>
+#ifdef CPBRT_HAVE_MALLOC_H
+#include <malloc.h>
+#endif
 #include <memory>
 #include <string>
 #include <vector>
 
 #include "error.h"
+
+// Global macros.
+
+// Dynamic memory allocation on the stack.
+#define ALLOCA(TYPE, COUNT) (TYPE *) alloca((COUNT) * sizeof(TYPE))
 
 // Global forward declarations.
 
@@ -46,6 +57,11 @@ static CPBRT_CONSTEXPR Float Infinity = std::numeric_limits<Float>::infinity();
 #endif // _MSC_VER
 
 static /*CPBRT_CONSTEXPR*/ const Float Pi = 3.14159265358979323846;
+
+// Dynamic memory allocation on the stack.
+#ifdef _MSC_VER
+#define alloca _alloca
+#endif
 
 // Global inline functions.
 
