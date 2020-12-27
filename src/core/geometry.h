@@ -1,3 +1,5 @@
+#include <iterator>
+
 #include "cpbrt.h"
 
 template <typename T> class Vector2 {
@@ -940,6 +942,64 @@ template <typename T, typename U> inline Bounds2<T> Expand(const Bounds2<T> &b, 
         b.pMin - Vector2<T>(delta, delta),
         b.pMax + Vector2<T>(delta, delta)
     );
+}
+
+class Bounds2iIterator : public std::forward_iterator_tag {
+private:
+    Point2i p;
+
+    const Bounds2i *bounds;
+
+    void advance() {
+        ++p.x;
+        if (p.x == bounds->pMax.x) {
+            p.x = bounds->pMin.x;
+            ++p.y;
+        }
+    }
+
+public:
+    Bounds2iIterator(const Bounds2i &b, const Point2i &p) : bounds(&b), p(p) {}
+
+    // Postfix increment.
+    Bounds2iIterator operator++() {
+        advance();
+        return *this;
+    }
+
+    // Prefix increment.
+    Bounds2iIterator operator++(int) {
+        Bounds2iIterator old = *this;
+        advance();
+        return old;
+    }
+
+    bool operator==(const Bounds2iIterator &bi) const {
+        return p == bi.p && bounds == bi.bounds;
+    }
+
+    bool operator!=(const Bounds2iIterator &bi) const {
+        return p != bi.p || bounds != bi.bounds;
+    }
+
+    Point2i operator*() const {
+        return p;
+    }
+};
+
+inline Bounds2iIterator begin(const Bounds2i &b) {
+    return Bounds2iIterator(b, b.pMin);
+}
+
+inline Bounds2iIterator end(const Bounds2i &b) {
+    Point2i pEnd(b.pMin.x, b.pMax.y);
+
+    if (b.pMin.x >= b.pMax.x || b.pMin.y >= b.pMax.y) {
+        // Degenerate.
+        pEnd = b.pMin;
+    }
+
+    return Bounds2iIterator(b, pEnd);
 }
 
 template <typename T> class Bounds3 {
