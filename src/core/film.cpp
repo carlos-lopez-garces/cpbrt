@@ -1,6 +1,7 @@
 #include <cmath>
 
 #include "film.h"
+#include "imageio.h"
 
 Bounds2i Film::GetSampleBounds() const {
     Bounds2f floatBounds(
@@ -57,12 +58,15 @@ void Film::MergeFilmTile(std::unique_ptr<FilmTile> tile) {
         const FilmTilePixel &tilePixel = tile->GetPixel(pixel);
         Pixel &mergePixel = GetPixel(pixel);
 
+        // The numerator in the pixel reconstruction/filtering equation is a Spectrum that can
+        // give its value in XYZ color.
         Float xyz[3];
         tilePixel.contribSum.ToXYZ(xyz);
         for (int i = 0; i < 3; ++i) {
             mergePixel.xyz[i] += xyz[i];
         }
 
+        // The denominator in the pixel reconstruction/filtering equation.
         mergePixel.filterWeightSum += tilePixel.filterWeightSum;
     }
 }
@@ -91,4 +95,49 @@ void Film::AddSplat(const Point2f &p, const Spectrum &v) {
     for (int i = 0; i < 3; ++i) {
         pixel.splatXYZ[i].Add(xyz[i]);
     }
+}
+
+void Film::WriteImage(Float splatScale) {
+    // Convert image to RGB and compute final pixel values.
+    std::unique_ptr<Float[]> rgb(new Float[3 * croppedPixelBounds.Area()]);
+    int offset = 0;
+    for (Point2i p : croppedPixelBounds) {
+        // Convert pixel XYZ color to RGB. The pixel's XYZ color comes from the numerator
+        // of the pixel reconstruction/filtering equation, which is a Spectrum built up from
+        // filtered sample contributions.
+        Pixel &pixel = GetPixel(p);
+        XYZToRGB(pixel.xyz, &rgb[3 * offset]);
+
+        // Complete the computation of the pixel reconstruction/filtering equation by dividing by
+        // the sum of the sample filter weights.
+        Float filterWeightSum = pixel.filterWeightSum;
+        if (filterWeightSum != 0) {
+            Float reciprocalFilterWeight = (Float) 1 / filterWeightSum;
+            // Clamp to 0 because reciprocalFilterWeight may be negative because some filters have
+            // negative intervals (MitchellFilter, for example, has negative lobes intended to give
+            // sharpness to edges).
+            rgb[3 * offset  ] = std::max((Float) 0, rgb[3 * offset  ] * reciprocalFilterWeight);
+            rgb[3 * offset+1] = std::max((Float) 0, rgb[3 * offset+1] * reciprocalFilterWeight);
+            rgb[3 * offset+2] = std::max((Float) 0, rgb[3 * offset+2] * reciprocalFilterWeight);
+        }
+
+        // TODO: Explain splatting.
+        // Add splat value at pixel.
+        Float splatRGB[3];
+        Float splatXYZ[3] = {pixel.splatXYZ[0], pixel.splatXYZ[1], pixel.splatXYZ[2]};
+        XYZToRGB(splatXYZ, splatRGB);
+        rgb[3 * offset  ] += splatScale * splatRGB[0];
+        rgb[3 * offset+1] += splatScale * splatRGB[1];
+        rgb[3 * offset+2] += splatScale * splatRGB[2];
+
+        // Scale pixel value by user-supplied scale.
+        rgb[3 * offset  ] *= scale;
+        rgb[3 * offset+1] *= scale;
+        rgb[3 * offset+2] *= scale;
+
+        ++offset;
+    }
+
+    // Write RGB image.
+    ::WriteImage(filename, &rgb[0], croppedPixelBounds, fullResolution);
 }

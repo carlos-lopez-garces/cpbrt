@@ -50,7 +50,8 @@ public:
     // Bounding box of subset of pixels to render as determined by a crop window. 
     Bounds2i croppedPixelBounds;
 
-    // ?
+    // A user-supplied factor that scales the final value of the pixel (after sampling,
+    // filtering, conversion to RGB, and splatting) for the user's purpose.
     const Float scale;
 
     Film(
@@ -134,6 +135,8 @@ public:
 
     // ?
     void AddSplat(const Point2f &p, const Spectrum &v);
+
+    void WriteImage(Float splatScale);
 };
 
 class FilmTile {
