@@ -35,3 +35,13 @@ CHECK_CXX_SOURCE_COMPILES (
 IF ( HAVE_BINARY_CONSTANTS )
   ADD_DEFINITIONS ( -D CPBRT_HAVE_BINARY_CONSTANTS )
 ENDIF ()
+
+# Check if aligned memory allocation is supported.
+# (Not checking for non-Windows versions because the only target is Windows.)
+CHECK_CXX_SOURCE_COMPILES ( "
+#include <malloc.h>
+int main() { void *ptr = _aligned_malloc(1024, 32); }
+" HAVE_ALIGNED_MALLOC )
+IF ( HAVE_ALIGNED_MALLOC )
+  ADD_DEFINITIONS ( -D CPBRT_HAVE_ALIGNED_MALLOC )
+ENDIF ()

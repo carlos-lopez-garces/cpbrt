@@ -63,6 +63,10 @@ static /*CPBRT_CONSTEXPR*/ const Float Pi = 3.14159265358979323846;
 #define alloca _alloca
 #endif
 
+#ifndef CPBRT_L1_CACHE_LINE_SIZE
+#define CPBRT_L1_CACHE_LINE_SIZE 64
+#endif
+
 // Global inline functions.
 
 inline Float Radians(Float deg) {
