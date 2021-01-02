@@ -1,6 +1,7 @@
 #include <memory>
 #include <vector>
 
+#include "core/memory.h"
 #include "core/primitive.h"
 
 struct BVHPrimitiveInfo;

@@ -2,6 +2,7 @@
 
 #include "geometry.h"
 #include "interaction.h"
+#include "memory.h"
 #include "shape.h"
 
 class Primitive {
