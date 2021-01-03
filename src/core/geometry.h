@@ -1,3 +1,4 @@
+#include <cmath>
 #include <iterator>
 
 #include "cpbrt.h"
@@ -1168,4 +1169,38 @@ template <typename T, typename U> inline Bounds3<T> Expand(const Bounds3<T> &b, 
         b.pMin - Vector3<T>(delta, delta, delta),
         b.pMax + Vector3<T>(delta, delta, delta)
     );
+}
+
+// Converts a spherical coordinate to a rectangular coordinate in a standard coordinate system.
+// Theta is measured from the z axis. Phi is measured about the z axis from the x axis.
+inline Vector3f SphericalDirection(Float sinTheta, Float cosTheta, Float phi) {
+    return Vector3f(sinTheta * std::cos(phi), sinTheta * std::sin(phi), cosTheta);
+}
+
+// Converts a spherical coordinate to a rectangular coordinate in the coordinate frame given
+// by the x, y, and z basis vectors. Theta is measured from the z axis. Phi is measured about
+// the z axis from the x axis.
+inline Vector3f SphericalDirection(
+    Float sinTheta,
+    Float cosTheta,
+    Float phi,
+    const Vector3f &x,
+    const Vector3f &y,
+    const Vector3f &z
+) {
+    return (sinTheta * std::cos(phi) * x) + (sinTheta * std::sin(phi) * y) + (cosTheta * z);
+}
+
+// Converts a rectangular coordinate to a spherical theta angle (measured from the z axis).
+// z = cos(theta), so theta = arccos(z).
+inline Float SphericalTheta(const Vector3f &v) {
+    // v is assumed to be normalized.
+    return std::acos(Clamp(v.z, -1, 1));
+}
+
+// Converts a rectangular coordinate to a spherical phi angle (measured about the z axis from
+// the x axis).
+inline Float SphericalPhi(const Vector3f &v) {
+    Float phi = std::atan2(v.y, v.x);
+    return (phi < 0) ? (phi + 2*Pi) : phi;
 }
