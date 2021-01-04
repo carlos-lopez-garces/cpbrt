@@ -110,6 +110,7 @@ public:
     // Computes the spectral distribution of a radiometric quantity over wavelength in the
     // given outgoing direction, computing also the (possibly unique) corresponding incident
     // direction.
+    // TODO: implement.
     virtual Spectrum Sample_f(
         const Vector3f &wo,
         Vector3f *wi,
@@ -119,8 +120,7 @@ public:
     ) const;
 
     // Computes the hemispherical-directional reflectance of the surface in the given outgoing
-    // direction when the spectral distribution is constant across all the incident directions
-    // (over the hemisphere; note that there's no particular input incident direction wi).
+    // direction considering the entire hemisphere of incident directions. 
     //
     // Reflectance is the spectral distribution that describes the reflective (scattering)
     // behavior of the surface. Reflectance alone does not compute radiance, but it dictates
@@ -166,4 +166,63 @@ public:
 private:
     BxDF *bxdf;
     Spectrum scale;
+};
+
+// The Lambertian reflection model models a perfect diffuse surface that reflects incident
+// light equally in all directions.
+class LambertianReflection : public BxDF {
+private:
+    // Reflectance. Spectral distribution for all pairs of incident and outgoing directions
+    // in the hemisphere. Its value is R=PI*f, where f is a constant BRDF. Since f is a spectral
+    // distribution over wavelength, it is referred to as "diffuse color" or "albedo".
+    const Spectrum R;
+
+public:
+    LambertianReflection(const Spectrum &R)
+        : BxDF(BxDFType(BSDF_REFLECTION | BSDF_DIFFUSE)), R(R) 
+    {}
+
+    // The reflectance expression includes the BRDF f: R=PI*f.
+    Spectrum f(const Vector3f &wo, const Vector3f &wi) const {
+        return R * InvPi;
+    }
+
+    // The Lambertian hemispherical-directional reflectance is constant across the entire
+    // hemisphere of outgoing directions.
+    Spectrum rho(const Vector3f &wo, int nSamples, const Point2f *samples) const {
+        return R;
+    }
+
+    // The Lambertian hemispherical-hemispherical reflectance is constant for all pairs of
+    // incident and outgoing directions in the hemisphere.
+    Spectrum rho(int nSamples, const Point2f *samples1, const Point2f *samples2) const {
+        return R;
+    }
+};
+
+// TODO: describe.
+class LambertianTransmission : public BxDF {
+private:
+    // Transmittance. Its value is T=PI*f, where f is a constant BTDF.
+    const Spectrum T;
+
+public:
+    LambertianTransmission(const Spectrum &T)
+        : BxDF(BxDFType(BSDF_TRANSMISSION | BSDF_DIFFUSE)), T(T) 
+    {}
+
+    // The transmittance expression includes the BTDF f: T=PI*f.
+    Spectrum f(const Vector3f &wo, const Vector3f &wi) const {
+        return T * InvPi;
+    }
+
+    // TODO: explain.
+    Spectrum rho(const Vector3f &wo, int nSamples, const Point2f *samples) const {
+        return T;
+    }
+
+    // TODO: explain.
+    Spectrum rho(int nSamples, const Point2f *samples1, const Point2f *samples2) const {
+        return T;
+    }
 };
