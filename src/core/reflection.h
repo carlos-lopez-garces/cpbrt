@@ -137,3 +137,33 @@ public:
     // a closed form and must approximate it instead.
     virtual Spectrum rho(int nSamples, const Point2f *samples1, const Point2f *samples2) const;
 };
+
+class ScaledBxDF : public BxDF {
+public:
+    ScaledBxDF(BxDF *bxdf, const Spectrum &scale) 
+        : BxDF(BxDFType(bxdf->type)), bxdf(bxdf), scale(scale)
+    {}
+
+    // Scales the spectral distribution of the wrapped BxDF by scale.
+    Spectrum f(const Vector3f &wo, const Vector3f &wi) const;
+
+    // Scales the spectral distribution of the wrapped BxDF by scale, computing also the (possibly
+    // unique) corresponding incident direction.
+    Spectrum Sample_f(
+        const Vector3f &wo,
+        Vector3f *wi,
+        const Point2f &sample,
+        Float *pdf,
+        BxDFType *sampledType = nullptr
+    ) const;
+
+    // Scales the hemispherical-directional reflectance of the wrapped BxDF by scale.
+    Spectrum rho(const Vector3f &wo, int nSamples, const Point2f *samples) const;
+
+    // Scales the hemispherical-hemispherical reflectance of the wrapped BxDF by scale.
+    Spectrum rho(int nSamples, const Point2f *samples1, const Point2f *samples2) const;
+  
+private:
+    BxDF *bxdf;
+    Spectrum scale;
+};
