@@ -56,7 +56,8 @@ typedef RGBSpectrum Spectrum;
 static CPBRT_CONSTEXPR Float Infinity = std::numeric_limits<Float>::infinity();
 #endif // _MSC_VER
 
-static /*CPBRT_CONSTEXPR*/ const Float Pi = 3.14159265358979323846;
+static const Float Pi = 3.14159265358979323846;
+static const Float InvPi = 0.31830988618379067154;
 
 // Dynamic memory allocation on the stack.
 #ifdef _MSC_VER
