@@ -1,5 +1,6 @@
 #include "cpbrt.h"
 #include "geometry.h"
+#include "interaction.h"
 #include "spectrum.h"
 
 // The shading coordinate system is defined by the orthonormal basis {s, t, n} = {x, y, z},
@@ -226,3 +227,97 @@ public:
         return T;
     }
 };
+
+class BSDF {
+private:
+    // Geometric normal.
+    const Normal3f ng;
+
+    // Orthonormal basis (ss, ts, ns) for shading coordinate system. All are coordinate
+    // vectors relative to the world space basis.
+
+    // Shading normal.
+    const Normal3f ns;
+    // Primary tangent.
+    const Vector3f ss;
+    // Secondary tangent.
+    const Vector3f ts;
+
+    // Component BxDFs at the point.
+    int nBxDFs = 0;
+    static constexpr int MaxBxDFs = 8;
+    BxDF *bxdfs[MaxBxDFs];
+
+    // Private so that it isn't called explicitly using free(). The memory of BSDFs is
+    // meant to be managed by a MemoryArena. Allocate BSDFs using ARENA_ALLOC.
+    ~BSDF() {}
+
+public:
+    // Relative index of refraction at the surface boundary where the point lies. 
+    const Float eta;
+
+    BSDF(const SurfaceInteraction &si, Float eta = 1)
+    : ns(si.shading.n),
+      ng(si.n),
+      ss(Normalize(si.shading.dpdu)),
+      ts(Cross(ns, ss)),
+      eta(eta)
+    {}
+
+    // Adds the input BxDF to the collection.
+    void Add(BxDF *bxdf) {
+        Assert(nBxDFs < MaxBxDFs);
+        bxdfs[nBxDFs++] = b;
+    }
+
+    int NumComponents(BxDFType flags = BSDF_ALL) const;
+
+    // Change of coordinate from world space to shading space.
+    Vector3f WorldToLocal(const Vector3f &v) const {
+        // TODO: explain; this is not the change-of-coordinate matrix I'm familiar
+        // with or the change of basis.
+        return Vector3f(Dot(v, ss), Dot(v, ts), Dot(v, ns));
+    }
+
+    // Change of coordinate from shading space to world space.
+    Vector3f LocalToWorld(const Vector3f &v) const {
+        // TODO: explain; is this the inverse of WorldToLocal computed as the transpose
+        // because it's orthogonal?
+        return Vector3f(
+            ss.x * v.x + ts.x * v.y + ns.x * v.z,
+            ss.y * v.x + ts.y * v.y + ns.y * v.z,
+            ss.z * v.x + ts.z * v.y + ns.z * v.z
+        );
+    }
+
+    // Computes the sum of the BRDFs when wo and wi are on the same hemisphere; the
+    // sum of the BTDFs otherwise. Only BxDFs of the type specified contribute to the sum.
+    // wo and wi are in world space.
+    Spectrum f(const Vector3f &woW, const Vector3f &wiW, BxDFType flags = BSDF_ALL) const; 
+
+    // Computes the sum of the hemispherical-directional reflectances of the types specified.
+    Spectrum rho(
+        const Vector3f &wo,
+        int nSamples,
+        const Point2f *samples,
+        BxDFType flags = BSDF_ALL
+    ) const;
+
+    // Computes the sum of the hemispherical-hemispherical reflectances of the types specified.
+    Spectrum rho(
+        int nSamples,
+        const Point2f *samples1,
+        const Point2f *samples2,
+        BxDFType flags = BSDF_ALL
+    ) const;
+};
+
+inline int NumComponents(BxDFType flags) const {
+    int num = 0;
+    for (int i = 0; i < nBxDFs; ++i) {
+        if (bxdfs[i]->MatchesFlags(flags)) {
+            ++num;
+        }
+    }
+    return num;
+}
