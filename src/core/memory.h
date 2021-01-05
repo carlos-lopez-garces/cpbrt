@@ -2,6 +2,11 @@
 #include <list>
 #include <utility>
 
+// Allocates an object of the given type using the supplied MemoryArena.
+// The use of the new operator is for calling the constructor on the memory
+// allocated by the MemoryArena, not to allocate it.
+#define ARENA_ALLOC(arena, Type) new (arena.Alloc(sizeof(Type))) Type
+
 // Allocates a block of the given size aligned to a L1 cache line boundary.
 void *AllocAligned(size_t size);
 
