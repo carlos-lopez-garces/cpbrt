@@ -29,8 +29,8 @@ PerspectiveCamera::PerspectiveCamera(
 }
 
 Float PerspectiveCamera::GenerateRay(const CameraSample &sample, Ray *ray) const {
-    // Compute the ray's origin by transforming the raster space sample's position
-    // on the film to camera space.
+    // Compute the ray's direction by transforming the raster space sample's position
+    // on the film to camera space. The vector passes through that point.
     Point3f pFilm = Point3f(sample.pFilm.x, sample.pFilm.y, 0);
     Point3f pCamera = RasterToCamera(pFilm);
 
@@ -79,8 +79,8 @@ Float PerspectiveCamera::GenerateRayDifferential(
     const CameraSample &sample,
     RayDifferential *rd
 ) const {
-    // Compute the main ray's origin by transforming the raster space sample's position
-    // on the film to camera space.
+    // Compute the main ray's direction by transforming the raster space sample's position
+    // on the film to camera space. The vector passes through that point.
     Point3f pFilm = Point3f(sample.pFilm.x, sample.pFilm.y, 0);
     Point3f pCamera = RasterToCamera(pFilm);
 
