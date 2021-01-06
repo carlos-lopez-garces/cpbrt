@@ -2,6 +2,7 @@
 
 #include "geometry.h"
 #include "interaction.h"
+#include "material.h"
 #include "memory.h"
 #include "shape.h"
 
@@ -17,9 +18,8 @@ public:
 
     virtual const Material *GetMaterial() const = 0;
 
-    // Includes in the SurfaceInteraction the BSDF and/or BSSRDF that describe the 
-    // surface at the ray intersection. The MemoryArena allocates memory for the BSDF
-    // and BSSRDF.
+    // Includes in the SurfaceInteraction the BSDF and/or BSSRDF that describe scattering 
+    // at the ray intersection point. The MemoryArena allocates memory for the BSDF and BSSRDF.
     virtual void ComputeScatteringFunctions(
         SurfaceInteraction *si,
         MemoryArena &arena,
@@ -47,6 +47,14 @@ public:
         const std::shared_ptr<AreaLight> &areaLight,
         const MediumInterface &mediumInterface)
     :   shape(shape), material(material), areaLight(areaLight), mediumInterface(mediumInterface) {}
+
+    // Creates the BSDF at the surface-ray intersection point.
+    void ComputeScatteringFunctions(
+        SurfaceInteraction *si,
+        MemoryArena &arena,
+        TransportMode mode,
+        bool allowMultipleLobes
+    ) const;
 };
 
 class TransformedPrimitive : public Primitive {

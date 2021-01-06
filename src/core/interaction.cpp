@@ -40,7 +40,7 @@ SurfaceInteraction::SurfaceInteraction(
 
 // Set or update shading geometry. If the orientation of the new shading geometry is
 // authoritative, it will override the orientation of the true geometry.
-void SetShadingGeometry::SetShadingGeometry(
+void SurfaceInteraction::SetShadingGeometry(
     const Vector3f &dpdus,
     const Vector3f &dpdvs,
     const Normal3f &dndus,
@@ -64,4 +64,17 @@ void SetShadingGeometry::SetShadingGeometry(
     shading.dpdv = dpdvs;
     shading.dndu = dndus;
     shading.dndv = dndvs;
+}
+
+void SurfaceInteraction::ComputeScatteringFunctions(
+    const RayDifferential &ray,
+    MemoryArena &arena,
+    bool allowMultipleLobes,
+    TransportMode mode
+) {
+    // TODO: implement when implementing Texture.
+    ComputeDifferentials(ray);
+
+    // Delegate to Primitive.
+    primitive->ComputeScatteringFunctions(this, arena, mode, allowMultipleLobes);
 }

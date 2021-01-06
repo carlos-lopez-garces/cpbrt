@@ -1,5 +1,6 @@
 #include "cpbrt.h"
 #include "geometry.h"
+#include "memory.h"
 #include "transform.h"
 
 class Interaction {
@@ -87,5 +88,13 @@ public:
         const Normal3f &dndus,
         const Normal3f &dndvs,
         bool orientationIsAuthoritative
+    );
+
+    // Initiates the creation of the BSDF at the surface-ray intersection point.
+    void ComputeScatteringFunctions(
+        const RayDifferential &ray,
+        MemoryArena &arena,
+        bool allowMultipleLobes,
+        TransportMode mode
     );
 };
