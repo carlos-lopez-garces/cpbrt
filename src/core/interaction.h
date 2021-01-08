@@ -46,6 +46,20 @@ public:
     Vector3f dpdu, dpdv;
     Normal3f dndu, dndv;
 
+    // Partial derivatives of the P: (x,y) -> (wpx, wpy, wpz) mapping from raster space
+    // position to world space position with respect to raster space position, that is,
+    // the change in the world space coordinate of p caused by a differential change in
+    // the x and y directions in raster space.
+    //
+    // The change is computed using RayDifferentials, which are highly dependent on the
+    // type of camera projection.
+    mutable Vector3f dpdx, dpdy;
+
+    // Partial derivatives of the U: (x,y) -> u and V: (x,y) -> v mappings from raster
+    // space position to UV parametric space.
+    mutable Float dudx = 0, dudy = 0;
+    mutable Float dvdx = 0, dvdy = 0;
+
     // A Shape is assumed to have a parametric description: an isomorphism exists between
     // (a subspace of) R^2 and (a subspace of) R^3 that maps (u,v) coordinates onto
     // (x,y,z) points on the Shape.
@@ -89,6 +103,14 @@ public:
         const Normal3f &dndvs,
         bool orientationIsAuthoritative
     );
+
+    // Computes the partial derivatives of the P: (x,y) -> (wpx, wpy, wpz) and UV mappings
+    // U: (x,y) -> u and V: (x,y) -> v, where (x,y) is a point in raster space and
+    // (wpx, wpy, wpz) is a point in world space.
+    //
+    // Ultimately what we want is to sample the texture function at the same rate as the
+    // image function.
+    void ComputeDifferentials(const RayDifferential &ray) const;
 
     // Initiates the creation of the BSDF at the surface-ray intersection point.
     void ComputeScatteringFunctions(

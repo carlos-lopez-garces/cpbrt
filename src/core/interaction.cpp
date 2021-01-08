@@ -1,4 +1,5 @@
 #include "interaction.h"
+#include "transform.h"
 
 SurfaceInteraction::SurfaceInteraction(
     const Point3f &p,
@@ -66,15 +67,97 @@ void SurfaceInteraction::SetShadingGeometry(
     shading.dndv = dndvs;
 }
 
+void SurfaceInteraction::ComputeDifferentials(const RayDifferential &ray) const {
+    if (ray.hasDifferentials) {
+        // Estimate screen space change in p and (u,v).
+
+        // At the differential scale, the surface is assumed to be locally flat and can
+        // be approximated by the plane ax + by + cz + d = 0 that is tangent to the surface
+        // at p, the point of intersection.
+        //
+        // The coefficients of the plane implicit equation are known: a=nx, b=ny, c=nz, and
+        // d=-dot(n,p), where n is the normal at p.
+        //
+        // The dpdx and dpdy differentials are computed as the difference vectors between p
+        // and the intersection points of the ray differentials and the local approximation plane.
+        // To compute these intersection points, the t parameters of the ray differentials are
+        // computed as follows:
+        Float d = -Dot(n, Vector3f(p.x, p.y, p.z));
+        Float tx = (-Dot(n, Vector3f(ray.rxOrigin)) - d) / Dot(n, ray.rxDirection);
+        Float ty = (-Dot(n, Vector3f(ray.ryOrigin)) - d) / Dot(n, ray.ryDirection);
+        Point3f px = ray.rxOrigin + tx*ray.rxDirection;
+        Point3f py = ray.ryOrigin + ty*ray.ryDirection;
+        dpdx = px - p;
+        dpdy = py - p;
+
+        // Choose two dimensions to use for ray offset computation.
+        // TODO: explain.
+        int dim[2];
+        if (std::abs(n.x) > std::abs(n.y) && std::abs(n.x) > std::abs(n.z)) {
+            dim[0] = 1;
+            dim[1] = 2;
+        } else if (std::abs(n.y) > std::abs(n.z)) {
+            dim[0] = 0;
+            dim[1] = 2;
+        } else {
+            dim[0] = 0; 
+            dim[1] = 1;
+        }
+
+        Float A[2][2] = {
+            { dpdu[dim[0]], dpdv[dim[0]] },
+            { dpdu[dim[1]], dpdv[dim[1]] }
+        };
+
+        Float bx[2] = {
+            px[dim[0]] - p[dim[0]],
+            px[dim[1]] - p[dim[1]]
+        };
+
+        Float by[2] = {
+            py[dim[0]] - p[dim[0]],
+            py[dim[1]] - p[dim[1]]
+        };
+
+        // The following 2 systems of equations are equivalent to this one:
+        //
+        // [ dp_x/du dp_x/dv ][ du ]   [ p'_x - p_x ]
+        // [ dp_y/du dp_y/dv ][ dv ] = [ p'_y - p_y ]
+        // [ dp_z/du dp_z/dv ]         [ p'_z - p_z ]
+        //
+        // which is the matrix equation form Ax=b of the vector equation 
+        // p' - p = du dp/du + dv dp/dv that expresses either one of the intersection points
+        // of the ray differentials and the local approximation plane as a linear combination
+        // vector of the basis {dp/du, dpd/v} of UV parametric space.
+        //
+        // We are interested in finding (du/dx, dv/dx), the differential change in U and V
+        // caused by a differential change in the px - p direction, where px is the ray x
+        // differential intersection with the plane; and (du/dy, dv/dy) in the py - p direction,
+        // where py is the intersection point of the ray y differential. 
+        if (!SolveLinearSystem2x2(A, bx, &dudx, &dvdx)) {
+            dudx = dvdx = 0;
+        }
+        if (!SolveLinearSystem2x2(A, By, &dudy, &dvdy)) {
+            dudy = dvdy = 0;
+        }
+    } else {
+        // 0-valued derivatives lead to unfiltered point sampling of textures.
+        dudx = dudy = 0;
+        dvdx = dvdy = 0;
+        dpdx = dpdy = Vector3f(0, 0, 0);
+    }
+}
+
 void SurfaceInteraction::ComputeScatteringFunctions(
     const RayDifferential &ray,
     MemoryArena &arena,
     bool allowMultipleLobes,
     TransportMode mode
 ) {
-    // TODO: implement when implementing Texture.
+    // Compute differentials of P and UV mappings. They may be needed next by materials
+    // that evaluate textures to obtain BSDF parameters.
     ComputeDifferentials(ray);
 
-    // Delegate to Primitive.
+    // Delegate BSDF creation to primitive.
     primitive->ComputeScatteringFunctions(this, arena, mode, allowMultipleLobes);
 }
