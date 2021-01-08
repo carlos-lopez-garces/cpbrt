@@ -154,3 +154,24 @@ public:
 
     bool SwapsHandedness() const;
 };
+
+// Solves the Ax=b linear system using Cramer's rule.
+bool SolveLinearSystem2x2(const Float A[2][2], const Float b[2], Float *x0, Float *x1) {
+    Float detA = A[0][0]*A[1][1] - A[0][1]*A[1][0];
+    if (std::abs(detA) < 1e-10f) {
+        return false;
+    }
+
+    // A0b is the 2x2 matrix formed by replacing column 0 of A with b.
+    Float detA0b = b[0]*A[1][1] - A[0][1]*b[1];
+    *x0 = detA0b / detA;
+
+    // A1b is the 2x2 matrix formed by replacing column 1 of A with b.
+    Float detA1b = A[0][0]*b[1] - b[0]*A[1][0];
+    *x1 = detA1b / detA;
+
+    if (std::isnan(*x1) || std::isnan(*x1)) {
+        return false;
+    }
+    return true;
+}
