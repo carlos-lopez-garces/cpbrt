@@ -32,3 +32,9 @@ public:
 
     Point2f Map(const SurfaceInteraction &si, Vector2f *dstdx, Vector2f *dstdy) const; 
 };
+
+template <typename T> class Texture {
+public:
+    // Evaluates the texture at the point mapped to the intersection point.
+    virtual T Evaluate(const SurfaceInteraction &si) const = 0;
+};
