@@ -165,6 +165,44 @@ Float InterpolateSpectrumSamples(const Float *lambda, const Float *values, int n
     return Lerp(t, values[offset], values[offset+1]);
 }
 
+// Computes exitant radiance Le for each of the n wavelengths at temperature T according
+// to Planck's law of blackbody emission.
+void Blackbody(const Float *lambda, int n, Float T, Float *Le) {
+    // Speed of light in a vacuum.
+    const Float c = 299792458;
+    // Planck's constant.
+    const Float h = 6.62606957e-34;
+    // Boltzmann constant.
+    const Float kb = 1.3806488e-23;
+
+    for (int i = 0; i < n; ++i) {
+        // Convert wavelength from nanometers to meters.
+        Float l = lambda[i] * 1e-9;
+
+        // Planck's law.
+        Float lambda5 = (l * l) * (l * l) * l;
+        Le[i] = (2 * h * c * c) / (lambda5 * (std::exp((h*c) / (l*kb*T)) - 1));
+    }
+}
+
+// Computes normalized exitant radiance for blackbodies.
+void BlackbodyNormalized(const Float *lambda, int n, Float T, Float *Le) {
+    Blackbody(lambda, n, T, Le);
+    
+    // Wien's displacement constant.
+    const Float b = 2.8977721e-3;
+
+    // Wien's displacement law and conversion from nanometers to meters.
+    Float lambdaMax = b / T * 1e9;
+    Float maxL;
+    Blackbody(&lambdaMax, 1, T, &maxL);
+
+    // Normalize Le values based on maximum blackbody radiance.
+    for (int i = 0; i < n; ++i) {
+        Le[i] /= maxL;
+    }
+}
+
 SampledSpectrum SampledSpectrum::FromRGB(const Float rgb[3], SpectrumType type) {
     SampledSpectrum sp;
 

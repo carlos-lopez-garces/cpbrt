@@ -68,6 +68,13 @@ extern Float AverageSpectrumSamples(
 
 extern Float InterpolateSpectrumSamples(const Float *lambda, const Float *values, int n, Float l);
 
+// Computes exitant radiance Le for each of the n wavelengths at temperature T according
+// to Planck's law of blackbody emission.
+extern void Blackbody(const Float *lambda, int n, Float T, Float *Le);
+
+// Computes normalized exitant radiance for blackbodies.
+extern void BlackbodyNormalized(const Float *lambda, int n, Float T, Float *Le);
+
 // Linearly maps XYZ SPD coefficients to RGB SPD coefficients.
 inline void XYZToRGB(const Float xyz[3], Float rgb[3]) {
     // Let R(lambda), B(lambda), and G(lambda) be spectral response curves and X(lambda),
