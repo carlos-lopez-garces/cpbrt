@@ -1,3 +1,4 @@
+#include "scene.h"
 #include "transform.h"
 
 enum class LightFlags : int {
@@ -67,6 +68,6 @@ public:
     // Computes total emitted power.
     virtual Spectrum Power() const = 0;
 
-    // TODO: implement Scene.
+    // To be called during Scene construction and before rendering begins.
     virtual void Preprocess(const Scene &scene) {}
 };
