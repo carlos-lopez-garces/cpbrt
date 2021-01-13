@@ -1,4 +1,6 @@
+#include "sampler.h"
 #include "scene.h"
+#include "spectrum.h"
 #include "transform.h"
 
 enum class LightFlags : int {
@@ -70,4 +72,29 @@ public:
 
     // To be called during Scene construction and before rendering begins.
     virtual void Preprocess(const Scene &scene) {}
+};
+
+class VisibilityTester {
+private:
+    // Departure and destination points of a shadow ray.
+    Interaction p0;
+    Interaction p1;
+
+public:
+    VisibilityTester(const Interaction &p0, const Interaction &p1) : p0(p0), p1(p1) {}
+
+    const Interaction &P0() const {
+        return p0;
+    }
+
+    const Interaction &P1() const {
+        return p1;
+    }
+
+    // Tells whether any occluder is intersected by a shadow ray between p0 and p1,
+    // ignoring participating media that may have an effect on the ray's radiance.
+    bool Unoccluded(const Scene &scene) const;
+
+    // TODO: implement when implementing volume scattering.
+    Spectrum Tr(const Scene &scene, Sampler &sampler) const;
 };
