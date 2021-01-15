@@ -32,6 +32,12 @@ public:
         const MediumInterface &mediumInterface
     ) : p(p), n(n), time(time), pError(pError), wo(wo), mediumInterface(mediumInterface) {}
 
+    Interaction(
+        const Point3f &p,
+        Float time,
+        const MediumInterface &mediumInterface
+    ) : p(p), time(time), mediumInterface(mediumInterface) {}
+
     bool isSurfaceInteraction() const {
         return n != Normal3f();
     }
