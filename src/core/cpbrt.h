@@ -58,6 +58,8 @@ static CPBRT_CONSTEXPR Float Infinity = std::numeric_limits<Float>::infinity();
 
 static const Float Pi = 3.14159265358979323846;
 static const Float InvPi = 0.31830988618379067154;
+static const Float PiOver2 = 1.57079632679489661923;
+static const Float PiOver4 = 0.78539816339744830961;
 
 // Dynamic memory allocation on the stack.
 #ifdef _MSC_VER
