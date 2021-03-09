@@ -424,6 +424,18 @@ public:
         return Point2<T>(x*reciprocal, y*reciprocal);
     }
 
+    T operator[](int i) const {
+        Assert(i >= 0 && i <= 1);
+        if (i == 0) return x;
+        return y;
+    }
+
+    T &operator[](int i) {
+        Assert(i >= 0 && i <= 1);
+        if (i == 0) return x;
+        return y;
+    }
+
     bool HasNaNs() {
         return std::isnan(x) || std::isnan(y);
     }
