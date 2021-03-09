@@ -24,6 +24,24 @@ template <typename T> void Shuffle(T *sample, int nSamples, int nDimensions, RNG
 
 void LatinHypercube(Float *sample, int nSamples, int nDimensions, RNG &rng);
 
+// Samples the unit disk uniformly using a pair of [0,1] uniform random numbers.
+// The output sample (X,Y) is the cartesian coordinate of a point on the disk, obtained
+// by transforming the polar coordinate of a sample of a 2D random variable (r, theta).
+//
+// The value of r comes from sampling the marginal PDF of r, which is accomplished by the
+// inversion method by evaluating the inverse of the CDF of r with the value of a uniform
+// random variable. (The CDF of r is obtained by integrating the marginal PDF.) 
+//
+// The value of theta comes from sampling the conditional density function p(theta|r) given
+// the value of r obtained before. p(theta|r) is sampled by the inversion method by evaluating
+// the inverse with the value of a uniform random variable.
+Point2f UniformSampleDisk(const Point2f &u) {
+    Float r = std::sqrt(u[0]);
+    Float theta = 2 * Pi * u[1];
+    // Map the polar coordinate to a cartesian coordinate.
+    return Point2f(r * std::cos(theta), r * std::sin(theta));
+}
+
 struct Distribution1D {
     // The n images of a piecewise-constant function.
     std::vector<Float> f;
