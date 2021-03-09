@@ -113,7 +113,7 @@ struct Distribution1D {
             }
         );
 
-        if (off) *off = offset;
+        if (off) *off = i;
 
         // Compute sampled offset.
         //
