@@ -42,6 +42,32 @@ Point2f UniformSampleDisk(const Point2f &u) {
     return Point2f(r * std::cos(theta), r * std::sin(theta));
 }
 
+// Samples the unit disk using a concentric mapping of the unit square, which transforms a
+// uniformly distributed random point on the unit square to a point on the unit disk. 
+Point2f ConcentricSampleDisk(const Point2f &u) {
+    // Map uniform random numbers to the unit square [-1,1]^2.
+    Point2f uOffset = 2.f * u - Vector2f(1, 1);
+
+    // Handle degeneracy at the origin.
+    if (uOffset.x == 0 && uOffset.y == 0) {
+        return Point2f(0, 0);
+    }
+
+    // Apply concentric mapping from the unit square to the unit disk. This mapping turns
+    // wedges of the square into slices of the disk.
+    Float theta, r;
+    if (std::abs(uOffset.x) > std::abs(uOffset.y)) {
+        r = uOffset.x;
+        theta = PiOver4 * (uOffset.y / uOffset.x);
+    } else {
+        r = uOffset.y;
+        theta = PiOver2 - PiOver4 * (uOffset.x / uOffset.y);
+    }
+
+    // Map the polar coordinate to a cartesian coordinate.
+    return Point2f(r * std::cos(theta), r * std::sin(theta));
+}
+
 struct Distribution1D {
     // The n images of a piecewise-constant function.
     std::vector<Float> f;
