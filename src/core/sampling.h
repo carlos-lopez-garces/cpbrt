@@ -164,3 +164,19 @@ struct Distribution1D {
         return f.size();
     }
 };
+
+// Transforms a distribution of points over the unit disk to one of points over the unit
+// hemisphere above it, and returns a sample direction.
+inline Vector3f CosineSampleHemisphere(const Point2f &u) {
+    // TODO: implement.
+    Point2f d = ConcentricSampleDisk(u);
+    Float z = std::sqrt(std::max((Float) 0, 1 - d.x*d.x - d.y*d.y));
+    return Vector3f(d.x, d.y, z);
+}
+
+// Cosine-weighted hemisphere PDF. The closer the point/direction is to the top of the
+// hemisphere, the higher the probability of sampling it will be. Theta is measured with
+// respect to the axis of the hemisphere.
+inline Float CosineHemispherePdf(Float cosTheta) {
+    return cosTheta * InvPi;
+}
