@@ -122,6 +122,13 @@ public:
         }
     }
 
+    CoefficientSpectrum &operator=(const CoefficientSpectrum &sp) {
+        for (int i = 0; i < nSpectrumSamples; ++i) {
+            c[i] = sp.c[i];
+        }
+        return *this;
+    }
+
     Float &operator[](int i) {
         return c[i];
     }
