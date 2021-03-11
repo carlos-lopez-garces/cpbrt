@@ -137,6 +137,8 @@ public:
     // nSamples and samples are only used when the implementation can't compute it exactly using
     // a closed form and must approximate it instead.
     virtual Spectrum rho(int nSamples, const Point2f *samples1, const Point2f *samples2) const;
+
+    virtual Float Pdf(const Vector3f &wo, const Vector3f &wi) const;
 };
 
 class ScaledBxDF : public BxDF {
@@ -320,4 +322,8 @@ inline int NumComponents(BxDFType flags) const {
         }
     }
     return num;
+}
+
+inline bool SameHemisphere(const Vector3f &w, const Vector3f &wp) {
+    return w.z * wp.z > 0;
 }
