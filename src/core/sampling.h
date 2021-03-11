@@ -212,7 +212,6 @@ struct Distribution1D {
 // Transforms a distribution of points over the unit disk to one of points over the unit
 // hemisphere above it, and returns a sample direction.
 inline Vector3f CosineSampleHemisphere(const Point2f &u) {
-    // TODO: implement.
     Point2f d = ConcentricSampleDisk(u);
     Float z = std::sqrt(std::max((Float) 0, 1 - d.x*d.x - d.y*d.y));
     return Vector3f(d.x, d.y, z);
