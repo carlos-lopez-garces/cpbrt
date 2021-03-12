@@ -53,4 +53,27 @@ public:
     }
 
     virtual Float Area() const = 0;
+
+    // Samples a point on the surface of the Shape using the input random sample value. The
+    // sample is drawn according to a PDF defined with respect to the surface area of the Shape.
+    virtual Interaction Sample(const Point2f &u) const = 0;
+
+    // Evaluates a PDF defined with respect to area. A Shape has a uniform distribution over area
+    // by default.
+    virtual Float Pdf(const Interaction &) const {
+        return 1 / Area();
+    }
+
+    // Samples the subset of points on the surface of the Shape that are visible from the input
+    // Interaction point (which is a point on some other surface). The sample is drawn according
+    // to a PDF defined with respect to solid angle (the sample is a point on the Shape, but the
+    // corresponding probability density is with respect to the set of directions along which the
+    // points are visible). 
+    virtual Interaction Sample(const Interaction &it, const Point2f &u) const {
+        return Sample(u);
+    }
+
+    // Evaluates a PDF defined with respect to solid angle: the set of directions along which the
+    // shape is visible from the given Interaction point. 
+    virtual Float Pdf(const Interaction &it, const Vector3f &wi) const;    
 };
