@@ -84,6 +84,10 @@ inline Float CosDPhi(const Vector3f &wa, const Vector3f &wb) {
     );
 }
 
+inline bool SameHemisphere(const Vector3f &w, const Vector3f &wp) {
+    return w.z * wp.z > 0;
+}
+
 enum BxDFType {
     BSDF_REFLECTION   = 1 << 0,
     BSDF_TRANSMISSION = 1 << 1,
@@ -110,8 +114,7 @@ public:
 
     // Computes the spectral distribution of a radiometric quantity over wavelength in the
     // given outgoing direction, computing also the (possibly unique) corresponding incident
-    // direction.
-    // TODO: implement.
+    // direction. Vectors wo and wi are expressed with respect to the local coordinate system.
     virtual Spectrum Sample_f(
         const Vector3f &wo,
         Vector3f *wi,
@@ -297,6 +300,18 @@ public:
     // wo and wi are in world space.
     Spectrum f(const Vector3f &woW, const Vector3f &wiW, BxDFType flags = BSDF_ALL) const; 
 
+    // Samples the collection of BxDFs of the input type to compute the spectral distribution
+    // of a radiometric quantity over wavelength in the given outgoing direction, computing also
+    // the (possibly unique) corresponding incident direction.
+    Spectrum Sample_f(
+        const Vector3f &woWorld,
+        Vector3f *wiWorld
+        const Point2f &u,
+        Float *pdf,
+        BxDFType type = BSDF_ALL,
+        BxDFType *sampledType
+    ) const;
+
     // Computes the sum of the hemispherical-directional reflectances of the types specified.
     Spectrum rho(
         const Vector3f &wo,
@@ -312,9 +327,11 @@ public:
         const Point2f *samples2,
         BxDFType flags = BSDF_ALL
     ) const;
+
+    Float Pdf(const Vector3f &woWorld, const Vector3f &wiWorld, BxDFType flags = BSDF_ALL) const;
 };
 
-inline int NumComponents(BxDFType flags) const {
+inline int BSDF::NumComponents(BxDFType flags) const {
     int num = 0;
     for (int i = 0; i < nBxDFs; ++i) {
         if (bxdfs[i]->MatchesFlags(flags)) {
@@ -322,8 +339,4 @@ inline int NumComponents(BxDFType flags) const {
         }
     }
     return num;
-}
-
-inline bool SameHemisphere(const Vector3f &w, const Vector3f &wp) {
-    return w.z * wp.z > 0;
 }
