@@ -42,6 +42,8 @@ public:
         VisibilityTester *vis
     ) const;
 
+    Float Pdf_Li(const Interaction &it, const Vector3f &wi) const;
+
     // Computes total emitted power (flux) by integrating intensity over the entire sphere of 
     // directions.
     Spectrum Power() const;

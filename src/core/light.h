@@ -52,20 +52,26 @@ public:
         // TODO: Warn if light has transformation with non-uniform scale.
     }
 
-    // Computes incident radiance at the point of Interaction, as well as the direction
-    // of incidence wi.
+    // Samples the direction of incidence wi at the point of Interaction and computes
+    // the corresponding incident radiance.
     virtual Spectrum Sample_Li(
         const Interaction &it,
-        // This is not the point of incidence, but a sample point on the surface of the
-        // light source. For "sampled" light sources that illuminate a given point from
-        // different directions.
+        // This is not the point of incidence, but a 2D random sample value used for
+        // sampling this light source. For light sources that illuminate a given point
+        // from different directions (like those that have a surface).
         const Point2f &u,
+        // Sampled direction.
         Vector3f *wi,
-        // Probability density function from sampled light sources.
+        // Probability density function of distribution of directions that correspond
+        // to this light source.
         Float *pdf,
         // Occlusion information between the light source and the point of incidence.
         VisibilityTester *vis
     ) const = 0;
+
+    // Evaluates the PDF of the distribution of directions of this light source for
+    // the input incident direction.
+    virtual Float Pdf_Li(const Interaction &it, const Vector3f &wi) const = 0;
 
     // Computes total emitted power.
     virtual Spectrum Power() const = 0;
