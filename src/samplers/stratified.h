@@ -16,4 +16,6 @@ public:
         xPixelSamples(xPixelSamples),
         yPixelSamples(yPixelSamples),
         jitterSamples(jitterSamples) {}
+
+    std::unique_ptr<Sampler> Clone(int seed);
 };

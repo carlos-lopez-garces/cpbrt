@@ -54,3 +54,9 @@ StratifiedSampler::StartPixel(const Point2i &p) {
 
     PixelSampler::StartPixel(p);
 }
+
+std::unique_ptr<Sampler> StratifiedSampler::Clone(int seed) {
+    StratifiedSampler *ss = new StratifiedSampler(*this);
+    ss->rng.SetSequence(seed);
+    return std::unique_prt<Sampler>(ss);
+}
