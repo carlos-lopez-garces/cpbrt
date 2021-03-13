@@ -21,5 +21,17 @@ public:
         std::shared_ptr<Sampler> sampler
     ) : camera(camera), sampler(sampler) {}
 
+    void Render(const Scene &scene);
+
     virtual void Preprocess(const Scene &scene, Sampler &sampler) {}
+
+    // Samples the incident radiance function using the given ray (and differentials).
+    virtual Spectrum Li(
+        const RayDifferential &ray,
+        const Scene &scene,
+        Sampler &sampler,
+        MemoryArena &arena,
+        // Number of ray bounces from the camera that have occurred up until this call.
+        int depth = 0
+    ) const = 0;
 };

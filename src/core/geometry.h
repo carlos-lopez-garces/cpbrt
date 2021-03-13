@@ -797,6 +797,12 @@ public:
         hasDifferentials = false;
     }
 
+    // Scales the distance between the main ray and the x and y ray differentials.
+    // A RayDifferential is used to sample the 2 neighboring pixels of the pixel sampled
+    // by the main ray. By default, the differentials and the main ray are 1 pixel apart,
+    // but this distance may be changed by this method: in the case when multiple samples
+    // of a pixel are taken (supersampling), we want the differentials to be closer to the
+    // main ray; the more samples per pixel are taken, the shorter the distance should be.
     void ScaleDifferentials(Float s) {
         rxOrigin = o + (rxOrigin-o)*s;
         ryOrigin = o + (ryOrigin-o)*s;

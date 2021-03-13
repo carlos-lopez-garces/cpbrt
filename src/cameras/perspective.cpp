@@ -71,7 +71,9 @@ Float PerspectiveCamera::GenerateRay(const CameraSample &sample, Ray *ray) const
     // Transform the ray to world space before returning it.
     *ray = CameraToWorld(*ray);
 
-    // ?
+    // Cameras that model a system of lenses may assign different weights to different rays;
+    // the weight is used to scale the ray's contribution to the image.
+    // The PerspectiveCamera gives equal weight to all rays.
     return 1;
 }
 
@@ -125,6 +127,8 @@ Float PerspectiveCamera::GenerateRayDifferential(
     // Transform the ray to world space before returning it.
     *rd = CameraToWorld(*rd);
 
-    // ?
+    // Cameras that model a system of lenses may assign different weights to different rays;
+    // the weight is used to scale the ray's contribution to the image.
+    // The PerspectiveCamera gives equal weight to all rays.
     return 1;
 }
