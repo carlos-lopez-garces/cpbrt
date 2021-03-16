@@ -32,6 +32,7 @@ public:
     const Transform LightToWorld;
     const Transform WorldToLight;
 
+    // Number of (point) samples that an Integrator should take from this light source.
     const int nSamples;
 
     // Participating medium on the inside and the outside of the light source.
@@ -75,6 +76,9 @@ public:
 
     // Computes total emitted power.
     virtual Spectrum Power() const = 0;
+
+    // Computes emitted radiance by this light source in the direction of the given ray.
+    virtual Spectrum Le(const RayDifferential &rd) const;
 
     // To be called during Scene construction and before rendering begins.
     virtual void Preprocess(const Scene &scene) {}
