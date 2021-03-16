@@ -122,7 +122,7 @@ public:
     void ComputeScatteringFunctions(
         const RayDifferential &ray,
         MemoryArena &arena,
-        bool allowMultipleLobes,
-        TransportMode mode
+        bool allowMultipleLobes = false,
+        TransportMode mode = TransportMode::Radiance
     );
 };

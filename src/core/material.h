@@ -1,6 +1,12 @@
 #include "interaction.h"
 #include "memory.h"
 
+// TODO: describe.
+enum class TransportMode {
+  Radiance,
+  Importance
+};
+
 class Material {
 public:
   virtual void ComputeScatteringFunctions(
