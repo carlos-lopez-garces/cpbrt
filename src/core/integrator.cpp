@@ -3,6 +3,95 @@
 #include "integrator.h"
 #include "memory.h"
 
+Spectrum UniformSampleAllLights(
+    const Interaction &it,
+    const Scene &scene,
+    MemoryArena &arena,
+    Sampler &sampler,
+    const std::vector<int> &nLightSamples,
+    bool handleMedia
+) {
+    Spectrum L(0.f);
+
+    for (size_t j = 0; j < scene.lights.size(); ++j) {
+        // Accumulate contribution of jth light to L.
+        const std::shared_ptr<Light> &light = scene.lights[j];
+        int nSamples = nLightSamples[j];
+
+        // For sampling points from the surfaces of the light source.
+        const Point2f *uLightArray = sampler.Get2DArray(nSamples);
+
+        // For sampling the BSDF at the Interaction point for each of the directions
+        // corresponding to each of the light source point samples.
+        const Point2f *uScatteringArray = sampler.Get2DArray(nSamples);
+
+        // Evaluate the Monte Carlo estimator. By the law of large numbers, the expected
+        // value of the estimator is the value of the direct lighting outgoing radiance integral.
+        // The actual value is, of course, an approximation, because we only evaluate the
+        // estimator using the values of n=nSamples uniform random variables.
+        if (!uLightArray || !uScatteringArray) {
+            // The preallocated array-samples have been exhausted, so we can't take the
+            // number of samples that we wanted from all of the light sources. Take a single
+            // point sample from a single light source instead.
+            Point2f uLight = sampler.Get2D();
+            Point2f uScattering = sampler.Get2D();
+
+            // Evaluate the outgoing radiance / scattering equation for the incident direction
+            // formed between the Interaction point and the random sample point on this light source.
+            L += EstimateDirect(it, uScattering, *light, uLight, scene, sampler, arena, handleMedia);
+        } else {
+            // Incident radiance coming from this light source.
+            Spectrumd Ld(0.f)
+
+            // Evaluate and sum the outgoing radiance / scattering equation for the incident direction
+            // formed between the Interaction point and each of the random sample points on this light
+            // source.
+            for (int k = 0; k < nSamples; ++k) {
+                Ld += EstimateDirect(
+                    it, uScatteringArray[k], *light, uLightArray[k], scene, sampler, arena, handleMedia
+                );
+            }
+
+            // This is the value of the Monte Carlo estimator: the average outgoing radiance
+            // corresponding to the n=nSamples incident directions as reflected by the BSDF.
+            L += Ld / nSamples;
+        }
+    }
+
+    return L;
+}
+
+Spectrum UniformSampleOneLight(
+    const Interaction &it,
+    const Scene &scene,
+    MemoryArena &arena,
+    Sampler &sampler,
+    // Whether to account for the effects of volumetric attenuation.
+    bool handleMedia
+) {
+    // Randomly choose single light to sample.
+    int nLights = int(scene.lights.size());
+    if (nLights == 0) {
+        return Spectrum(0.f);
+    }
+    int lightNum = std::min((int) (sampler.Get1D() * nLights), nLights - 1);
+    const std::shared_ptr<Light> &light = scene.lights[lightNum];
+
+    // For sampling a point from the surface of the light source.
+    Point2f uLight = sampler.Get2D();
+
+    // For sampling the BSDF at the Interaction point for direction corresponding to light
+    // source point sample.
+    Point2f uScattering = sampler.Get2D();
+
+    // Evaluate the outgoing radiance / scattering equation for this one direction. It can be
+    // proven that the expected value of the sum of the scattering function evaluated for every
+    // light source is equal to the value of the function evaluated just for one and multiplied
+    // by the number of them.
+    return (Float) nLights 
+        * EstimateDirect(it, uScattering, *light, uLight, scene, sampler, arena, handleMedia);
+}
+
 void SamplerIntegrator::Render(const Scene &scene) {
     Preprocess(scene, *sampler);
 

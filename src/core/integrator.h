@@ -2,6 +2,32 @@
 
 #include "scene.h"
 
+// Evaluates the direct lighting outgoing radiance / scattering equation at the 
+// intersection point with direct lighting contributions from all light sources in
+// the scene, using Monte Carlo integration.
+Spectrum UniformSampleAllLights(
+    const Interaction &it,
+    const Scene &scene,
+    MemoryArena &arena,
+    Sampler &sampler,
+    // The number of samples to take by light source.
+    const std::vector<int> &nLightSamples,
+    // Whether to account for the effects of volumetric attenuation.
+    bool handleMedia = false
+);
+
+// Evaluates the direct lighting outgoing radiance / scattering equation at the
+// intersection point by taking a single sample from a single light source chosen
+// uniformly at random. 
+Spectrum UniformSampleOneLight(
+    const Interaction &it,
+    const Scene &scene,
+    MemoryArena &arena,
+    Sampler &sampler,
+    // Whether to account for the effects of volumetric attenuation.
+    bool handleMedia = false
+);
+
 class Integrator {
 public:
     virtual void Render(const Scene &scene) = 0;
@@ -23,6 +49,7 @@ public:
 
     void Render(const Scene &scene);
 
+    // Executes before the main rendering loop.
     virtual void Preprocess(const Scene &scene, Sampler &sampler) {}
 
     // Samples the incident radiance function using the given ray (and differentials).
