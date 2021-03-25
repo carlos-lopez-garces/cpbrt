@@ -223,3 +223,24 @@ inline Vector3f CosineSampleHemisphere(const Point2f &u) {
 inline Float CosineHemispherePdf(Float cosTheta) {
     return cosTheta * InvPi;
 }
+
+// Sample weighting function for multiple importance sampling, used to reduce variance
+// of the Monte Carlo estimator for the integral of a product of functions f and g caused
+// by mismatches between the integrand and the PDFs in the estimates f(X)g(X)/fPdf(X) or 
+// f(X)g(X)/gPdf(X).
+inline Float BalanceHeuristic(int nf, Float fPdf, int ng, Float gPdf) {
+    return (nf * fPdf) / (nf * fPdf + ng * gPdf);
+}
+
+// Sample weighting function for multiple importance sampling, used to reduce variance
+// of the Monte Carlo estimator for the integral of a product of functions f and g caused
+// by mismatches between the integrand and the PDFs in the estimates f(X)g(X)/fPdf(X) or 
+// f(X)g(X)/gPdf(X).
+// 
+// Reduces variance even more than the balance heuristic. Here, the parameter beta is
+// always 2.
+inline Float PowerHeuristic(int nf, Float fPdf, int ng, Float gPdf) {
+    Float f = nf * fPdf;
+    Float g = ng * gPdf;
+    return (f * f) / (f * f + g * g);
+}
