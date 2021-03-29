@@ -102,6 +102,10 @@ public:
         const Shape *shape
     );
 
+    bool IsSurfaceInteraction() const { 
+        return n != Normal3f();
+    }
+
     void SetShadingGeometry(
         const Vector3f &dpdus,
         const Vector3f &dpdvs,
