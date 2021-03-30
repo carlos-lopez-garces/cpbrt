@@ -1,7 +1,10 @@
 #include "film.h"
 #include "geometry.h"
 #include "integrator.h"
+#include "light.h"
 #include "memory.h"
+#include "reflection.h"
+#include "sampling.h"
 
 Spectrum UniformSampleAllLights(
     const Interaction &it,
@@ -90,6 +93,162 @@ Spectrum UniformSampleOneLight(
     // by the number of them.
     return (Float) nLights 
         * EstimateDirect(it, uScattering, *light, uLight, scene, sampler, arena, handleMedia);
+}
+
+Spectrum EstimateDirect(
+    const Interaction &it,
+    const Point2f &uScattering,
+    const Light &light,
+    const Point2f &uLight,
+    const Scene &scene,
+    Sampler &sampler,
+    MemoryArena &arena,
+    bool handleMedia,
+    bool specular
+) {
+    BxDFType bsdfFlags = specular ? BSDF_ALL : BxDFType(BSDF_ALL & ~BSDF_SPECULAR);
+
+    Spectrum Ld(0.f);
+
+    // The scattering equation is a product of functions: the BRDF f and the direct radiance Ld from
+    // the light. A distribution in the shape of this product is difficult to obtain. And if only the 
+    // PDF of one of the 2 functions were to be used to sample the incident direction, the other function
+    // would be sampled badly with it and the estimate would have high variance.
+    //
+    // Multiple importance sampling allows us to sample with the individual PDFs of the BRDF and of
+    // Ld with low variance. 1 sample will be taken using the BRDF's PDF and 1 using the light source's
+    // PDF, and their contributions to the direct radiance estimate will be weighted by a special 
+    // weighting function. 
+
+    // Sample light source with multiple importance sampling. The direction of incidence wi will be
+    // determined from the light source's point distribution.
+    Vector3f wi;
+    Float lightPdf = 0;
+    Float scatteringPdf = 0;
+    VisibilityTester visibility;
+    Spectrum Li = light.Sample_Li(it, uLight, &wi, &lightPdf, &visibility);
+    if (lightPdf > 0 && !Li.IsBlack()) {
+        // Compute BSDF or phase function's value for light sample.
+        Spectrum f;
+        if (it.IsSurfaceInteraction()) {
+            // Evaluate BSDF for sampled incident direction.
+            const SurfaceInteraction &si = (const SurfaceInteraction &) it;
+            // Radiance is measured with respect to an area differential that is orthogonal
+            // to the direction of incidence. To actually place this area differential on the
+            // surface, the scattering equation includes the cosine of the theta angle as a factor,
+            // measured from the surface normal to the direction of incidence). 
+            f = si.bsdf->f(si.wo, wi, bsdfFlags) * AbsDot(wi, si.shading.n);
+            scatteringPdf = si.bsdf->Pdf(si.wo, wi, bsdfFlags);
+        } else {
+            // TODO: Evaluate phase function for sampled incident direction. This is when the
+            // Interaction is not a surface, but participating media.
+        }
+
+        if (!f.IsBlack()) {
+            // The surface or medium reflects light.
+
+            // Compute effect of visibility for light source sample.
+            if (handleMedia) {
+                Li *= visibility.Tr(scene, sampler);
+            } else if (!visibility.Unoccluded(scene)) {
+                // The light source doesn't illuminate the surface from the sampled direction.
+                Li = Spectrum(0.f);
+            }
+
+            // Add light's contribution to reflected radiance.
+            // TODO: This Li.IsBlack conditional seems redundant.
+            if (!Li.IsBlack()) {
+                if (IsDeltaLight(light.flags)) {
+                    // The light source is described by a delta distribution, that is, it illuminates
+                    // from a single direction with probability 1 and, therefore, the sample introduces
+                    // no variance. Since there's no variance to reduce, there's no need for weighting
+                    // the sample like multiple importance sampling does, so compute the standard Monte
+                    // Carlo estimate for it and add its contribution.
+                    Ld += f * Li / lightPdf;
+                } else {
+                    // Weight the sample and compute the MIS Monte Carlo estimate for it and add its
+                    // contribution.
+                    Float weight = PowerHeuristic(1, lightPdf, 1, scatteringPdf);
+                    Ld += f * Li * weight / lightPdf;
+                }
+            }
+        }
+    }
+
+    // Sample BSDF with multiple importance sampling. The direction of incidence wi will be determined
+    // by the surface's (or medium's) BSDF.
+    //
+    // The surface's (or medium's) BSDF is not sampled when the light source is described by a delta
+    // distribution, that is, when it illuminates from a single direction with probability 1: it would
+    // be nearly impossible that a direction determined by sampling the BSDF correspond to this one
+    // delta direction. (Radiance contributions from delta lights can only be obtained by sampling the
+    // light source and has been done above already.) 
+    if (!IsDeltaLight(light.flags)) {
+        Spectrum f;
+        bool sampledSpecular = false;
+        if (it.isSurfaceInteraction()) {
+            // Sample incident direction for surface interactions.
+            BxDFType sampledType;
+            const SurfaceInteraction &si = (const SurfaceInteraction &) it;
+            f = si.bsdf->Sample_f(si.wo, &wi, uScattering, &scatteringPdf, bsdfFlags, &sampledType);
+            // Radiance is measured with respect to an area differential that is orthogonal
+            // to the direction of incidence. To actually place this area differential on the
+            // surface, the scattering equation includes the cosine of the theta angle as a factor,
+            // measured from the surface normal to the direction of incidence. 
+            f *= AbsDot(wi, si.shading.n);
+            sampledSpecular = sampledType & BSDF_SPECULAR;
+        } else {
+            // TODO: Sample scattered direction for medium interactions.
+        }
+
+        if (!f.IsBlack() && scatteringPdf > 0) {
+            // Account for light contributions along sampled direction wi.
+            //
+            // If the BSDF is specular, wi was sampled with probability 1 (this incident direction
+            // wi corresponds to the given scattered direction wo always), so its MIS weight must be
+            // 1. The PDF already has the shape of the BSDF: delta?
+            Float weight = 1;
+            if (!sampledSpecular) {
+                lightPdf = light.Pdf_Li(it, wi);
+                if (lightPdf == 0) {
+                    // As computed with the light source sample only.
+                    return Ld;
+                }
+                // Obtain the MIS weight of this sample. 
+                weight = PowerHeuristic(1, scatteringPdf, 1, lightPdf);
+            }
+
+            // Does the given light source illuminate this surface (medium) from the sampled incident
+            // direction wi? Find intersection and compute transmittance.
+            SurfaceInteraction lightIntersection;
+            Ray ray = it.SpawnRay(wi);
+            Spectrum Tr(1.f);
+            bool foundSurfaceInteraction 
+                = handleMedia ? scene.IntersectTr(ray, sampler, &lightIntersection, &Tr) 
+                              : scene.Intersect(ray, &lightIntersection);
+
+            Spectrum Li(0.f);
+            if (foundSurfaceInteraction) {
+                if (lightIntersection.primitive->GetAreaLight() == &light) {
+                    // The given light source was intersected by a ray going in the sampled incident
+                    // direction wi. Sample its emitted radiance.
+                    Li = lightIntersection.Le(-wi);
+                }
+            } else {
+                // The given light source doesn't have geometry in the scene (it is an infinite area
+                // environment light, for example). Sample its emitted radiance.
+                // TODO: What if it's occluded?
+                Li = light.Le(ray);
+            }
+
+            // Compute the MIS Monte Carlo estimate for the BSDF (medium) sample and its contribution.
+            if (!Li.IsBlack()) {
+                Ld += f * Li * Tr * weight / scatteringPdf;
+            }
+        }
+    }
+
+    return Ld;
 }
 
 void SamplerIntegrator::Render(const Scene &scene) {

@@ -1,5 +1,6 @@
 #include <memory>
 
+#include "interaction.h"
 #include "scene.h"
 
 // Evaluates the direct lighting outgoing radiance / scattering equation at the 
@@ -26,6 +27,25 @@ Spectrum UniformSampleOneLight(
     Sampler &sampler,
     // Whether to account for the effects of volumetric attenuation.
     bool handleMedia = false
+);
+
+// Computes a single Monte Carlo estimate of radiance emitted by the given light
+// source and received by the surface or medium represented by the given Interaction,
+// using multiple importance sampling.
+Spectrum EstimateDirect(
+    const Interaction &it,
+    // Uniform random sample for sampling the BSDF.
+    const Point2f &uScattering,
+    const Light &light,
+    // Uniform random sample for sampling the light source.
+    const Point2f &uLight,
+    const Scene &scene,
+    Sampler &sampler,
+    MemoryArena &arena,
+    // Whether to account for the effects of volumetric attenuation.
+    bool handleMedia = false,
+    // Whether to consider perfectly specular lobes.
+    bool specular = false
 );
 
 class Integrator {
