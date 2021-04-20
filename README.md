@@ -2,7 +2,7 @@ This repository is the result of studying Physically Based Rendering: From Theor
 
 The 1st objective is to study the sections that lead to a minimal path tracer and write the corresponding code.
 
-The sections I've covered are marked next.
+The sections I've covered are marked next. Each covered section is accompanied by my personal **[notes](notes/)**.
 
 1 Introduction ([notes/1 Introduction](notes/1_Introduction.pdf))
 - [x] 1.1 Literate Programming
