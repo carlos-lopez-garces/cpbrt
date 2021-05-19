@@ -382,6 +382,116 @@ void ParamSet::AddTexture(const std::string &name, const std::string &value) {
     textures.push_back(psi);
 }
 
+bool ParamSet::EraseBool(const std::string &name) {
+    for (size_t i = 0; i < bools.size(); ++i) {
+        if (bools[i]->name == name) {
+            bools.erase(bools.begin() + i);
+            return true;
+        }
+    }
+    return false;
+}
+
+bool ParamSet::EraseInt(const std::string &name) {
+    for (size_t i = 0; i < ints.size(); ++i) {
+        if (ints[i]->name == name) {
+            ints.erase(ints.begin() + i);
+            return true;
+        }
+    }
+    return false;
+}
+
+bool ParamSet::EraseFloat(const std::string &name) {
+    for (size_t i = 0; i < floats.size(); ++i) {
+        if (floats[i]->name == name) {
+            floats.erase(floats.begin() + i);
+            return true;
+        }
+    }
+    return false;
+}
+
+bool ParamSet::ErasePoint2f(const std::string &name) {
+    for (size_t i = 0; i < point2fs.size(); ++i) {
+        if (point2fs[i]->name == name) {
+            point2fs.erase(point2fs.begin() + i);
+            return true;
+        }
+    }
+    return false;
+}
+
+bool ParamSet::EraseVector2f(const std::string &name) {
+    for (size_t i = 0; i < vector2fs.size(); ++i) {
+        if (vector2fs[i]->name == name) {
+            vector2fs.erase(vector2fs.begin() + i);
+            return true;
+        }
+    }
+    return false;
+}
+
+bool ParamSet::ErasePoint3f(const std::string &name) {
+    for (size_t i = 0; i < point3fs.size(); ++i) {
+        if (point3fs[i]->name == name) {
+            point3fs.erase(point3fs.begin() + i);
+            return true;
+        }
+    }
+    return false;
+}
+
+bool ParamSet::EraseVector3f(const std::string &name) {
+    for (size_t i = 0; i < vector3fs.size(); ++i) {
+        if (vector3fs[i]->name == name) {
+            vector3fs.erase(vector3fs.begin() + i);
+            return true;
+        }
+    }
+    return false;
+}
+
+bool ParamSet::EraseNormal3f(const std::string &name) {
+    for (size_t i = 0; i < normals.size(); ++i) {
+        if (normals[i]->name == name) {
+            normals.erase(normals.begin() + i);
+            return true;
+        }
+    }
+    return false;
+}
+
+bool ParamSet::EraseSpectrum(const std::string &name) {
+    for (size_t i = 0; i < spectra.size(); ++i) {
+        if (spectra[i]->name == name) {
+            spectra.erase(spectra.begin() + i);
+            return true;
+        }
+    }
+    return false;
+}
+
+bool ParamSet::EraseString(const std::string &name) {
+    for (size_t i = 0; i < strings.size(); ++i) {
+        if (strings[i]->name == name) {
+            strings.erase(strings.begin() + i);
+            return true;
+        }
+    }
+    return false;
+}
+
+bool ParamSet::EraseTexture(const std::string &name) {
+    for (size_t i = 0; i < textures.size(); ++i) {
+        if (textures[i]->name == name) {
+            textures.erase(textures.begin() + i);
+            return true;
+        }
+    }
+    return false;
+}
+
 void ParamSet::Clear() {
 #define DEL_PARAMS(name) (name).erase((name).begin(), (name).end())
     DEL_PARAMS(ints);

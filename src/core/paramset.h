@@ -49,6 +49,7 @@ public:
     const Spectrum *FindSpectrum(const std::string &name, int *n) const;
     const std::string *FindString(const std::string &name, int *n) const;
 
+    // Add an item with all the given input values under the given name.
     void AddBool(const std::string &name, std::unique_ptr<bool[]> values, int nValues);
     void AddInt(const std::string &name, std::unique_ptr<int[]> values, int nValues);
     void AddFloat(const std::string &name, std::unique_ptr<Float[]> values, int nValues);
@@ -57,13 +58,30 @@ public:
     void AddPoint3f(const std::string &name, std::unique_ptr<Point3f[]> values, int nValues);
     void AddVector3f(const std::string &name, std::unique_ptr<Vector3f[]> values, int nValues);
     void AddNormal3f(const std::string &name, std::unique_ptr<Normal3f[]> values, int nValues);
+    // AddRGBSpectrum and AddXYZSpectrum take 3 floating-point values.
     void AddRGBSpectrum(const std::string &name, std::unique_ptr<Float[]> values, int nValues);
     void AddXYZSpectrum(const std::string &name, std::unique_ptr<Float[]> values, int nValues);
+    // Takes pairs of temperature (Kelvin) and scale. 
     void AddBlackbodySpectrum(const std::string &name, std::unique_ptr<Float[]> values, int nValues);
+    // Takes pairs of wavelength and SPD values at each wavelength.
     void AddSampledSpectrum(const std::string &name, std::unique_ptr<Float[]> values, int nValues);
+    // Reads pairs of wavelength and SPD values at each wavelength from files.
     void AddSampledSpectrumFiles(const std::string &name, const char **names, int nValues);
     void AddString(const std::string &name, std::unique_ptr<std::string[]> values, int nValues);
     void AddTexture(const std::string &name, const std::string &value);
+
+    // Remove the item of the given name.
+    bool EraseBool(const std::string &name);
+    bool EraseInt(const std::string &name);
+    bool EraseFloat(const std::string &name);
+    bool ErasePoint2f(const std::string &name);
+    bool EraseVector2f(const std::string &name);
+    bool ErasePoint3f(const std::string &name);
+    bool EraseVector3f(const std::string &name);
+    bool EraseNormal3f(const std::string &name);
+    bool EraseSpectrum(const std::string &name);
+    bool EraseString(const std::string &name);
+    bool EraseTexture(const std::string &name);
 
     // Clear all the parameter vectors.
     void Clear();
