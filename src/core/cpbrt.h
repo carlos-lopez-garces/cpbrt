@@ -31,7 +31,15 @@ typedef float Float;
 #endif // CPBRT_FLOAT_AS_DOUBLE
 
 struct Options {
-
+    int nThreads = 0;
+    bool quickRender = false;
+    bool quiet = false;
+    bool verbose = false;
+    std::string imageFile;
+    // Used by API state verification macros.
+    bool cat = false;
+    // Used by API state verification macros.
+    bool toPly = false;
 };
 
 // Rather than being an abstract data type, Spectrum is an alias of the chosen
