@@ -13,7 +13,7 @@ template <typename T> struct ParamSetItem {
     // input file.
     mutable bool lookedUp = false;
 
-    template <typename T> ParamSetItem(const std::string &name, const T* v, int nValues)
+    template <typename T> ParamSetItem(const std::string &name, std::unique_ptr<T[]> value, int nValues)
       : name(name), values(new T[nValues]), nValues(nValues) {
           std::copy(v, v + nValues, values.get());
     }
