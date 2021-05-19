@@ -1,5 +1,17 @@
+#include <map>
+
 #include "fileutil.h"
 #include "paramset.h"
+#include "spectrum.h"
+
+// ParamSet data members.
+
+std::map<std::string, Spectrum> ParamSet::cachedSpectra;
+
+// ParamSet macros.
+
+#define ADD_PARAM_TYPE(T, vec) \
+    (vec).emplace_back(new ParamSetItem<T>(name, std::move(values), nValues));
 
 bool ParamSet::FindOneBool(const std::string &name, bool defaultValue) const {
     for (const auto &item : bools) {
@@ -10,6 +22,8 @@ bool ParamSet::FindOneBool(const std::string &name, bool defaultValue) const {
     }
     return defaultValue;
 }
+
+// ParamSet methods.
 
 int ParamSet::FindOneInt(const std::string &name, int defaultValue) const {
     for (const auto &item : ints) {
@@ -229,6 +243,143 @@ const std::string *ParamSet::FindString(const std::string &name, int *n) const {
         }
     }
     return nullptr;
+}
+
+void ParamSet::AddBool(const std::string &name, std::unique_ptr<bool[]> values, int nValues) {
+    EraseBool(name);
+    ADD_PARAM_TYPE(bool, bools);
+}
+
+void ParamSet::AddInt(const std::string &name, std::unique_ptr<int[]> values, int nValues) {
+    EraseInt(name);
+    ADD_PARAM_TYPE(int, ints);
+}
+
+void ParamSet::AddFloat(const std::string &name, std::unique_ptr<Float[]> values, int nValues) {
+    EraseFloat(name);
+    floats.emplace_back(new ParamSetItem<Float>(name, std::move(values), nValues));
+}
+
+void ParamSet::AddPoint2f(const std::string &name, std::unique_ptr<Point2f[]> values, int nValues) {
+    ErasePoint2f(name);
+    ADD_PARAM_TYPE(Point2f, point2fs);
+}
+
+void ParamSet::AddVector2f(const std::string &name, std::unique_ptr<Vector2f[]> values, int nValues) {
+    EraseVector2f(name);
+    ADD_PARAM_TYPE(Vector2f, vector2fs);
+}
+
+void ParamSet::AddPoint3f(const std::string &name, std::unique_ptr<Point3f[]> values, int nValues) {
+    ErasePoint3f(name);
+    ADD_PARAM_TYPE(Point3f, point3fs);
+}
+
+void ParamSet::AddVector3f(const std::string &name, std::unique_ptr<Vector3f[]> values, int nValues) {
+    EraseVector3f(name);
+    ADD_PARAM_TYPE(Vector3f, vector3fs);
+}
+
+void ParamSet::AddNormal3f(const std::string &name, std::unique_ptr<Normal3f[]> values, int nValues) {
+    EraseNormal3f(name);
+    ADD_PARAM_TYPE(Normal3f, normals);
+}
+
+void ParamSet::AddRGBSpectrum(const std::string &name, std::unique_ptr<Float[]> values, int nValues) {
+    EraseSpectrum(name);
+    nValues /= 3;
+    std::unique_ptr<Spectrum[]> s(new Spectrum[nValues]);
+    for (int i = 0; i < nValues; ++i) s[i] = Spectrum::FromRGB(&values[3 * i]);
+    std::shared_ptr<ParamSetItem<Spectrum>> psi(new ParamSetItem<Spectrum>(name, std::move(s), nValues));
+    spectra.push_back(psi);
+}
+
+void ParamSet::AddXYZSpectrum(const std::string &name, std::unique_ptr<Float[]> values, int nValues) {
+    EraseSpectrum(name);
+    nValues /= 3;
+    std::unique_ptr<Spectrum[]> s(new Spectrum[nValues]);
+    for (int i = 0; i < nValues; ++i) s[i] = Spectrum::FromXYZ(&values[3 * i]);
+    std::shared_ptr<ParamSetItem<Spectrum>> psi(new ParamSetItem<Spectrum>(name, std::move(s), nValues));
+    spectra.push_back(psi);
+}
+
+void ParamSet::AddBlackbodySpectrum(const std::string &name, std::unique_ptr<Float[]> values, int nValues) {
+    EraseSpectrum(name);
+    nValues /= 2;
+    std::unique_ptr<Spectrum[]> s(new Spectrum[nValues]);
+    std::unique_ptr<Float[]> v(new Float[nCIESamples]);
+    for (int i = 0; i < nValues; ++i) {
+        BlackbodyNormalized(CIE_lambda, nCIESamples, values[2 * i], v.get());
+        s[i] = values[2 * i + 1] * Spectrum::FromSampled(CIE_lambda, v.get(), nCIESamples);
+    }
+    std::shared_ptr<ParamSetItem<Spectrum>> psi(
+        new ParamSetItem<Spectrum>(name, std::move(s), nValues));
+    spectra.push_back(psi);
+}
+
+void ParamSet::AddSampledSpectrum(const std::string &name, std::unique_ptr<Float[]> values, int nValues) {
+    EraseSpectrum(name);
+    nValues /= 2;
+    std::unique_ptr<Float[]> wl(new Float[nValues]);
+    std::unique_ptr<Float[]> v(new Float[nValues]);
+    for (int i = 0; i < nValues; ++i) {
+        wl[i] = values[2 * i];
+        v[i] = values[2 * i + 1];
+    }
+    std::unique_ptr<Spectrum[]> s(new Spectrum[1]);
+    s[0] = Spectrum::FromSampled(wl.get(), v.get(), nValues);
+    std::shared_ptr<ParamSetItem<Spectrum>> psi(new ParamSetItem<Spectrum>(name, std::move(s), 1));
+    spectra.push_back(psi);
+}
+
+void ParamSet::AddSampledSpectrumFiles(const std::string &name, const char **names, int nValues) {
+    EraseSpectrum(name);
+    std::unique_ptr<Spectrum[]> s(new Spectrum[nValues]);
+    for (int i = 0; i < nValues; ++i) {
+        std::string fn = AbsolutePath(ResolveFilename(names[i]));
+        if (cachedSpectra.find(fn) != cachedSpectra.end()) {
+            s[i] = cachedSpectra[fn];
+            continue;
+        }
+
+        std::vector<Float> vals;
+        if (!ReadFloatFile(fn.c_str(), &vals)) {
+            Warning(
+                "Unable to read SPD file \"%s\".  Using black distribution.",
+                fn.c_str());
+            s[i] = Spectrum(0.);
+        } else {
+            if (vals.size() % 2) {
+                Warning(
+                    "Extra value found in spectrum file \"%s\". "
+                    "Ignoring it.",
+                    fn.c_str());
+            }
+            std::vector<Float> wls, v;
+            for (size_t j = 0; j < vals.size() / 2; ++j) {
+                wls.push_back(vals[2 * j]);
+                v.push_back(vals[2 * j + 1]);
+            }
+            s[i] = Spectrum::FromSampled(&wls[0], &v[0], wls.size());
+        }
+        cachedSpectra[fn] = s[i];
+    }
+
+    std::shared_ptr<ParamSetItem<Spectrum>> psi(new ParamSetItem<Spectrum>(name, std::move(s), nValues));
+    spectra.push_back(psi);
+}
+
+void ParamSet::AddString(const std::string &name, std::unique_ptr<std::string[]> values, int nValues) {
+    EraseString(name);
+    ADD_PARAM_TYPE(std::string, strings);
+}
+
+void ParamSet::AddTexture(const std::string &name, const std::string &value) {
+    EraseTexture(name);
+    std::unique_ptr<std::string[]> str(new std::string[1]);
+    str[0] = value;
+    std::shared_ptr<ParamSetItem<std::string>> psi(new ParamSetItem<std::string>(name, std::move(str), 1));
+    textures.push_back(psi);
 }
 
 void ParamSet::Clear() {
