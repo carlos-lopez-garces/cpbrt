@@ -17,3 +17,36 @@ static APIState currentApiState = APIState::Uninitialized;
 void cpbrtInit(const Options &opt);
 
 void cpbrtCleanup();
+
+// Transformations API.
+
+// Initializes all the current transformation matrices (CTMs) as identity matrices.
+void cpbrtIdentity();
+
+void cpbrtTranslate(Float dx, Float dy, Float dz);
+
+// Rotate active current transformation matrices about the given axis (ax, ay, az).
+void cpbrtRotate(Float angle, Float ax, Float ay, Float az);
+
+void cpbrtScale(Float sx, Float sy, Float sz);
+
+void cpbrtLookAt(
+    // Camera-space origin in world space.
+    Float ex, Float ey, Float ez,
+    // Look-at point.
+    Float lx, Float ly, Float lz,
+    // Up vector. 
+    Float ux, Float uy, Float uz
+);
+
+// Multiply active current transformations by the input matrix.
+void cpbrtConcatTransform(Float transform[16]);
+
+// Set active current transformations to the input transformation.
+void cpbrtTransform(Float transform[16]);
+
+// Saves the current transformations under the given name.
+void cpbrtCoordinateSystem(const std::string &name);
+
+// Sets the named saved transformations as the current ones.
+void cpbrtCoordSysTransform(const std::string &name);
