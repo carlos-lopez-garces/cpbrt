@@ -52,6 +52,11 @@ struct RenderOptions {
     TransformSet CameraToWorld;
 };
 
+// Stack of attributes.
+struct GraphicsState {
+
+};
+
 // API static data.
 
 // Current transformation matrices (CTMs).
@@ -63,6 +68,11 @@ static std::map<std::string, TransformSet> namedCoordinateSystems;
 
 // Scene-wide global options set in the OptionsBlock state.
 static std::unique_ptr<RenderOptions> renderOptions;
+
+static GraphicsState graphicsState;
+static std::vector<GraphicsState> pushedGraphicsStates;
+static std::vector<TransformSet> pushedTransforms;
+static std::vector<uint32_t> pushedActiveTransformBits;
 
 // API macros.
 
@@ -114,6 +124,8 @@ void cpbrtInit(const Options &opt) {
     }
     currentApiState = APIState::OptionsBlock;
     renderOptions.reset(new RenderOptions());
+
+    graphicsState = GraphicsState();
 
     SampledSpectrum::Init();
 }
@@ -242,4 +254,57 @@ void cpbrtCamera(const std::string &name, const ParamSet &params) {
     renderOptions->CameraParams = params;
     renderOptions->CameraToWorld = Inverse(curTransform);
     namedCoordinateSystems["camera"] = renderOptions->CameraToWorld;
+}
+
+// World API.
+
+void cpbrtWorldBegin() {
+    VERIFY_OPTIONS("WorldBegin");
+    currentApiState = APIState::WorldBlock;
+    for (int i = 0; i < MaxTransforms; ++i) {
+        // Reset all CTMs as identity matrices.
+        curTransform[i] = Transform();
+    }
+    activeTransformBits = AllTransformsBits;
+    namedCoordinateSystems["world"] = curTransform;
+}
+
+void cpbrtAttributeBegin() {
+    VERIFY_WORLD("AttributeBegin");
+    pushedGraphicsStates.push_back(graphicsState);
+    pushedTransforms.push_back(curTransform);
+    pushedActiveTransformBits.push_back(activeTransformBits);
+}
+
+void cpbrtAttributeEnd() {
+    VERIFY_WORLD("AttributeEnd");
+    if (!pushedGraphicsStates.size()) {
+        Error("Unmatched cpbrtAttributeEnd() encountered. Ignoring it."); 
+        return;
+    }
+    graphicsState = pushedGraphicsStates.back();
+    pushedGraphicsStates.pop_back();
+    curTransform = pushedTransforms.back();
+    pushedTransforms.pop_back();
+    activeTransformBits = pushedActiveTransformBits.back();
+    pushedActiveTransformBits.pop_back();
+}
+
+void cpbrtTransformBegin() {
+    VERIFY_WORLD("TransformBegin");
+    pushedTransforms.push_back(curTransform);
+    pushedActiveTransformBits.push_back(activeTransformBits);
+}
+
+void cpbrtTransformEnd() {
+    VERIFY_WORLD("TransformEnd");
+    if (!pushedTransforms.size()) {
+        Error(
+            "Unmatched cpbrtTransformEnd() encountered. Ignoring it.");
+        return;
+    }
+    curTransform = pushedTransforms.back();
+    pushedTransforms.pop_back();
+    activeTransformBits = pushedActiveTransformBits.back();
+    pushedActiveTransformBits.pop_back();
 }

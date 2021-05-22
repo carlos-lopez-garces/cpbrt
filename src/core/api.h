@@ -71,3 +71,19 @@ void cpbrtAccelerator(const std::string &name, const ParamSet &params);
 void cpbrtIntegrator(const std::string &name, const ParamSet &params);
 
 void cpbrtCamera(const std::string &name, const ParamSet &params);
+
+// World API.
+
+void cpbrtWorldBegin();
+
+// Pushes the current graphics state and transformations onto the stack.
+void cpbrtAttributeBegin();
+
+// Pops the current graphics state and transformations from the stack.
+void cpbrtAttributeEnd();
+
+// Pushes the CTMs onto the stack.
+void cpbrtTransformBegin() {
+
+// Pops transformations from the stack.
+void cpbrtTransformEnd();
