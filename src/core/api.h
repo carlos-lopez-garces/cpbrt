@@ -1,4 +1,5 @@
 #include "cpbrt.h"
+#include "paramset.h"
 
 // Initialization options stored for global access.
 Options CpbrtOptions;
@@ -19,6 +20,12 @@ void cpbrtInit(const Options &opt);
 void cpbrtCleanup();
 
 // Transformations API.
+
+void cpbrtActiveTransformAll();
+
+void cpbrtActiveTransformEndTime();
+
+void cpbrtActiveTransformStartTime();
 
 // Initializes all the current transformation matrices (CTMs) as identity matrices.
 void cpbrtIdentity();
@@ -50,3 +57,17 @@ void cpbrtCoordinateSystem(const std::string &name);
 
 // Sets the named saved transformations as the current ones.
 void cpbrtCoordSysTransform(const std::string &name);
+
+// Options API.
+
+void cpbrtPixelFilter(const std::string &name, const ParamSet &params);
+
+void cpbrtFilm(const std::string &type, const ParamSet &params);
+
+void cpbrtSampler(const std::string &name, const ParamSet &params);
+
+void cpbrtAccelerator(const std::string &name, const ParamSet &params);
+
+void cpbrtIntegrator(const std::string &name, const ParamSet &params);
+
+void cpbrtCamera(const std::string &name, const ParamSet &params);

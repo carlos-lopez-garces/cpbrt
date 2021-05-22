@@ -30,6 +30,28 @@ public:
     }
 };
 
+// Options that can be set in the OptionsBlock state.
+struct RenderOptions {
+    std::string FilterName = "box";
+    ParamSet FilterParams;
+
+    std::string FilmName = "image";
+    ParamSet FilmParams;
+
+    std::string SamplerName = "stratified";
+    ParamSet SamplerParams;
+
+    std::string AcceleratorName = "bvh";
+    ParamSet AcceleratorParams;
+
+    std::string IntegratorName = "path";
+    ParamSet IntegratorParams;
+
+    std::string CameraName = "perspective";
+    ParamSet CameraParams;
+    TransformSet CameraToWorld;
+};
+
 // API static data.
 
 // Current transformation matrices (CTMs).
@@ -38,6 +60,9 @@ static uint32_t activeTransformBits = AllTransformsBits;
 
 // Saved CTMs.
 static std::map<std::string, TransformSet> namedCoordinateSystems;
+
+// Scene-wide global options set in the OptionsBlock state.
+static std::unique_ptr<RenderOptions> renderOptions;
 
 // API macros.
 
@@ -88,6 +113,7 @@ void cpbrtInit(const Options &opt) {
         Error("cpbrtInit() has already been called.");
     }
     currentApiState = APIState::OptionsBlock;
+    renderOptions.reset(new RenderOptions());
 
     SampledSpectrum::Init();
 }
@@ -99,9 +125,22 @@ void cpbrtCleanup() {
         Error("cpbrtCleanup() called while inside world block.");
     }
     currentApiState = APIState::Uninitialized;
+    renderOptions.reset(nullptr);
 }
 
 // Transformations API.
+
+void cpbrtActiveTransformAll() {
+    activeTransformBits = AllTransformsBits;
+}
+
+void cpbrtActiveTransformEndTime() {
+    activeTransformBits = EndTransformBits;
+}
+
+void cpbrtActiveTransformStartTime() {
+    activeTransformBits = StartTransformBits;
+}
 
 void cpbrtIdentity() {
     VERIFY_INITIALIZED("Identity");
@@ -163,4 +202,44 @@ void cpbrtCoordSysTransform(const std::string &name) {
     } else {
         Warning("Couldn't find named coordinate system \"%s\"", name.c_str());
     }
+}
+
+// Options API.
+
+void cpbrtPixelFilter(const std::string &name, const ParamSet &params) {
+    VERIFY_OPTIONS("PixelFilter");
+    renderOptions->FilterName = name;
+    renderOptions->FilterParams = params;
+}
+
+void cpbrtFilm(const std::string &type, const ParamSet &params) {
+    VERIFY_OPTIONS("Film");
+    renderOptions->FilmName = type;
+    renderOptions->FilmParams = params;
+}
+
+void cpbrtSampler(const std::string &name, const ParamSet &params) {
+    VERIFY_OPTIONS("Sampler");
+    renderOptions->SamplerName = name;
+    renderOptions->SamplerParams = params;
+}
+
+void cpbrtAccelerator(const std::string &name, const ParamSet &params) {
+    VERIFY_OPTIONS("Accelerator");
+    renderOptions->AcceleratorName = name;
+    renderOptions->AcceleratorParams = params;
+}
+
+void cpbrtIntegrator(const std::string &name, const ParamSet &params) {
+    VERIFY_OPTIONS("Integrator");
+    renderOptions->IntegratorName = name;
+    renderOptions->IntegratorParams = params;
+}
+
+void cpbrtCamera(const std::string &name, const ParamSet &params) {
+    VERIFY_OPTIONS("Camera");
+    renderOptions->CameraName = name;
+    renderOptions->CameraParams = params;
+    renderOptions->CameraToWorld = Inverse(curTransform);
+    namedCoordinateSystems["camera"] = renderOptions->CameraToWorld;
 }
