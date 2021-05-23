@@ -25,3 +25,12 @@ void PlasticMaterial::ComputeScatteringFunctions(
         // TODO: implement when glossy specular BxDFs are ready.
     }
 }
+
+PlasticMaterial *CreatePlasticMaterial(const TextureParams &mp) {
+    std::shared_ptr<Texture<Spectrum>> Kd = mp.GetSpectrumTexture("Kd", Spectrum(0.25f));
+    std::shared_ptr<Texture<Spectrum>> Ks = mp.GetSpectrumTexture("Ks", Spectrum(0.25f));
+    std::shared_ptr<Texture<Float>> roughness = mp.GetFloatTexture("roughness", .1f);
+    std::shared_ptr<Texture<Float>> bumpMap = mp.GetFloatTextureOrNull("bumpmap");
+    bool remapRoughness = mp.FindBool("remaproughness", true);
+    return new PlasticMaterial(Kd, Ks, roughness, bumpMap, remapRoughness);
+}

@@ -42,3 +42,5 @@ public:
         bool allowMultipleLobes
     ) const;
 };
+
+PlasticMaterial *CreatePlasticMaterial(const TextureParams &mp);
