@@ -13,3 +13,7 @@ public:
         return value;
     }
 };
+
+ConstantTexture<Float> *CreateConstantFloatTexture(const Transform &tex2world, const TextureParams &tp);
+
+ConstantTexture<Spectrum> *CreateConstantSpectrumTexture(const Transform &tex2world, const TextureParams &tp);
