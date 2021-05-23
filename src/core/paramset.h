@@ -103,3 +103,89 @@ private:
     std::vector<std::shared_ptr<ParamSetItem<std::string>>> textures;
     static std::map<std::string, Spectrum> cachedSpectra;
 };
+
+class TextureParams {
+private:
+    std::map<std::string, std::shared_ptr<Texture<Float>>> &floatTextures;
+    std::map<std::string, std::shared_ptr<Texture<Spectrum>>> &spectrumTextures;
+    const ParamSet &geomParams;
+    const ParamSet &materialParams;
+
+public:
+    TextureParams(
+        const ParamSet &geomParams, const ParamSet &materialParams,
+        std::map<std::string, std::shared_ptr<Texture<Float>>> &fTex,
+        std::map<std::string, std::shared_ptr<Texture<Spectrum>>> &sTex
+    ) : floatTextures(fTex),
+        spectrumTextures(sTex),
+        geomParams(geomParams),
+        materialParams(materialParams)
+    {}
+
+    // The following return the texture of the input name. The search is done in the 
+    // following order:
+    // 1. The shape (a whole texture).
+    // 2. The material (a whole texture).
+    // 3. A constant value from the shape (a single value).
+    // 4. A constant value from the material (a single value).
+    // 5. The input default value (a single value).
+
+    std::shared_ptr<Texture<Spectrum>> GetSpectrumTexture(
+        const std::string &n, const Spectrum &default
+    ) const;
+
+    std::shared_ptr<Texture<Spectrum>> GetSpectrumTextureOrNull(
+        const std::string &n
+    ) const;
+
+    std::shared_ptr<Texture<Float>> GetFloatTexture(
+        const std::string &n, Float def
+    ) const;
+
+    std::shared_ptr<Texture<Float>> GetFloatTextureOrNull(
+        const std::string &n
+    ) const;
+
+    // The following return the 1st value of the corresponding type associated with 
+    // the input name, or the provided default value if not found. The shape is searched
+    // first, then the material.
+    //
+    // These are not texture functions. These are functions that make TextureParams act
+    // as a regular ParamSet.
+
+    Float FindFloat(const std::string &n, Float d) const {
+        return geomParams.FindOneFloat(n, materialParams.FindOneFloat(n, d));
+    }
+
+    std::string FindString(const std::string &n, const std::string &d = "") const {
+        return geomParams.FindOneString(n, materialParams.FindOneString(n, d));
+    }
+
+    std::string FindFilename(const std::string &n, const std::string &d = "") const {
+        return geomParams.FindOneFilename(n, materialParams.FindOneFilename(n, d));
+    }
+
+    int FindInt(const std::string &n, int d) const {
+        return geomParams.FindOneInt(n, materialParams.FindOneInt(n, d));
+    }
+
+    bool FindBool(const std::string &n, bool d) const {
+        return geomParams.FindOneBool(n, materialParams.FindOneBool(n, d));
+    }
+
+    Point3f FindPoint3f(const std::string &n, const Point3f &d) const {
+        return geomParams.FindOnePoint3f(n, materialParams.FindOnePoint3f(n, d));
+    }
+
+    Vector3f FindVector3f(const std::string &n, const Vector3f &d) const {
+        return geomParams.FindOneVector3f(n, materialParams.FindOneVector3f(n, d));
+    }
+
+    Normal3f FindNormal3f(const std::string &n, const Normal3f &d) const {
+        return geomParams.FindOneNormal3f(n, materialParams.FindOneNormal3f(n, d));
+    }
+
+    Spectrum FindSpectrum(const std::string &n, const Spectrum &d) const {
+        return geomParams.FindOneSpectrum(n, materialParams.FindOneSpectrum(n, d));
+    }
+};
