@@ -87,3 +87,21 @@ void cpbrtTransformBegin() {
 
 // Pops transformations from the stack.
 void cpbrtTransformEnd();
+
+// Records a named texture in the graphics state.
+void cpbrtTexture(
+    const std::string &name,
+    const std::string &type,
+    const std::string &texname,
+    const ParamSet &params
+);
+
+// Records a material in the graphics state.
+void cpbrtMaterial(const std::string &name, const ParamSet &params);
+
+// Creates a named material.
+void cpbrtMakeNamedMaterial(const std::string &name, const ParamSet &params);
+
+// Records the material of the input name as the current material. cpbrtMakeNamedMaterial
+// must have been called to create such named material.
+void cpbrtNamedMaterial(const std::string &name);

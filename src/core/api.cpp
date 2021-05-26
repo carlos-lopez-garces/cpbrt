@@ -52,9 +52,50 @@ struct RenderOptions {
     TransformSet CameraToWorld;
 };
 
+// An instance of a material.
+struct MaterialInstance {
+    MaterialInstance() = default;
+
+    MaterialInstance(
+        const std::string &name,
+        const std::shared_ptr<Material> &mtl,
+        ParamSet params
+    ) : name(name), material(mtl), params(std::move(params))
+    {}
+
+    std::string name;
+    std::shared_ptr<Material> material;
+    ParamSet params;
+};
+
 // Stack of attributes.
 struct GraphicsState {
+    using FloatTextureMap = std::map<std::string, std::shared_ptr<Texture<Float>>>;
+    std::shared_ptr<FloatTextureMap> floatTextures;
+    bool floatTexturesShared = false;
 
+    using SpectrumTextureMap = std::map<std::string, std::shared_ptr<Texture<Spectrum>>>;
+    std::shared_ptr<SpectrumTextureMap> spectrumTextures;
+    bool spectrumTexturesShared = false;
+
+    std::shared_ptr<MaterialInstance> currentMaterial;
+    ParamSet materialParams;
+    std::string material = "matte";
+
+    using NamedMaterialMap = std::map<std::string, std::shared_ptr<MaterialInstance>>;
+    std::shared_ptr<NamedMaterialMap> namedMaterials;
+    bool namedMaterialsShared = false;
+
+    GraphicsState() 
+        : floatTextures(std::make_shared<FloatTextureMap>()),
+          spectrumTextures(std::make_shared<SpectrumTextureMap>()),
+          namedMaterials(std::make_shared<NamedMaterialMap>()) {
+        
+        ParamSet empty;
+        TextureParams tp(empty, empty, *floatTextures, *spectrumTextures);
+        std::shared_ptr<Material> mtl(CreateMatteMaterial(tp));
+        currentMaterial = std::make_shared<MaterialInstance>("matte", mtl, ParamSet());
+    }
 };
 
 // API static data.
@@ -307,4 +348,147 @@ void cpbrtTransformEnd() {
     pushedTransforms.pop_back();
     activeTransformBits = pushedActiveTransformBits.back();
     pushedActiveTransformBits.pop_back();
+}
+
+void cpbrtTexture(
+    const std::string &name,
+    const std::string &type,
+    const std::string &texname,
+    const ParamSet &params
+) {
+    VERIFY_WORLD("Texture");
+
+    TextureParams tp(params, params, *graphicsState.floatTextures, *graphicsState.spectrumTextures);
+
+    if (type == "float") {
+        if (graphicsState.floatTextures->find(name) != graphicsState.floatTextures->end()) {
+            Warning("Texture \"%s\" being redefined", name.c_str());
+        }
+            
+        std::shared_ptr<Texture<Float>> ft = MakeFloatTexture(texname, curTransform[0], tp);
+        if (ft) {
+            if (graphicsState.floatTexturesShared) {
+                graphicsState.floatTextures =
+                    std::make_shared<GraphicsState::FloatTextureMap>(*graphicsState.floatTextures);
+                graphicsState.floatTexturesShared = false;
+            }
+            (*graphicsState.floatTextures)[name] = ft;
+        }
+    } else if (type == "color" || type == "spectrum") {
+        if (graphicsState.spectrumTextures->find(name) != graphicsState.spectrumTextures->end()) {
+            Warning("Texture \"%s\" being redefined", name.c_str());
+        }
+
+        std::shared_ptr<Texture<Spectrum>> st = MakeSpectrumTexture(texname, curTransform[0], tp);
+        if (st) {
+            if (graphicsState.spectrumTexturesShared) {
+                graphicsState.spectrumTextures =
+                    std::make_shared<GraphicsState::SpectrumTextureMap>(*graphicsState.spectrumTextures);
+                graphicsState.spectrumTexturesShared = false;
+            }
+            (*graphicsState.spectrumTextures)[name] = st;
+        }
+    } else
+        Error("Texture type \"%s\" unknown.", type.c_str());
+}
+
+void cpbrtMaterial(const std::string &name, const ParamSet &params) {
+    VERIFY_WORLD("Material");
+    ParamSet emptyParams;
+    TextureParams mp(params, emptyParams, *graphicsState.floatTextures, *graphicsState.spectrumTextures);
+    std::shared_ptr<Material> mtl = MakeMaterial(name, mp);
+    graphicsState.currentMaterial = std::make_shared<MaterialInstance>(name, mtl, params);
+}
+
+void cpbrtMakeNamedMaterial(const std::string &name, const ParamSet &params) {
+    VERIFY_WORLD("MakeNamedMaterial");
+    
+    ParamSet emptyParams;
+    TextureParams mp(params, emptyParams, *graphicsState.floatTextures, *graphicsState.spectrumTextures);
+    std::string matName = mp.FindString("type");
+    
+    if (matName == "") {
+        Error("No parameter string \"type\" found in MakeNamedMaterial");
+    }
+
+    std::shared_ptr<Material> mtl = MakeMaterial(matName, mp);
+    
+    if (graphicsState.namedMaterials->find(name) != graphicsState.namedMaterials->end()) {
+        Warning("Named material \"%s\" redefined.", name.c_str());
+    }
+
+    if (graphicsState.namedMaterialsShared) {
+        graphicsState.namedMaterials =
+            std::make_shared<GraphicsState::NamedMaterialMap>(*graphicsState.namedMaterials);
+        graphicsState.namedMaterialsShared = false;
+    }
+    
+    (*graphicsState.namedMaterials)[name] = std::make_shared<MaterialInstance>(matName, mtl, params);
+}
+
+void cpbrtNamedMaterial(const std::string &name) {
+    VERIFY_WORLD("NamedMaterial");
+
+    auto iter = graphicsState.namedMaterials->find(name);
+    if (iter == graphicsState.namedMaterials->end()) {
+        Error("NamedMaterial \"%s\" unknown.", name.c_str());
+        return;
+    }
+    graphicsState.currentMaterial = iter->second;
+}
+
+// Static functions.
+
+std::shared_ptr<Texture<Float>> MakeFloatTexture(
+    const std::string &name,
+    const Transform &tex2world,
+    const TextureParams &tp
+) {
+    Texture<Float> *tex = nullptr;
+    
+    // TODO: add other types.
+    if (name == "constant")
+        tex = CreateConstantFloatTexture(tex2world, tp);
+    else
+        Warning("Float texture \"%s\" unknown.", name.c_str());
+    tp.ReportUnused();
+
+    return std::shared_ptr<Texture<Float>>(tex);
+}
+
+std::shared_ptr<Texture<Spectrum>> MakeSpectrumTexture(
+    const std::string &name,
+    const Transform &tex2world,
+    const TextureParams &tp
+) {
+    Texture<Spectrum> *tex = nullptr;
+
+    // TODO: add other types.
+    if (name == "constant")
+        tex = CreateConstantSpectrumTexture(tex2world, tp);
+    else
+        Warning("Spectrum texture \"%s\" unknown.", name.c_str());
+    tp.ReportUnused();
+
+    return std::shared_ptr<Texture<Spectrum>>(tex);
+}
+
+std::shared_ptr<Material> MakeMaterial(const std::string &name, const TextureParams &mp) {
+    Material *material = nullptr;
+
+    // TODO: add other types.
+    if (name == "" || name == "none")
+        return nullptr;
+    else if (name == "matte")
+        material = CreateMatteMaterial(mp);
+    else if (name == "plastic")
+        material = CreatePlasticMaterial(mp);
+    else {
+        Warning("Material \"%s\" unknown. Using \"matte\".", name.c_str());
+        material = CreateMatteMaterial(mp);
+    }
+    mp.ReportUnused();
+
+    if (!material) Error("Unable to create material \"%s\"", name.c_str());
+    return std::shared_ptr<Material>(material);
 }
