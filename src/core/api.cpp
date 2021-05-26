@@ -50,6 +50,10 @@ struct RenderOptions {
     std::string CameraName = "perspective";
     ParamSet CameraParams;
     TransformSet CameraToWorld;
+
+    std::vector<std::shared_ptr<Light>> lights;
+    ParamSet areaLightParams;
+    std::string areaLight;
 };
 
 // An instance of a material.
@@ -437,6 +441,27 @@ void cpbrtNamedMaterial(const std::string &name) {
     graphicsState.currentMaterial = iter->second;
 }
 
+void cpbrtLightSource(const std::string &name, const ParamSet &params) {
+    VERIFY_WORLD("LightSource");
+    // TODO: create medium interface.
+
+    std::shared_ptr<Light> lt = MakeLight(name, params, curTransform[0], mi);
+
+    if (!lt) {
+        Error("LightSource: light type \"%s\" unknown.", name.c_str());
+    } else {
+        renderOptions->lights.push_back(lt);
+    }
+}
+
+void cpbrtAreaLightSource(const std::string &name, const ParamSet &params) {
+    VERIFY_WORLD("AreaLightSource");
+    graphicsState.areaLight = name;
+    graphicsState.areaLightParams = params;
+    // Unlike cpbrtLightSource, the area light is not created yet: the shapes
+    // that make up its geometry need to be created first.
+}
+
 // Static functions.
 
 std::shared_ptr<Texture<Float>> MakeFloatTexture(
@@ -491,4 +516,25 @@ std::shared_ptr<Material> MakeMaterial(const std::string &name, const TexturePar
 
     if (!material) Error("Unable to create material \"%s\"", name.c_str());
     return std::shared_ptr<Material>(material);
+}
+
+std::shared_ptr<Light> MakeLight(
+    const std::string &name,
+    const ParamSet &paramSet,
+    const Transform &light2world,
+    const MediumInterface &mediumInterface
+) {
+    std::shared_ptr<Light> light;
+
+    // TODO: add other types.
+    if (name == "point") {
+        light =
+            CreatePointLight(light2world, mediumInterface.outside, paramSet);
+    }
+    else {
+        Warning("Light \"%s\" unknown.", name.c_str()); 
+    }
+    paramSet.ReportUnused();
+    
+    return light;
 }

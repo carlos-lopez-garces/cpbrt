@@ -105,3 +105,7 @@ void cpbrtMakeNamedMaterial(const std::string &name, const ParamSet &params);
 // Records the material of the input name as the current material. cpbrtMakeNamedMaterial
 // must have been called to create such named material.
 void cpbrtNamedMaterial(const std::string &name);
+
+void cpbrtLightSource(const std::string &name, const ParamSet &params);
+
+void cpbrtAreaLightSource(const std::string &name, const ParamSet &params);
