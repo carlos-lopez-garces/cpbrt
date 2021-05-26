@@ -139,7 +139,7 @@ The sections I've covered are marked next. Each covered section is accompanied b
 - [ ] 17.2 Alternative Hardware Architectures
 
 A Utilities ([notes/Appendix A](notes/Appendix_A.pdf))
-- [ ] A.1 Main Include File
+- [x] A.1 Main Include File
 - [ ] A.2 Image File Input and Output
 - [ ] A.3 Communicating with the User
 - [x] A.4 Memory Management
