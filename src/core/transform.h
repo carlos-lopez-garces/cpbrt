@@ -158,6 +158,20 @@ public:
     bool SwapsHandedness() const;
 };
 
+Transform Translate(const Vector3f &delta);
+
+Transform Scale(Float x, Float y, Float z);
+
+Transform RotateX(Float theta);
+
+Transform RotateY(Float theta);
+
+Transform RotateZ(Float theta);
+
+Transform Rotate(Float theta, const Vector3f &axis);
+
+Transform LookAt(const Point3f &pos, const Point3f &look, const Vector3f &up);
+
 // Solves the Ax=b linear system using Cramer's rule.
 bool SolveLinearSystem2x2(const Float A[2][2], const Float b[2], Float *x0, Float *x1) {
     Float detA = A[0][0]*A[1][1] - A[0][1]*A[1][0];

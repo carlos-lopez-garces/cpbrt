@@ -286,3 +286,102 @@ bool Transform::SwapsHandedness() const {
     // determinant is negative.
     return upperLeft3x3Determinant < 0.f;
 }
+
+Transform Translate(const Vector3f &delta) {
+    Matrix4x4 m(1, 0, 0, delta.x, 0, 1, 0, delta.y, 0, 0, 1, delta.z, 0, 0, 0, 1);
+    Matrix4x4 minv(1, 0, 0, -delta.x, 0, 1, 0, -delta.y, 0, 0, 1, -delta.z, 0, 0, 0, 1);
+    return Transform(m, minv);
+}
+
+Transform Scale(Float x, Float y, Float z) {
+    Matrix4x4 m(x, 0, 0, 0, 0, y, 0, 0, 0, 0, z, 0, 0, 0, 0, 1);
+    Matrix4x4 minv(1 / x, 0, 0, 0, 0, 1 / y, 0, 0, 0, 0, 1 / z, 0, 0, 0, 0, 1);
+    return Transform(m, minv);
+}
+
+Transform RotateX(Float theta) {
+    Float sinTheta = std::sin(Radians(theta));
+    Float cosTheta = std::cos(Radians(theta));
+    Matrix4x4 m(1, 0, 0, 0, 0, cosTheta, -sinTheta, 0, 0, sinTheta, cosTheta, 0, 0, 0, 0, 1);
+    return Transform(m, Transpose(m));
+}
+
+Transform RotateY(Float theta) {
+    Float sinTheta = std::sin(Radians(theta));
+    Float cosTheta = std::cos(Radians(theta));
+    Matrix4x4 m(cosTheta, 0, sinTheta, 0, 0, 1, 0, 0, -sinTheta, 0, cosTheta, 0, 0, 0, 0, 1);
+    return Transform(m, Transpose(m));
+}
+
+Transform RotateZ(Float theta) {
+    Float sinTheta = std::sin(Radians(theta));
+    Float cosTheta = std::cos(Radians(theta));
+    Matrix4x4 m(cosTheta, -sinTheta, 0, 0, sinTheta, cosTheta, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1);
+    return Transform(m, Transpose(m));
+}
+
+Transform Rotate(Float theta, const Vector3f &axis) {
+    Vector3f a = Normalize(axis);
+    Float sinTheta = std::sin(Radians(theta));
+    Float cosTheta = std::cos(Radians(theta));
+    Matrix4x4 m;
+
+    // Compute rotation of first basis vector.
+    m.m[0][0] = a.x * a.x + (1 - a.x * a.x) * cosTheta;
+    m.m[0][1] = a.x * a.y * (1 - cosTheta) - a.z * sinTheta;
+    m.m[0][2] = a.x * a.z * (1 - cosTheta) + a.y * sinTheta;
+    m.m[0][3] = 0;
+
+    // Compute rotations of second and third basis vectors.
+    m.m[1][0] = a.x * a.y * (1 - cosTheta) + a.z * sinTheta;
+    m.m[1][1] = a.y * a.y + (1 - a.y * a.y) * cosTheta;
+    m.m[1][2] = a.y * a.z * (1 - cosTheta) - a.x * sinTheta;
+    m.m[1][3] = 0;
+
+    m.m[2][0] = a.x * a.z * (1 - cosTheta) - a.y * sinTheta;
+    m.m[2][1] = a.y * a.z * (1 - cosTheta) + a.x * sinTheta;
+    m.m[2][2] = a.z * a.z + (1 - a.z * a.z) * cosTheta;
+    m.m[2][3] = 0;
+
+    return Transform(m, Transpose(m));
+}
+
+Transform LookAt(const Point3f &pos, const Point3f &look, const Vector3f &up) {
+    Matrix4x4 cameraToWorld;
+
+    // Initialize fourth column of viewing matrix.
+    cameraToWorld.m[0][3] = pos.x;
+    cameraToWorld.m[1][3] = pos.y;
+    cameraToWorld.m[2][3] = pos.z;
+    cameraToWorld.m[3][3] = 1;
+
+    // Initialize first three columns of viewing matrix.
+    Vector3f dir = Normalize(look - pos);
+    if (Cross(Normalize(up), dir).Length() == 0) {
+        Error(
+            "\"up\" vector (%f, %f, %f) and viewing direction (%f, %f, %f) "
+            "passed to LookAt are pointing in the same direction.  Using "
+            "the identity transformation.",
+            up.x, up.y, up.z, dir.x, dir.y, dir.z);
+        return Transform();
+    }
+
+    Vector3f right = Normalize(Cross(Normalize(up), dir));
+
+    Vector3f newUp = Cross(dir, right);
+
+    cameraToWorld.m[0][0] = right.x;
+    cameraToWorld.m[1][0] = right.y;
+    cameraToWorld.m[2][0] = right.z;
+    cameraToWorld.m[3][0] = 0.;
+    cameraToWorld.m[0][1] = newUp.x;
+    cameraToWorld.m[1][1] = newUp.y;
+    cameraToWorld.m[2][1] = newUp.z;
+    cameraToWorld.m[3][1] = 0.;
+    cameraToWorld.m[0][2] = dir.x;
+    cameraToWorld.m[1][2] = dir.y;
+    cameraToWorld.m[2][2] = dir.z;
+    cameraToWorld.m[3][2] = 0.;
+
+    return Transform(Inverse(cameraToWorld), cameraToWorld);
+}
