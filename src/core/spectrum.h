@@ -1,3 +1,6 @@
+#ifndef CPBRT_CORE_SPECTRUM_H
+#define CPBRT_CORE_SPECTRUM_H
+
 #include <cmath>
 
 #include "cpbrt.h"
@@ -575,3 +578,5 @@ public:
         FromXYZ(xyz);
     }
 };
+
+#endif // CPBRT_CORE_SPECTRUM_H

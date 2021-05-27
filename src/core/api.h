@@ -1,3 +1,6 @@
+#ifndef CPBRT_CORE_API_H
+#define CPBRT_CORE_API_H
+
 #include "cpbrt.h"
 #include "paramset.h"
 
@@ -109,3 +112,9 @@ void cpbrtNamedMaterial(const std::string &name);
 void cpbrtLightSource(const std::string &name, const ParamSet &params);
 
 void cpbrtAreaLightSource(const std::string &name, const ParamSet &params);
+
+// Main program API.
+
+void cpbrtParseFile(std::string filename);
+
+#endif // CPBRT_CORE_API_H

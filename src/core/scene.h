@@ -1,3 +1,6 @@
+#ifndef CPBRT_CORE_SCENE_H
+#define CPBRT_CORE_SCENE_H
+
 #include <memory>
 
 #include "geometry.h"
@@ -35,3 +38,5 @@ public:
     // P is for "predicate". No intersection details are returned.
     bool IntersectP(const Ray &ray) const;
 };
+
+#endif // CPBRT_CORE_SCENE_H

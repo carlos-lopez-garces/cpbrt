@@ -1,3 +1,6 @@
+#ifndef CPBRT_CORE_TEXTURE_H
+#define CPBRT_CORE_TEXTURE_H
+
 #include "interaction.h"
 #include "geometry.h"
 
@@ -38,3 +41,5 @@ public:
     // Evaluates the texture at the point mapped to the intersection point.
     virtual T Evaluate(const SurfaceInteraction &si) const = 0;
 };
+
+#endif // CPBRT_CORE_TEXTURE_H

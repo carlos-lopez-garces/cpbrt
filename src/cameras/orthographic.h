@@ -1,3 +1,6 @@
+#ifndef CPBRT_CAMERAS_ORTHOGRAPHIC_H
+#define CPBRT_CAMERAS_ORTHOGRAPHIC_H
+
 #include "core/camera.h"
 
 class OrthographicCamera : public ProjectiveCamera {
@@ -51,3 +54,5 @@ public:
 
     Float GenerateRayDifferential(const CameraSample &sample, RayDifferential *rd) const;
 };
+
+#endif // CPBRT_CAMERAS_ORTHOGRAPHIC_H

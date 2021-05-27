@@ -1,3 +1,6 @@
+#ifndef CPBRT_CORE_FILTER_H
+#define CPBRT_CORE_FILTER_H
+
 #include "geometry.h"
 
 class Filter {
@@ -14,3 +17,5 @@ public:
     // relation to the filter's origin (x, y), that is, (x - sampleX, y - sampleY).
     virtual Float Evaluate(const Point2f &p) const = 0;
 };
+
+#endif // CPBRT_CORE_FILTER_H

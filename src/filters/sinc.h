@@ -1,3 +1,6 @@
+#ifndef CPBRT_FILTERS_SINC_H
+#define CPBRT_FILTERS_SINC_H
+
 #include <cmath>
 
 #include "core/filter.h"
@@ -40,3 +43,5 @@ public:
         return Sinc(x) * lanczos;
     }
 };
+
+#endif // PBRT_FILTERS_SINC_H

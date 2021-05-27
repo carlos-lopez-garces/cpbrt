@@ -1,3 +1,6 @@
+#ifndef CPBRT_LIGHTS_POINT_H
+#define CPBRT_LIGHTS_POINT_H
+
 #include "core/light.h"
 #include "core/spectrum.h"
 #include "core/transform.h"
@@ -48,3 +51,5 @@ public:
     // directions.
     Spectrum Power() const;
 };
+
+#endif // CPBRT_LIGHTS_POINT_H

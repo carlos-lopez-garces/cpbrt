@@ -1,3 +1,6 @@
+#ifndef CPBRT_CORE_INTERACTION_H
+#define CPBRT_CORE_INTERACTION_H
+
 #include "cpbrt.h"
 #include "geometry.h"
 #include "memory.h"
@@ -130,3 +133,5 @@ public:
         TransportMode mode = TransportMode::Radiance
     );
 };
+
+#endif // CPBRT_CORE_INTERACTION_H

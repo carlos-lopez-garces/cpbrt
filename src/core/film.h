@@ -1,3 +1,6 @@
+#ifndef CPBRT_CORE_FILM_H
+#define CPBRT_CORE_FILM_H
+
 #include <memory>
 #include <mutex>
 #include <string>
@@ -244,3 +247,5 @@ struct FilmTilePixel {
     Spectrum contribSum = 0.f;
     Float filterWeightSum = 0.f;
 };
+
+#endif // CPBRT_CORE_FILM_H

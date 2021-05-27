@@ -1,3 +1,6 @@
+#ifndef CPBRT_CORE_GEOMETRY_H
+#define CPBRT_CORE_GEOMETRY_H
+
 #include <cmath>
 #include <iterator>
 
@@ -1222,3 +1225,5 @@ inline Float SphericalPhi(const Vector3f &v) {
     Float phi = std::atan2(v.y, v.x);
     return (phi < 0) ? (phi + 2*Pi) : phi;
 }
+
+#endif // CPBRT_CORE_GEOMETRY_H

@@ -1,3 +1,6 @@
+#ifndef CPBRT_MATERIALS_MATTE_H
+#define CPBRT_MATERIALS_MATTE_H
+
 #include <memory>
 
 #include "core/interaction.h"
@@ -39,3 +42,5 @@ public:
 };
 
 MatteMaterial *CreateMatteMaterial(const TextureParams &mp);
+
+#endif // CPBRT_MATERIALS_MATTE_H

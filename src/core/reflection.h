@@ -1,3 +1,6 @@
+#ifndef CPBRT_CORE_REFLECTION_H
+#define CPBRT_CORE_REFLECTION_H
+
 #include "cpbrt.h"
 #include "geometry.h"
 #include "interaction.h"
@@ -340,3 +343,5 @@ inline int BSDF::NumComponents(BxDFType flags) const {
     }
     return num;
 }
+
+#endif // CPBRT_CORE_REFLECTION_H

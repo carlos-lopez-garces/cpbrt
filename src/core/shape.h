@@ -1,3 +1,6 @@
+#ifndef CPBRT_CORE_SHAPE_H
+#define CPBRT_CORE_SHAPE_H
+
 #include "transform.h"
 #include "geometry.h"
 
@@ -77,3 +80,5 @@ public:
     // shape is visible from the given Interaction point. 
     virtual Float Pdf(const Interaction &it, const Vector3f &wi) const;    
 };
+
+#endif // CPBRT_CORE_SHAPE_H

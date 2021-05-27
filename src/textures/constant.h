@@ -1,3 +1,6 @@
+#ifndef CPBRT_TEXTURES_CONSTANT_H
+#define CPBRT_TEXTURES_CONSTANT_H
+
 #include "core/interaction.h"
 #include "core/texture.h"
 
@@ -17,3 +20,5 @@ public:
 ConstantTexture<Float> *CreateConstantFloatTexture(const Transform &tex2world, const TextureParams &tp);
 
 ConstantTexture<Spectrum> *CreateConstantSpectrumTexture(const Transform &tex2world, const TextureParams &tp);
+
+#endif // CPBRT_TEXTURES_CONSTANT_H

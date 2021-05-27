@@ -1,3 +1,6 @@
+#ifndef CPBRT_INTEGRATORS_DIRECT_LIGHTING_H
+#define CPBRT_INTEGRATORS_DIRECT_LIGHTING_H
+
 #include <memory>
 
 #include "core/integrator.h"
@@ -44,3 +47,5 @@ public:
         int depth
     ) const;
 }
+
+#endif // CPBRT_INTEGRATORS_DIRECT_LIGHTING_H

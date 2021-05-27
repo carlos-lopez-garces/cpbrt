@@ -1,3 +1,6 @@
+#ifndef CPBRT_FILTERS_GAUSSIAN_H
+#define CPBRT_FILTERS_GAUSSIAN_H
+
 #include <cmath>
 
 #include "core/filter.h"
@@ -32,3 +35,5 @@ public:
         );
     }
 };
+
+#endif // CPBRT_FILTERS_GAUSSIAN_H

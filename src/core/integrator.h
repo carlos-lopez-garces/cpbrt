@@ -1,3 +1,6 @@
+#ifndef CPBRT_CORE_INTEGRATOR_H
+#define CPBRT_CORE_INTEGRATOR_H
+
 #include <memory>
 
 #include "interaction.h"
@@ -82,3 +85,5 @@ public:
         int depth = 0
     ) const = 0;
 };
+
+#endif // CPBRT_CORE_INTEGRATOR_H

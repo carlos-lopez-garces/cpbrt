@@ -1,3 +1,6 @@
+#ifndef CPBRT_CORE_LIGHT_H
+#define CPBRT_CORE_LIGHT_H
+
 #include "sampler.h"
 #include "scene.h"
 #include "spectrum.h"
@@ -108,3 +111,5 @@ public:
     // TODO: implement when implementing volume scattering.
     Spectrum Tr(const Scene &scene, Sampler &sampler) const;
 };
+
+#endif // CPBRT_CORE_LIGHT_H

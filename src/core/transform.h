@@ -1,3 +1,6 @@
+#ifndef CPBRT_CORE_TRANSFORM_H
+#define CPBRT_CORE_TRANSFORM_H
+
 #include "cpbrt.h"
 #include "geometry.h"
 #include "interaction.h"
@@ -175,3 +178,5 @@ bool SolveLinearSystem2x2(const Float A[2][2], const Float b[2], Float *x0, Floa
     }
     return true;
 }
+
+#endif // CPBRT_CORE_TRANSFORM_H

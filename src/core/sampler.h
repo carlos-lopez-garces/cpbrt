@@ -1,3 +1,6 @@
+#ifndef CPBRT_CORE_SAMPLER_H
+#define CPBRT_CORE_SAMPLER_H
+
 #include <cstdint>
 #include <memory>
 #include <vector>
@@ -186,3 +189,5 @@ public:
     Float Get1D();
     Point2f Get2D();
 };
+
+#endif // CPBRT_CORE_SAMPLER_H

@@ -1,3 +1,6 @@
+#ifndef CPBRT_CAMERAS_PERSPECTIVE_H
+#define CPBRT_CAMERAS_PERSPECTIVE_H
+
 #include <cmath>
 
 #include "core/cpbrt.h"
@@ -52,3 +55,5 @@ public:
 
     Float GenerateRayDifferential(const CameraSample &sample, RayDifferential *rd) const;
 };
+
+#endif // CPBRT_CAMERAS_PERSPECTIVE_H

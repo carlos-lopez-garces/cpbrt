@@ -1,3 +1,6 @@
+#ifndef CPBRT_FILTERS_MITCHELL_H
+#define CPBRT_FILTERS_MITCHELL_H
+
 #include <cmath>
 
 #include "core/filter.h"
@@ -37,3 +40,5 @@ public:
         }
     }
 };
+
+#endif // CPBRT_FILTERS_MITCHELL_H

@@ -1,3 +1,6 @@
+#ifndef CPBRT_FILTERS_TRIANGLE_H
+#define CPBRT_FILTERS_TRIANGLE_H
+
 #include "core/filter.h"
 
 class TriangleFilter : public Filter {
@@ -8,3 +11,5 @@ public:
     // linearly as the distance of the point to the filter's center increases.
     Float Evaluate(const Point2f &p) const;
 };
+
+#endif // CPBRT_FILTERS_TRIANGLE_H

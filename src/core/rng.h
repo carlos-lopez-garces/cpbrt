@@ -1,3 +1,6 @@
+#ifndef CPBRT_CORE_RNG_H
+#define CPBRT_CORE_RNG_H
+
 #include <algorithm>
 
 #include "cpbrt.h"
@@ -82,3 +85,5 @@ inline uint32_t RNG::UniformUInt32() {
 
     return (xorshifted >> rot) | (xorshifted << ((~rot + 1u) & 31));
 }
+
+#endif // CPBRT_CORE_RNG_H

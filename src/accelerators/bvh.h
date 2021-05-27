@@ -1,3 +1,6 @@
+#ifndef CPBRT_ACCELERATORS_BVH_H
+#define CPBRT_ACCELERATORS_BVH_H
+
 #include <memory>
 #include <vector>
 
@@ -83,3 +86,5 @@ public:
 
     bool IntersectP(const Ray &ray) const;
 };
+
+#endif // CPBRT_ACCELERATORS_BVH_H

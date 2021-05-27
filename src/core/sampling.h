@@ -1,3 +1,6 @@
+#ifndef CPBRT_CORE_SAMPLING_H
+#define CPBRT_CORE_SAMPLING_H
+
 #include <vector>
 
 #include "cpbrt.h"
@@ -244,3 +247,5 @@ inline Float PowerHeuristic(int nf, Float fPdf, int ng, Float gPdf) {
     Float g = ng * gPdf;
     return (f * f) / (f * f + g * g);
 }
+
+#endif // CPBRT_CORE_SAMPLING_H

@@ -1,3 +1,6 @@
+#ifndef CPBRT_SAMPLERS_STRATIFIED_H
+#define CPBRT_SAMPLERS_STRATIFIED_H
+
 #include "core/sampler.h"
 
 class StratifiedSampler : PixelSampler {
@@ -19,3 +22,5 @@ public:
 
     std::unique_ptr<Sampler> Clone(int seed);
 };
+
+#endif // CPBRT_SAMPLERS_STRATIFIED_H

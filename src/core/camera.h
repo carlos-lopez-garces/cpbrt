@@ -1,3 +1,6 @@
+#ifndef CPBRT_CORE_CAMERA_H
+#define CPBRT_CORE_CAMERA_H
+
 #include "cpbrt.h"
 #include "geometry.h"
 #include "transform.h"
@@ -105,3 +108,5 @@ public:
         RasterToCamera = Inverse(CameraToScreen) * RasterToScreen;
     }
 };
+
+#endif // CPBRT_CORE_CAMERA_H

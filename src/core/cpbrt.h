@@ -1,3 +1,6 @@
+#ifndef CPBRT_CORE_PBRT_H
+#define CPBRT_CORE_PBRT_H
+
 #include <algorithm>
 #ifdef CPBRT_HAVE_ALLOCA_H
 #include <alloca.h>
@@ -160,3 +163,5 @@ inline double BitsToFloat(uint64_t bits) {
     memcpy(&f, &bits, sizeof(uint64_t));
     return f;
 }
+
+#endif // CPBRT_CORE_PBRT_H

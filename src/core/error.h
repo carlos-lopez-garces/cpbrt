@@ -3,8 +3,8 @@
 #pragma once
 #endif
 
-#ifndef PBRT_CORE_ERROR_H
-#define PBRT_CORE_ERROR_H
+#ifndef CPBRT_CORE_ERROR_H
+#define CPBRT_CORE_ERROR_H
 
 #include "cpbrt.h"
 
@@ -18,4 +18,4 @@
 void Warning(const char *, ...) PRINTF_FUNC;
 void Error(const char *, ...) PRINTF_FUNC;
 
-#endif
+#endif // CPBRT_CORE_ERROR_H

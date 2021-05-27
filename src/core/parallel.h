@@ -1,3 +1,6 @@
+#ifndef CPBRT_CORE_PARALLEL_H
+#define CPBRT_CORE_PARALLEL_H
+
 #include <atomic>
 
 #include "cpbrt.h"
@@ -42,3 +45,5 @@ public:
         } while (!bits.compare_exchange_weak(oldBits, newBits));
     }
 };
+
+#endif // CPBRT_CORE_PARALLEL_H

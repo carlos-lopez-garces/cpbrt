@@ -1,3 +1,6 @@
+#ifndef CPBRT_INTEGRATORS_PATH_H
+#define CPBRT_INTEGRATORS_PATH_H
+
 #include "core/integrator.h"
 
 class PathIntegrator : public SamplerIntegrator {
@@ -23,3 +26,5 @@ public:
         int depth
     ) const;
 };
+
+#endif // CPBRT_INTEGRATORS_PATH_H

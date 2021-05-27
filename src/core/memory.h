@@ -1,3 +1,6 @@
+#ifndef CPBRT_CORE_MEMORY_H
+#define CPBRT_CORE_MEMORY_H
+
 #include <cstdint>
 #include <list>
 #include <utility>
@@ -51,3 +54,5 @@ public:
         availableBlocks.splice(availableBlocks.begin(), usedBlocks);
     }
 };
+
+#endif // CPBRT_CORE_MEMORY_H

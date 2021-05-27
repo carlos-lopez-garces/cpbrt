@@ -1,3 +1,6 @@
+#ifndef CPBRT_CORE_MATERIAL_H
+#define CPBRT_CORE_MATERIAL_H
+
 #include "interaction.h"
 #include "memory.h"
 
@@ -18,3 +21,5 @@ public:
       bool allowMultipleLobes
   ) const = 0;  
 };
+
+#endif // CPBRT_CORE_MATERIAL_H

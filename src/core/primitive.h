@@ -1,3 +1,6 @@
+#ifndef CPBRT_CORE_PRIMITIVE_H
+#define CPBRT_CORE_PRIMITIVE_H
+
 #include <memory>
 
 #include "geometry.h"
@@ -89,3 +92,5 @@ public:
         bool allowMultipleLobes
     ) const;
 };
+
+#endif // CPBRT_CORE_PRIMITIVE_H

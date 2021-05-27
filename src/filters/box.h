@@ -1,3 +1,6 @@
+#ifndef CPBRT_FILTERS_BOX_H
+#define CPBRT_FILTERS_BOX_H
+
 #include "core/filter.h"
 
 class BoxFilter : public Filter {
@@ -9,3 +12,5 @@ public:
     // the filter's extent.
     Float Evaluate(const Point2f &p) const;
 };
+
+#endif // CPBRT_FILTERS_BOX_H

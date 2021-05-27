@@ -1,3 +1,6 @@
+#ifndef CPBRT_CORE_IMAGEIO_H
+#define CPBRT_CORE_IMAGEIO_H
+
 #include <memory>
 
 #include "geometry.h"
@@ -13,3 +16,5 @@ void WriteImage(
     const Bounds2i &outputBounds,
     const Point2i &totalResolution
 );
+
+#endif // CPBRT_CORE_IMAGEIO_H

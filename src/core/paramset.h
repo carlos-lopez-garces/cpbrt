@@ -1,3 +1,6 @@
+#ifndef CPBRT_CORE_PARAMSET_H
+#define CPBRT_CORE_PARAMSET_H
+
 #include <memory>
 #include <vector>
 
@@ -189,3 +192,5 @@ public:
         return geomParams.FindOneSpectrum(n, materialParams.FindOneSpectrum(n, d));
     }
 };
+
+#endif // CPBRT_CORE_PARAMSET_H

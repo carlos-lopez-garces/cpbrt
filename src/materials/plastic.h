@@ -1,3 +1,6 @@
+#ifndef CPBRT_MATERIALS_PLASTIC_H
+#define CPBRT_MATERIALS_PLASTIC_H
+
 #include <memory>
 
 #include "core/interaction.h"
@@ -44,3 +47,5 @@ public:
 };
 
 PlasticMaterial *CreatePlasticMaterial(const TextureParams &mp);
+
+#endif // CPBRT_MATERIALS_PLASTIC_H
