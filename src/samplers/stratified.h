@@ -20,6 +20,8 @@ public:
         yPixelSamples(yPixelSamples),
         jitterSamples(jitterSamples) {}
 
+    void StartPixel(const Point2i &p);
+
     std::unique_ptr<Sampler> Clone(int seed);
 };
 

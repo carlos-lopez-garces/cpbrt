@@ -743,7 +743,7 @@ public:
     Vector3f d;
 
     // Restricts the ray to a segment of points [0, r(tMax)].
-    mutable float tMax;
+    mutable Float tMax;
 
     Float time;
 

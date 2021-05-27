@@ -1,4 +1,5 @@
 #include "orthographic.h"
+#include "core/sampling.h"
 
 Float OrthographicCamera::GenerateRay(const CameraSample &sample, Ray *ray) const {
     // Compute the ray's origin by transforming the raster space sample's position
@@ -14,7 +15,6 @@ Float OrthographicCamera::GenerateRay(const CameraSample &sample, Ray *ray) cons
     // the projection, so none of the effects of the orthographic transformation are
     // relevant here. 
     if (lensRadius > 0) {
-        // TODO: implement ConcentricSampleDisk.
         // TODO: if the point being sampled is on the focal plane or in the DoF range,
         // does ConcentricSampleDisk with the input sample.pLens also return a jittered
         // output? Wouldn't that cause the point to be imaged out of focus?

@@ -1,32 +1,19 @@
 #ifndef CPBRT_ACCELERATORS_BVH_H
 #define CPBRT_ACCELERATORS_BVH_H
 
+#include <atomic>
 #include <memory>
 #include <vector>
 
 #include "core/memory.h"
 #include "core/primitive.h"
 
+struct BVHBuildNode;
 struct BVHPrimitiveInfo;
-struct MortonPrimitive;
 struct LinearBVHNode;
+struct MortonPrimitive;
 
 class BVHAccel : public Aggregate {
-private:
-    // Maximum number of primitives that can be stored in a node, up to 255.
-    const int maxPrimsInNode;
-
-    // Algorithm to use for subdividing primitives.
-    const SplitMethod splitMethod;
-
-    // Before construction, the primitives lie in an undefined order. After construction,
-    // the order is determined by the split method. The primitives of a leaf node will
-    // lie contiguously.
-    std::vector<std::shared_ptr<Primitive>> primitives;
-
-    // Binary tree in linear array representation and depth-first, built during construction. 
-    LinearBVHNode *nodes = nullptr;
-
 public:
     // Primitive subdivision algorithms.
     enum class SplitMethod { SAH, HLBVH, Middle, EqualCounts };
@@ -85,6 +72,21 @@ public:
     bool Intersect(const Ray &ray, SurfaceInteraction *si) const;
 
     bool IntersectP(const Ray &ray) const;
+
+private:
+    // Maximum number of primitives that can be stored in a node, up to 255.
+    const int maxPrimsInNode;
+
+    // Algorithm to use for subdividing primitives.
+    const SplitMethod splitMethod;
+
+    // Before construction, the primitives lie in an undefined order. After construction,
+    // the order is determined by the split method. The primitives of a leaf node will
+    // lie contiguously.
+    std::vector<std::shared_ptr<Primitive>> primitives;
+
+    // Binary tree in linear array representation and depth-first, built during construction. 
+    LinearBVHNode *nodes = nullptr;
 };
 
 #endif // CPBRT_ACCELERATORS_BVH_H

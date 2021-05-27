@@ -3,6 +3,8 @@
 
 #include "cpbrt.h"
 #include "geometry.h"
+#include "material.h"
+#include "medium.h"
 #include "memory.h"
 #include "transform.h"
 

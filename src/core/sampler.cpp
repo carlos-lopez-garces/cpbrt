@@ -113,7 +113,7 @@ void GlobalSampler::StartPixel(const Point2i &p) {
         // array request.
         int nSamples = samples1DArraySizes[i] * samplesPerPixel;
 
-        if (int j = 0; j < nSamples; ++j) {
+        for (int j = 0; j < nSamples; ++j) {
             int64_t index = GetIndexForSample(j);
             sampleArray1D[i][j] = SampleDimension(index, arrayStartDim + i);
         }
@@ -125,7 +125,7 @@ void GlobalSampler::StartPixel(const Point2i &p) {
         // array request.
         int nSamples = samples2DArraySizes[i] * samplesPerPixel;
 
-        if (int j = 0; j < nSamples; ++j) {
+        for (int j = 0; j < nSamples; ++j) {
             int64_t index = GetIndexForSample(j);
             sampleArray2D[i][j] = SampleDimension(index, arrayStartDim + i);
         }

@@ -1,11 +1,13 @@
 #ifndef CPBRT_CORE_PARAMSET_H
 #define CPBRT_CORE_PARAMSET_H
 
+#include <map>
 #include <memory>
 #include <vector>
 
 #include "cpbrt.h"
 #include "geometry.h"
+#include "spectrum.h"
 
 template <typename T> struct ParamSetItem {
     const std::string name;

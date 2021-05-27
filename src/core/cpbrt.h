@@ -58,6 +58,61 @@ typedef SampledSpectrum Spectrum;
 typedef RGBSpectrum Spectrum;
 #endif // CPBRT_SAMPLED_SPECTRUM
 
+class Scene;
+class Integrator;
+class SamplerIntegrator;
+template <typename T> class Vector2;
+template <typename T> class Vector3;
+template <typename T> class Point3;
+template <typename T> class Point2;
+template <typename T> class Normal3;
+class Ray;
+class RayDifferential;
+template <typename T> class Bounds2;
+template <typename T> class Bounds3;
+class Transform;
+class Interaction;
+class SurfaceInteraction;
+class Shape;
+class Primitive;
+class GeometricPrimitive;
+class TransformedPrimitive;
+template <int nSpectrumSamples> class CoefficientSpectrum;
+class Camera;
+struct CameraSample;
+class ProjectiveCamera;
+class Sampler;
+class Filter;
+class Film;
+class FilmTile;
+class BxDF;
+class BRDF;
+class BTDF;
+class BSDF;
+class Material;
+template <typename T> class Texture;
+class Medium;
+class MediumInteraction;
+struct MediumInterface;
+class BSSRDF;
+class SeparableBSSRDF;
+class TabulatedBSSRDF;
+struct BSSRDFTable;
+class Light;
+class VisibilityTester;
+class AreaLight;
+struct Distribution1D;
+class Distribution2D;
+class RNG;
+class ProgressReporter;
+class MemoryArena;
+template <typename T, int logBlockSize = 2> class BlockedArray;
+class Matrix4x4;
+class ParamSet;
+template <typename T>
+struct ParamSetItem;
+class TextureParams;
+
 // Global constants.
 
 // Only so that you don't have to type std::numeric_limits<Float> ... 

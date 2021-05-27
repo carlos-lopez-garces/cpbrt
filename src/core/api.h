@@ -86,7 +86,7 @@ void cpbrtAttributeBegin();
 void cpbrtAttributeEnd();
 
 // Pushes the CTMs onto the stack.
-void cpbrtTransformBegin() {
+void cpbrtTransformBegin();
 
 // Pops transformations from the stack.
 void cpbrtTransformEnd();

@@ -1,6 +1,8 @@
 #include "api.h"
 #include "error.h"
+#include "materials/matte.h"
 #include "spectrum.h"
+#include "textures/constant.h"
 #include "transform.h"
 
 // API local classes.
@@ -21,7 +23,7 @@ public:
     }
 
     // Returns the inverses of the transformations in a TansformSet. 
-    friend TansformSet Inverse(const TransformSet &ts) {
+    friend TransformSet Inverse(const TransformSet &ts) {
         TransformSet tInv;
         for (int i = 0; i < MaxTransforms; ++i) {
             tInv.t[i] = Inverse(ts.t[i]);
@@ -118,6 +120,83 @@ static GraphicsState graphicsState;
 static std::vector<GraphicsState> pushedGraphicsStates;
 static std::vector<TransformSet> pushedTransforms;
 static std::vector<uint32_t> pushedActiveTransformBits;
+
+// Static functions.
+
+std::shared_ptr<Texture<Float>> MakeFloatTexture(
+    const std::string &name,
+    const Transform &tex2world,
+    const TextureParams &tp
+) {
+    Texture<Float> *tex = nullptr;
+    
+    // TODO: add other types.
+    if (name == "constant")
+        tex = CreateConstantFloatTexture(tex2world, tp);
+    else
+        Warning("Float texture \"%s\" unknown.", name.c_str());
+    tp.ReportUnused();
+
+    return std::shared_ptr<Texture<Float>>(tex);
+}
+
+std::shared_ptr<Texture<Spectrum>> MakeSpectrumTexture(
+    const std::string &name,
+    const Transform &tex2world,
+    const TextureParams &tp
+) {
+    Texture<Spectrum> *tex = nullptr;
+
+    // TODO: add other types.
+    if (name == "constant")
+        tex = CreateConstantSpectrumTexture(tex2world, tp);
+    else
+        Warning("Spectrum texture \"%s\" unknown.", name.c_str());
+    tp.ReportUnused();
+
+    return std::shared_ptr<Texture<Spectrum>>(tex);
+}
+
+std::shared_ptr<Material> MakeMaterial(const std::string &name, const TextureParams &mp) {
+    Material *material = nullptr;
+
+    // TODO: add other types.
+    if (name == "" || name == "none")
+        return nullptr;
+    else if (name == "matte")
+        material = CreateMatteMaterial(mp);
+    else if (name == "plastic")
+        material = CreatePlasticMaterial(mp);
+    else {
+        Warning("Material \"%s\" unknown. Using \"matte\".", name.c_str());
+        material = CreateMatteMaterial(mp);
+    }
+    mp.ReportUnused();
+
+    if (!material) Error("Unable to create material \"%s\"", name.c_str());
+    return std::shared_ptr<Material>(material);
+}
+
+std::shared_ptr<Light> MakeLight(
+    const std::string &name,
+    const ParamSet &paramSet,
+    const Transform &light2world,
+    const MediumInterface &mediumInterface
+) {
+    std::shared_ptr<Light> light;
+
+    // TODO: add other types.
+    if (name == "point") {
+        light =
+            CreatePointLight(light2world, mediumInterface.outside, paramSet);
+    }
+    else {
+        Warning("Light \"%s\" unknown.", name.c_str()); 
+    }
+    paramSet.ReportUnused();
+    
+    return light;
+}
 
 // API macros.
 
@@ -460,81 +539,4 @@ void cpbrtAreaLightSource(const std::string &name, const ParamSet &params) {
     graphicsState.areaLightParams = params;
     // Unlike cpbrtLightSource, the area light is not created yet: the shapes
     // that make up its geometry need to be created first.
-}
-
-// Static functions.
-
-std::shared_ptr<Texture<Float>> MakeFloatTexture(
-    const std::string &name,
-    const Transform &tex2world,
-    const TextureParams &tp
-) {
-    Texture<Float> *tex = nullptr;
-    
-    // TODO: add other types.
-    if (name == "constant")
-        tex = CreateConstantFloatTexture(tex2world, tp);
-    else
-        Warning("Float texture \"%s\" unknown.", name.c_str());
-    tp.ReportUnused();
-
-    return std::shared_ptr<Texture<Float>>(tex);
-}
-
-std::shared_ptr<Texture<Spectrum>> MakeSpectrumTexture(
-    const std::string &name,
-    const Transform &tex2world,
-    const TextureParams &tp
-) {
-    Texture<Spectrum> *tex = nullptr;
-
-    // TODO: add other types.
-    if (name == "constant")
-        tex = CreateConstantSpectrumTexture(tex2world, tp);
-    else
-        Warning("Spectrum texture \"%s\" unknown.", name.c_str());
-    tp.ReportUnused();
-
-    return std::shared_ptr<Texture<Spectrum>>(tex);
-}
-
-std::shared_ptr<Material> MakeMaterial(const std::string &name, const TextureParams &mp) {
-    Material *material = nullptr;
-
-    // TODO: add other types.
-    if (name == "" || name == "none")
-        return nullptr;
-    else if (name == "matte")
-        material = CreateMatteMaterial(mp);
-    else if (name == "plastic")
-        material = CreatePlasticMaterial(mp);
-    else {
-        Warning("Material \"%s\" unknown. Using \"matte\".", name.c_str());
-        material = CreateMatteMaterial(mp);
-    }
-    mp.ReportUnused();
-
-    if (!material) Error("Unable to create material \"%s\"", name.c_str());
-    return std::shared_ptr<Material>(material);
-}
-
-std::shared_ptr<Light> MakeLight(
-    const std::string &name,
-    const ParamSet &paramSet,
-    const Transform &light2world,
-    const MediumInterface &mediumInterface
-) {
-    std::shared_ptr<Light> light;
-
-    // TODO: add other types.
-    if (name == "point") {
-        light =
-            CreatePointLight(light2world, mediumInterface.outside, paramSet);
-    }
-    else {
-        Warning("Light \"%s\" unknown.", name.c_str()); 
-    }
-    paramSet.ReportUnused();
-    
-    return light;
 }

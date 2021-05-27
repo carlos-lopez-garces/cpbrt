@@ -58,7 +58,7 @@ void SurfaceInteraction::SetShadingGeometry(
         // normal.
         n = FaceForward(n, shading.n);
     } else {
-        shading.n = FaceForward(shading.n, n)
+        shading.n = FaceForward(shading.n, n);
     }
 
     shading.dpdu = dpdus;
@@ -137,7 +137,7 @@ void SurfaceInteraction::ComputeDifferentials(const RayDifferential &ray) const 
         if (!SolveLinearSystem2x2(A, bx, &dudx, &dvdx)) {
             dudx = dvdx = 0;
         }
-        if (!SolveLinearSystem2x2(A, By, &dudy, &dvdy)) {
+        if (!SolveLinearSystem2x2(A, by, &dudy, &dvdy)) {
             dudy = dvdy = 0;
         }
     } else {

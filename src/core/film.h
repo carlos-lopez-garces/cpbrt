@@ -10,6 +10,21 @@
 #include "parallel.h"
 #include "spectrum.h"
 
+// Stores 2 running sums, the numerator and denominator of the quotient that defines the
+// pixel filtering/reconstruction equation:
+//
+// SUM_i(f(x-x_i, y-y_i)w(x_i, y_i)L(x_i, y_i))
+// --------------------------------------------
+// SUM_i(f(x-x_i, y-y_i)
+//
+// where f is the filter, w is the weight that the camera assigns to the sample, and L is
+// radiance value of the sample.
+struct FilmTilePixel {
+    // Converting constructor of Spectrum allows for initialization from float.
+    Spectrum contribSum = 0.f;
+    Float filterWeightSum = 0.f;
+};
+
 class Film {
 private:
     struct Pixel {
@@ -231,21 +246,6 @@ public:
     Bounds2i GetPixelBounds() const {
         return pixelBounds;
     }
-};
-
-// Stores 2 running sums, the numerator and denominator of the quotient that defines the
-// pixel filtering/reconstruction equation:
-//
-// SUM_i(f(x-x_i, y-y_i)w(x_i, y_i)L(x_i, y_i))
-// --------------------------------------------
-// SUM_i(f(x-x_i, y-y_i)
-//
-// where f is the filter, w is the weight that the camera assigns to the sample, and L is
-// radiance value of the sample.
-struct FilmTilePixel {
-    // Converting constructor of Spectrum allows for initialization from float.
-    Spectrum contribSum = 0.f;
-    Float filterWeightSum = 0.f;
 };
 
 #endif // CPBRT_CORE_FILM_H

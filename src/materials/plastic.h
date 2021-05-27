@@ -15,7 +15,7 @@ private:
     std::shared_ptr<Texture<Spectrum>> Kd;
 
     // Glossy specular component.
-    std::shared_ptr<Texture<Spectrum>> Ks,
+    std::shared_ptr<Texture<Spectrum>> Ks;
 
     std::shared_ptr<Texture<Float>> roughness;
     const bool remapRoughness;

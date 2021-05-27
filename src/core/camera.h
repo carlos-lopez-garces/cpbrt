@@ -2,6 +2,7 @@
 #define CPBRT_CORE_CAMERA_H
 
 #include "cpbrt.h"
+#include "film.h"
 #include "geometry.h"
 #include "transform.h"
 
@@ -18,7 +19,7 @@ struct CameraSample {
 };
 
 class Camera {
-private:
+public:
     // TODO: The CameraToWorld transformation should really be an AnimatedTransform.
     Transform CameraToWorld;
 
@@ -33,7 +34,6 @@ private:
     // The scattering medium in which the camera is immersed (typically air).
     const Medium *medium;
 
-public:
     Camera(
         const Transform &CameraToWorld,
         Float shutterOpen,

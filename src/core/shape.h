@@ -51,7 +51,7 @@ public:
     // of the intersection. Classes implementing this interface should not do that, in general.
     virtual bool IntersectP(const Ray &ray, bool testAlphaTexture = true) const {
         Float tHit = ray.tMax;
-        Surface isect;
+        SurfaceInteraction isect;
         return Intersect(ray, &tHit, &isect, testAlphaTexture);
     }
 

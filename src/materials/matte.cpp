@@ -1,3 +1,4 @@
+#include "core/paramset.h"
 #include "core/reflection.h"
 #include "matte.h"
 
@@ -24,13 +25,13 @@ void MatteMaterial::ComputeScatteringFunctions(
             si->bsdf->Add(ARENA_ALLOC(arena, LambertianReflection)(kd));
         } else {
             // TODO: implement OrenNayarReflection.
-            si->bsdf->Add(ARENA_ALLOC(arena, OrenNayarReflection)(kd, sigma));
+            // si->bsdf->Add(ARENA_ALLOC(arena, OrenNayarReflection)(kd, sigma));
         }
     }
 }
 
 MatteMaterial *CreateMatteMaterial(const TextureParams &mp) {
-    std::shared_ptr<Texture<Spectrum>> Kd =mp.GetSpectrumTexture("Kd", Spectrum(0.5f));
+    std::shared_ptr<Texture<Spectrum>> Kd = mp.GetSpectrumTexture("Kd", Spectrum(0.5f));
     std::shared_ptr<Texture<Float>> sigma = mp.GetFloatTexture("sigma", 0.f);
     std::shared_ptr<Texture<Float>> bumpMap = mp.GetFloatTextureOrNull("bumpmap");
     return new MatteMaterial(Kd, sigma, bumpMap);

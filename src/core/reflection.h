@@ -30,13 +30,13 @@ inline Float AbsCosTheta(const Vector3f &w) {
     return std::abs(w.z);
 }
 
-inline Float SinTheta(const Vector3f &w) {
-    return std::sqrt(Sin2Theta(w));
-}
-
 inline Float Sin2Theta(const Vector3f &w) {
     // Pythagorean identity.
     return std::max((Float) 0, (Float) 1 - Cos2Theta(w));
+}
+
+inline Float SinTheta(const Vector3f &w) {
+    return std::sqrt(Sin2Theta(w));
 }
 
 inline Float TanTheta(const Vector3f &w) {

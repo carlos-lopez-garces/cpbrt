@@ -1,7 +1,7 @@
 #include "stratified.h"
 #include "core/sampling.h"
 
-StratifiedSampler::StartPixel(const Point2i &p) {
+void StratifiedSampler::StartPixel(const Point2i &p) {
     // Generate single stratified 1D samples for the pixel across all dimensions:
     // samples1D[dimension][sample index].
     for (size_t i = 0; i < samples1D.size(); ++i) {

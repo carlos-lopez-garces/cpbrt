@@ -1,3 +1,5 @@
+#include "core/paramset.h"
+#include "core/spectrum.h"
 #include "textures/constant.h"
 
 ConstantTexture<Float> *CreateConstantFloatTexture(

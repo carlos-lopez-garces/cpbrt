@@ -1,4 +1,5 @@
 #include "perspective.h"
+#include "core/sampling.h"
 
 PerspectiveCamera::PerspectiveCamera(
     const Transform &CameraToWorld,
@@ -43,7 +44,6 @@ Float PerspectiveCamera::GenerateRay(const CameraSample &sample, Ray *ray) const
     // before the projection, so none of the effects of the perspective transformation
     // are relevant here. 
     if (lensRadius > 0) {
-        // TODO: implement ConcentricSampleDisk.
         // TODO: if the point being sampled is on the focal plane or in the DoF range,
         // does ConcentricSampleDisk with the input sample.pLens also return a jittered
         // output? Wouldn't that cause the point to be imaged out of focus?

@@ -111,10 +111,6 @@ inline void RGBToXYZ(const Float rgb[3], Float xyz[3]) {
     xyz[2] = 0.019334f*rgb[0] + 0.119193f*rgb[1] + 0.950227f*rgb[2];
 }
 
-inline Spectrum Lerp(Float t, const Spectrum &sp1, const Spectrum &sp2) {
-    return (1 - t)*sp1 + t*sp2;
-}
-
 template <int nSpectrumSamples> class CoefficientSpectrum {
 public:
     static const int nSamples = nSpectrumSamples;
@@ -312,6 +308,88 @@ inline CoefficientSpectrum<nSpectrumSamples> Pow(
     return ret;
 }
 
+class RGBSpectrum : public CoefficientSpectrum<3> {
+public:
+    RGBSpectrum(Float v = 0.f) : CoefficientSpectrum<3>(v) {}
+
+    RGBSpectrum(const CoefficientSpectrum<3> &v) : CoefficientSpectrum<3>(v) {}
+
+    static RGBSpectrum FromRGB(const Float rgb[3], SpectrumType = SpectrumType::Reflectance) {
+        RGBSpectrum rsp;
+        rsp.c[0] = rgb[0];
+        rsp.c[1] = rgb[1];
+        rsp.c[2] = rgb[2];
+        return rsp;
+    }
+
+    void ToRGB(Float *rgb) const {
+        rgb[0] = c[0];
+        rgb[1] = c[1];
+        rgb[2] = c[2];
+    }
+
+    const RGBSpectrum &ToRGBSpectrum() const {
+        return *this;
+    }
+
+    static RGBSpectrum FromXYZ(const Float xyz[3], SpectrumType type = SpectrumType::Reflectance) {
+        RGBSpectrum rsp;
+        XYZToRGB(xyz, rsp.c);
+        return rsp;
+    }
+
+    void ToXYZ(Float xyz[3]) const {
+        RGBToXYZ(c, xyz);
+    }
+
+    Float y() const {
+        // Corresponds to the xyz[1] value returned by ToXYZ(xyz).
+        const Float yWeight[3] = {0.212671f, 0.715160f, 0.072169f};
+        return yWeight[0]*c[0] + yWeight[1]*c[1] + yWeight[2]*c[2];
+    }
+
+    static RGBSpectrum FromSampled(const Float *lambda, const Float *values, int n) {
+        // Sort samples in order of increasing wavelength.
+        if (!SpectrumSamplesSorted(lambda, n)) {
+            std::vector<Float> sortedLambda(&lambda[0], &lambda[n]);
+            std::vector<Float> sortedValues(&values[0], &values[n]);
+            SortSpectrumSamples(&sortedLambda[0], &sortedValues[0], n);
+            return FromSampled(&sortedLambda[0], &sortedValues[0], n);
+        }
+
+        // Map the sampled SPD to XYZ first and then to RGB.
+
+        Float xyz[3] = {0.f, 0.f, 0.f};
+        for (int i = 0; i < nCIESamples; ++i) {
+            // Since the input SPD and the CIE XYZ color-matching curves may not be sampled
+            // at the same wavelength intervals, we need to resample the SPD at the wavelength
+            // intervals of the XYZ color-matching curves to match the samples with their
+            // corresponding XYZ curve values.
+            Float value = InterpolateSpectrumSamples(lambda, values, n, CIE_lambda[i]);
+
+            // Sum of the products of this spectrum's SPD and the XYZ color-matching curves.
+            xyz[0] += value * CIE_X[i];
+            xyz[1] += value * CIE_Y[i];
+            xyz[2] += value * CIE_Z[i];
+        }
+
+        Float lambdaDelta = Float(CIE_lambda[nCIESamples-1] - CIE_lambda[0]) / Float(nCIESamples);
+
+        // Riemman sums that approximate the definite integrals of the products of the SPD
+        // and the XYZ color-matching curves.
+        xyz[0] *= lambdaDelta;
+        xyz[1] *= lambdaDelta;
+        xyz[2] *= lambdaDelta;
+
+        // ?
+        xyz[0] *= 1.f / CIE_Y_integral;
+        xyz[1] *= 1.f / CIE_Y_integral;
+        xyz[2] *= 1.f / CIE_Y_integral;
+
+        FromXYZ(xyz);
+    }
+};
+
 class SampledSpectrum : public CoefficientSpectrum<nSpectralSamples> {
 private:
     // n samples of the CIE X(lambda), Y(lambda), and Z(lambda) 
@@ -497,86 +575,8 @@ public:
     }
 };
 
-class RGBSpectrum : public CoefficientSpectrum<3> {
-public:
-    RGBSpectrum(Float v = 0.f) : CoefficientSpectrum<3>(v) {}
-
-    RGBSpectrum(const CoefficientSpectrum<3> &v) : CoefficientSpectrum<3>(v) {}
-
-    static RGBSpectrum FromRGB(const Float rgb[3], SpectrumType = SpectrumType::Reflectance) {
-        RGBSpectrum rsp;
-        rsp.c[0] = rgb[0];
-        rsp.c[1] = rgb[1];
-        rsp.c[2] = rgb[2];
-        return rsp;
-    }
-
-    void ToRGB(Float *rgb) const {
-        rgb[0] = c[0];
-        rgb[1] = c[1];
-        rgb[2] = c[2];
-    }
-
-    const RGBSpectrum &ToRGBSpectrum() const {
-        return *this;
-    }
-
-    static RGBSpectrum FromXYZ(const Float xyz[3], SpectrumType type = SpectrumType::Reflectance) {
-        RGBSpectrum rsp;
-        XYZToRGB(xyz, rsp.c);
-        return rsp;
-    }
-
-    void ToXYZ(Float xyz[3]) const {
-        RGBToXYZ(c, xyz);
-    }
-
-    Float y() const {
-        // Corresponds to the xyz[1] value returned by ToXYZ(xyz).
-        const Float yWeight[3] = {0.212671f, 0.715160f, 0.072169f};
-        return yWeight[0]*c[0] + yWeight[1]*c[1] + yWeight[2]*c[2];
-    }
-
-    static RGBSpectrum FromSampled(const Float *lambda, const Float *values, int n) {
-        // Sort samples in order of increasing wavelength.
-        if (!SpectrumSamplesSorted(lambda, n)) {
-            std::vector<Float> sortedLambda(&lambda[0], &lambda[n]);
-            std::vector<Float> sortedValues(&values[0], &values[n]);
-            SortSpectrumSamples(&sortedLambda[0], &sortedValues[0], n);
-            return FromSampled(&sortedLambda[0], &sortedValues[0], n);
-        }
-
-        // Map the sampled SPD to XYZ first and then to RGB.
-
-        Float xyz[3] = {0.f, 0.f, 0.f};
-        for (int i = 0; i < nCIESamples; ++i) {
-            // Since the input SPD and the CIE XYZ color-matching curves may not be sampled
-            // at the same wavelength intervals, we need to resample the SPD at the wavelength
-            // intervals of the XYZ color-matching curves to match the samples with their
-            // corresponding XYZ curve values.
-            Float value = InterpolateSpectrumSamples(lambda, values, n, CIE_lambda[i]);
-
-            // Sum of the products of this spectrum's SPD and the XYZ color-matching curves.
-            xyz[0] += value * CIE_X[i];
-            xyz[1] += value * CIE_Y[i];
-            xyz[2] += value * CIE_Z[i];
-        }
-
-        Float lambdaDelta = Float(CIE_lambda[nCIESamples-1] - CIE_lambda[0]) / Float(nCIESamples);
-
-        // Riemman sums that approximate the definite integrals of the products of the SPD
-        // and the XYZ color-matching curves.
-        xyz[0] *= lambdaDelta;
-        xyz[1] *= lambdaDelta;
-        xyz[2] *= lambdaDelta;
-
-        // ?
-        xyz[0] *= 1.f / CIE_Y_integral;
-        xyz[1] *= 1.f / CIE_Y_integral;
-        xyz[2] *= 1.f / CIE_Y_integral;
-
-        FromXYZ(xyz);
-    }
-};
+inline Spectrum Lerp(Float t, const Spectrum &sp1, const Spectrum &sp2) {
+    return (1 - t)*sp1 + t*sp2;
+}
 
 #endif // CPBRT_CORE_SPECTRUM_H
