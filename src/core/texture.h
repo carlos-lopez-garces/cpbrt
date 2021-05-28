@@ -1,8 +1,7 @@
 #ifndef CPBRT_CORE_TEXTURE_H
 #define CPBRT_CORE_TEXTURE_H
 
-#include "interaction.h"
-#include "geometry.h"
+#include "cpbrt.h"
 
 class TextureMapping2D {
 public:

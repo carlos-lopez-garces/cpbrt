@@ -2,12 +2,6 @@
 #define CPBRT_CORE_INTERACTION_H
 
 #include "cpbrt.h"
-#include "geometry.h"
-#include "material.h"
-#include "medium.h"
-#include "memory.h"
-#include "primitive.h"
-#include "transform.h"
 
 class Interaction {
 public:

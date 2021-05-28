@@ -2,9 +2,6 @@
 #define CPBRT_CORE_SHAPE_H
 
 #include "cpbrt.h"
-#include "interaction.h"
-#include "transform.h"
-#include "geometry.h"
 
 class Shape {
 public:

@@ -3,8 +3,7 @@
 
 #include <memory>
 
-#include "geometry.h"
-#include "spectrum.h"
+#include "cpbrt.h"
 
 // TODO: implement.
 std::unique_ptr<RGBSpectrum[]> ReadImage(const std::string &name, Point2i *resolution);

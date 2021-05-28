@@ -3,8 +3,7 @@
 
 #include <memory>
 
-#include "interaction.h"
-#include "scene.h"
+#include "cpbrt.h"
 
 // Evaluates the direct lighting outgoing radiance / scattering equation at the 
 // intersection point with direct lighting contributions from all light sources in

@@ -4,7 +4,6 @@
 #include <memory>
 
 #include "cpbrt.h"
-#include "transform.h"
 
 class Primitive {
 public:

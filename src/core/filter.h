@@ -1,7 +1,7 @@
 #ifndef CPBRT_CORE_FILTER_H
 #define CPBRT_CORE_FILTER_H
 
-#include "geometry.h"
+#include "cpbrt.h"
 
 class Filter {
 public:

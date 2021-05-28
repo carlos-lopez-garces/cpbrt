@@ -5,10 +5,7 @@
 #include <mutex>
 #include <string>
 
-#include "filter.h"
-#include "geometry.h"
-#include "parallel.h"
-#include "spectrum.h"
+#include "cpbrt.h"
 
 // Stores 2 running sums, the numerator and denominator of the quotient that defines the
 // pixel filtering/reconstruction equation:

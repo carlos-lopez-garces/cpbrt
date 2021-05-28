@@ -2,7 +2,6 @@
 #define CPBRT_CORE_API_H
 
 #include "cpbrt.h"
-#include "paramset.h"
 
 // Initialization options stored for global access.
 Options CpbrtOptions;
