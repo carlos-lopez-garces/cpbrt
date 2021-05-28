@@ -13,7 +13,7 @@ class Primitive {
 public:
     virtual Bounds3f WorldBound() const = 0;
 
-    virtual bool Intersect(const Ray &ray, SurfaceInteraction &si) const = 0;
+    virtual bool Intersect(const Ray &ray, SurfaceInteraction *si) const = 0;
     // P is for "predicate". No intersection details are returned.
     virtual bool IntersectP(const Ray &ray) const = 0;
 
@@ -53,7 +53,11 @@ public:
 
     Bounds3f WorldBound() const;
 
-    bool Intersect(const Ray &ray, SurfaceInteraction &si) const;
+    const AreaLight *GetAreaLight() const;
+
+    const Material *GetMaterial() const;
+
+    bool Intersect(const Ray &ray, SurfaceInteraction *si) const;
     // P is for "predicate". No intersection details are returned.
     bool IntersectP(const Ray &ray) const;
 

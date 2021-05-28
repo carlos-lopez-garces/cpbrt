@@ -3,10 +3,8 @@
 
 #include <memory>
 
-#include "core/interaction.h"
+#include "core/cpbrt.h"
 #include "core/material.h"
-#include "core/memory.h"
-#include "core/spectrum.h"
 
 class PlasticMaterial : public Material {
 private:

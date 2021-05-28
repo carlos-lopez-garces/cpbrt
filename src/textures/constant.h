@@ -1,8 +1,9 @@
 #ifndef CPBRT_TEXTURES_CONSTANT_H
 #define CPBRT_TEXTURES_CONSTANT_H
 
-#include "core/interaction.h"
+#include "core/cpbrt.h"
 #include "core/texture.h"
+#include "core/paramset.h"
 
 template <typename T> class ConstantTexture : public Texture<T> {
 private:

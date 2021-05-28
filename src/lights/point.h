@@ -1,9 +1,9 @@
 #ifndef CPBRT_LIGHTS_POINT_H
 #define CPBRT_LIGHTS_POINT_H
 
+#include "core/cpbrt.h"
 #include "core/light.h"
-#include "core/spectrum.h"
-#include "core/transform.h"
+#include "core/shape.h"
 
 class PointLight : public Light {
 private:

@@ -1,5 +1,8 @@
 #include "perspective.h"
+#include "core/paramset.h"
+#include "core/sampler.h"
 #include "core/sampling.h"
+#include "core/light.h"
 
 PerspectiveCamera::PerspectiveCamera(
     const Transform &CameraToWorld,

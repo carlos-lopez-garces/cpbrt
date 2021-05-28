@@ -1,4 +1,9 @@
 #include "path.h"
+#include "core/camera.h"
+#include "core/film.h"
+#include "core/interaction.h"
+#include "core/paramset.h"
+#include "core/scene.h"
 
 Spectrum PathIntegrator::Li(
     const RayDifferential &r,

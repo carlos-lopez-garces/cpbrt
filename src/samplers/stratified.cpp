@@ -1,4 +1,5 @@
 #include "stratified.h"
+#include "core/paramset.h"
 #include "core/sampling.h"
 
 void StratifiedSampler::StartPixel(const Point2i &p) {

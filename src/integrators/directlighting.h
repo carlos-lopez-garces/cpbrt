@@ -3,7 +3,9 @@
 
 #include <memory>
 
+#include "core/cpbrt.h"
 #include "core/integrator.h"
+#include "core/scene.h"
 
 // The strategy to choose depends on the number of samples taken per pixel: if many,
 // then UniformSampleOne suffices (because many such single-sample, single-light

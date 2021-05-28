@@ -1,6 +1,9 @@
-#include "core/paramset.h"
-#include "core/reflection.h"
 #include "plastic.h"
+#include "core/spectrum.h"
+#include "core/reflection.h"
+#include "core/paramset.h"
+#include "core/texture.h"
+#include "core/interaction.h"
 
 void PlasticMaterial::ComputeScatteringFunctions(
     // Differential geometry of surface-ray intersection point.

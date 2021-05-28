@@ -1,7 +1,9 @@
 #ifndef CPBRT_CAMERAS_ORTHOGRAPHIC_H
 #define CPBRT_CAMERAS_ORTHOGRAPHIC_H
 
+#include "core/cpbrt.h"
 #include "core/camera.h"
+#include "core/film.h"
 
 class OrthographicCamera : public ProjectiveCamera {
 private:

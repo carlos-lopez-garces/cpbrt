@@ -97,13 +97,13 @@ inline RayDifferential Transform::operator()(const RayDifferential &rd) const {
 
 template <typename T> inline Bounds3<T> Transform::operator()(const Bounds3<T> &aabb) const {
     Bounds3<T> transformedAABB((*this)(aabb.Corner(0)));
-    transformedAABB = Union(transformedAABB, (*this)(aabb.Corner(1));
-    transformedAABB = Union(transformedAABB, (*this)(aabb.Corner(2));
-    transformedAABB = Union(transformedAABB, (*this)(aabb.Corner(3));
-    transformedAABB = Union(transformedAABB, (*this)(aabb.Corner(4));
-    transformedAABB = Union(transformedAABB, (*this)(aabb.Corner(5));
-    transformedAABB = Union(transformedAABB, (*this)(aabb.Corner(6));
-    transformedAABB = Union(transformedAABB, (*this)(aabb.Corner(7));
+    transformedAABB = Union(transformedAABB, (*this)(aabb.Corner(1)));
+    transformedAABB = Union(transformedAABB, (*this)(aabb.Corner(2)));
+    transformedAABB = Union(transformedAABB, (*this)(aabb.Corner(3)));
+    transformedAABB = Union(transformedAABB, (*this)(aabb.Corner(4)));
+    transformedAABB = Union(transformedAABB, (*this)(aabb.Corner(5)));
+    transformedAABB = Union(transformedAABB, (*this)(aabb.Corner(6)));
+    transformedAABB = Union(transformedAABB, (*this)(aabb.Corner(7)));
     return transformedAABB;
 }
 
@@ -264,7 +264,7 @@ Transform Transform::LookAt(const Point3f &pos, const Point3f &look, const Vecto
     cameraToWorld.m[0][2] = forward.x;
     cameraToWorld.m[1][2] = forward.y;
     cameraToWorld.m[2][2] = forward.z;
-    cameraToWorld.m[3][2] - 0.f;
+    cameraToWorld.m[3][2] = 0.f;
 
     // 4th column.
     cameraToWorld.m[0][3] = pos.x;

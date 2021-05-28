@@ -1,6 +1,7 @@
 #ifndef CPBRT_INTEGRATORS_PATH_H
 #define CPBRT_INTEGRATORS_PATH_H
 
+#include "core/cpbrt.h"
 #include "core/integrator.h"
 
 class PathIntegrator : public SamplerIntegrator {

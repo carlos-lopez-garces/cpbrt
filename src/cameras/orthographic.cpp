@@ -1,4 +1,6 @@
 #include "orthographic.h"
+#include "core/paramset.h"
+#include "core/sampler.h"
 #include "core/sampling.h"
 
 Float OrthographicCamera::GenerateRay(const CameraSample &sample, Ray *ray) const {

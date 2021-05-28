@@ -2,6 +2,7 @@
 #define CPBRT_SAMPLERS_STRATIFIED_H
 
 #include "core/sampler.h"
+#include "core/rng.h"
 
 class StratifiedSampler : PixelSampler {
 private:

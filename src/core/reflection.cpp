@@ -54,7 +54,7 @@ Spectrum ScaledBxDF::Sample_f(
     Vector3f *wi,
     const Point2f &sample,
     Float *pdf,
-    BxDFType *sampledType = nullptr
+    BxDFType *sampledType
 ) const {
     // The product of 2 spectrums is sample-wise.
     return scale * bxdf->Sample_f(wo, wi, sample, pdf, sampledType);

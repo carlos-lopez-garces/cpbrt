@@ -5,6 +5,7 @@
 
 #include "core/cpbrt.h"
 #include "core/camera.h"
+#include "core/film.h"
 
 class PerspectiveCamera : public ProjectiveCamera {
 private:

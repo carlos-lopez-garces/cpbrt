@@ -88,7 +88,7 @@ Float PixelSampler::Get1D() {
     }
 }
 
-Float PixelSampler::Get2D() {
+Point2f PixelSampler::Get2D() {
     if (current2DDimension < samples2D.size()) {
         return samples2D[current2DDimension++][currentPixelSampleIndex];
     } else {
@@ -96,7 +96,7 @@ Float PixelSampler::Get2D() {
         // (the nSampledDimensions number that was passed to the constructor and that
         // was used to allocated dimension arrays in samples2D), the sampler returns
         // uniform random numbers.
-        return rng.UniformFloat();
+        return Point2f(rng.UniformFloat(), rng.UniformFloat());
     }
 }
 

@@ -205,7 +205,7 @@ public:
     // Scalar division divides each coefficient by the scalar.
     CoefficientSpectrum operator/(Float s) const {
         CoefficientSpectrum ret = *this;
-        for (int = 0; i < nSpectrumSamples; ++i) {
+        for (int i = 0; i < nSpectrumSamples; ++i) {
             ret.c[i] /= s;
         }
         Assert(!ret.HasNaNs());
@@ -213,14 +213,14 @@ public:
     }
 
     CoefficientSpectrum &operator/=(Float s) {
-        for (int = 0; i < nSpectrumSamples; ++i) {
+        for (int i = 0; i < nSpectrumSamples; ++i) {
             c[i] /= s;
         }
         return *this;
     }
 
     bool operator==(const CoefficientSpectrum &sp) const {
-        for (int = 0; i < nSpectrumSamples; ++i) {
+        for (int i = 0; i < nSpectrumSamples; ++i) {
             if (c[i] != sp.c[i]) {
                 return false;
             }
@@ -234,7 +234,7 @@ public:
 
     CoefficientSpectrum operator-() const {
         CoefficientSpectrum ret;
-        for (int = 0; i < nSpectrumSamples; ++i) {
+        for (int i = 0; i < nSpectrumSamples; ++i) {
             ret.c[i] = -c[i];
         }
         return ret;
@@ -243,7 +243,7 @@ public:
     // Spectrum square root is defined as the coefficient-wise square root of the spectrum.
     friend CoefficientSpectrum Sqrt(const CoefficientSpectrum &sp) {
         CoefficientSpectrum ret;
-        for (int = 0; i < nSpectrumSamples; ++i) {
+        for (int i = 0; i < nSpectrumSamples; ++i) {
             ret.c[i] = std::sqrt(s.c[i]);
         }
         return ret;
@@ -272,7 +272,7 @@ public:
     }
 
     bool IsBlack() const {
-        for (int = 0; i < nSpectrumSamples; ++i) {
+        for (int i = 0; i < nSpectrumSamples; ++i) {
             if (c[i] != 0.) {
                 return false;
             }
@@ -281,7 +281,7 @@ public:
     }
 
     bool HasNaNs() const {
-        for (int = 0; i < nSpectrumSamples; ++i) {
+        for (int i = 0; i < nSpectrumSamples; ++i) {
             if (std::isnan(c[i])) {
                 return true;
             }
@@ -301,7 +301,7 @@ inline CoefficientSpectrum<nSpectrumSamples> Pow(
     Float e
 ) {
     CoefficientSpectrum<nSpectrumSamples> ret;
-    for (int = 0; i < nSpectrumSamples; ++i) {
+    for (int i = 0; i < nSpectrumSamples; ++i) {
         ret.c[i] = std::pow(s.c[i], e);
     }
     Assert(!ret.HasNaNs());

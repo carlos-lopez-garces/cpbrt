@@ -1,14 +1,12 @@
-#include "cpbrt.h"
-#include "shape.h"
-#include "material.h"
-#include "medium.h"
-#include "transform.h"
+#include "primitive.h"
+#include "light.h"
+#include "interaction.h"
 
 Bounds3f GeometricPrimitive::WorldBound() const {
     return shape->WorldBound();
 }
 
-bool GeometricPrimitive::Intersect(const Ray &ray, SurfaceInteraction &si) const {
+bool GeometricPrimitive::Intersect(const Ray &ray, SurfaceInteraction *si) const {
     Float tHit;
 
     if (!shape->Intersect(ray, &tHit, si)) {
@@ -74,5 +72,4 @@ void Aggregate::ComputeScatteringFunctions(
     bool allowMultipleLobes
 ) const {
     // TODO: log fatal error.
-    return nullptr;
 }

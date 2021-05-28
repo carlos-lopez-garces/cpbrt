@@ -1,4 +1,7 @@
 #include "bvh.h"
+#include "core/interaction.h"
+#include "core/paramset.h"
+#include "core/parallel.h"
 
 struct BVHPrimitiveInfo {
     // Index of primitive in BVHAccel::primitives.
@@ -345,7 +348,7 @@ BVHBuildNode *BVHAccel::recursiveBuild(
                             &primitiveInfo[start],
                             &primitiveInfo[mid],
                             &primitiveInfo[end-1]+1,
-                            [dim](const BVHPrimitive &a, const BVHPrimitive &b) {
+                            [dim](const BVHPrimitiveInfo &a, const BVHPrimitiveInfo &b) {
                                 return a.centroid[dim] < b.centroid[dim];
                             }
                         );

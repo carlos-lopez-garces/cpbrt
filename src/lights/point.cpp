@@ -1,6 +1,7 @@
-#include "core/interaction.h"
-#include "core/paramset.h"
 #include "point.h"
+#include "core/scene.h"
+#include "core/paramset.h"
+#include "core/sampling.h"
 
 Spectrum PointLight::Sample_Li(
     const Interaction &it,

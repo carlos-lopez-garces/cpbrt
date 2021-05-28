@@ -1,5 +1,8 @@
 #include "directlighting.h"
 #include "core/interaction.h"
+#include "core/paramset.h"
+#include "core/camera.h"
+#include "core/film.h"
 
 void DirectLightingIntegrator::Preprocess(const Scene &scene, Sampler &sampler) {
     if (strategy == LightStrategy::UniformSampleAll) {

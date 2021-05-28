@@ -1,6 +1,9 @@
+#include "matte.h"
 #include "core/paramset.h"
 #include "core/reflection.h"
-#include "matte.h"
+#include "core/interaction.h"
+#include "core/texture.h"
+#include "core/interaction.h"
 
 void MatteMaterial::ComputeScatteringFunctions(
     // Differential geometry of surface-ray intersection point.
