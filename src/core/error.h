@@ -18,4 +18,13 @@
 void Warning(const char *, ...) PRINTF_FUNC;
 void Error(const char *, ...) PRINTF_FUNC;
 
+#ifdef NDEBUG
+#define Assert(expr) ((void)0)
+#else
+#define Assert(expr) \
+    ((expr) ? (void)0 : \
+        Error("Assertion \"%s\" failed in %s, line %d", \
+               #expr, __FILE__, __LINE__))
+#endif // NDEBUG
+
 #endif // CPBRT_CORE_ERROR_H
