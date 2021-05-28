@@ -52,4 +52,10 @@ public:
     Spectrum Power() const;
 };
 
+std::shared_ptr<PointLight> CreatePointLight(
+    const Transform &light2world,
+    const Medium *medium,
+    const ParamSet &paramSet
+);
+
 #endif // CPBRT_LIGHTS_POINT_H
