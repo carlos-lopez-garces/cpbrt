@@ -2,6 +2,7 @@
 #define CPBRT_CORE_REFLECTION_H
 
 #include "cpbrt.h"
+#include "spectrum.h"
 
 // The shading coordinate system is defined by the orthonormal basis {s, t, n} = {x, y, z},
 // where s and t are 2 orthogonal vectors tangent to the shaded point and n is the normal

@@ -6,6 +6,8 @@
 #include <vector>
 
 #include "cpbrt.h"
+#include "geometry.h"
+#include "rng.h"
 
 // Samples are collections of multi-dimensional vectors of at least 5 dimensions, (x, y, t, u, v, ...):
 // image/film/raster coordinates x and y, time, and lens coordinates u and v.

@@ -1,11 +1,13 @@
 #include "api.h"
 #include "error.h"
+#include "paramset.h"
+#include "spectrum.h"
+#include "transform.h"
+
 #include "lights/point.h"
 #include "materials/matte.h"
 #include "materials/plastic.h"
-#include "spectrum.h"
 #include "textures/constant.h"
-#include "transform.h"
 
 // API local classes.
 

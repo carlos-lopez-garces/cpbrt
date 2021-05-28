@@ -1,10 +1,12 @@
-#include "film.h"
-#include "geometry.h"
 #include "integrator.h"
-#include "light.h"
-#include "memory.h"
-#include "reflection.h"
+#include "scene.h"
+#include "interaction.h"
 #include "sampling.h"
+#include "parallel.h"
+#include "film.h"
+#include "sampler.h"
+#include "integrator.h"
+#include "camera.h"
 
 Spectrum UniformSampleAllLights(
     const Interaction &it,

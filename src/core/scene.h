@@ -4,6 +4,8 @@
 #include <memory>
 
 #include "cpbrt.h"
+#include "primitive.h"
+#include "light.h"
 
 class Scene {
 private:

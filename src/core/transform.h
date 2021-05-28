@@ -2,6 +2,7 @@
 #define CPBRT_CORE_TRANSFORM_H
 
 #include "cpbrt.h"
+#include "geometry.h"
 
 class Matrix4x4 {
 public:

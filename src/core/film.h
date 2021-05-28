@@ -6,6 +6,10 @@
 #include <string>
 
 #include "cpbrt.h"
+#include "geometry.h"
+#include "spectrum.h"
+#include "filter.h"
+#include "parallel.h"
 
 // Stores 2 running sums, the numerator and denominator of the quotient that defines the
 // pixel filtering/reconstruction equation:

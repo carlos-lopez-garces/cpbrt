@@ -6,6 +6,8 @@
 #include <vector>
 
 #include "cpbrt.h"
+#include "geometry.h"
+#include "spectrum.h"
 
 template <typename T> struct ParamSetItem {
     const std::string name;

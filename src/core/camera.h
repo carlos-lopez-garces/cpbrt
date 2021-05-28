@@ -2,6 +2,9 @@
 #define CPBRT_CORE_CAMERA_H
 
 #include "cpbrt.h"
+#include "geometry.h"
+#include "transform.h"
+#include "film.h"
 
 struct CameraSample {
     // Point on the film.

@@ -4,6 +4,9 @@
 #include <memory>
 
 #include "cpbrt.h"
+#include "material.h"
+#include "medium.h"
+#include "transform.h"
 
 class Primitive {
 public:

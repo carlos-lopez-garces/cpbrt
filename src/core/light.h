@@ -2,6 +2,9 @@
 #define CPBRT_CORE_LIGHT_H
 
 #include "cpbrt.h"
+#include "interaction.h"
+#include "medium.h"
+#include "transform.h"
 
 enum class LightFlags : int {
     // Single position delta distribution.
