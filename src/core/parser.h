@@ -39,7 +39,7 @@
 #define PBRT_CORE_PARSER_H
 
 // core/parser.h*
-#include "pbrt.h"
+#include "cpbrt.h"
 
 #include <functional>
 #include <memory>

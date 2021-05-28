@@ -6,6 +6,14 @@
 
 #include "cpbrt.h"
 
+template <typename T> inline bool isNaN(const T x) {
+    return std::isnan(x);
+}
+
+template <> inline bool isNaN(const int x) {
+    return false;
+}
+
 template <typename T> class Vector2 {
 public:
     T x, y;
@@ -95,7 +103,7 @@ public:
     }
 
     bool HasNaNs() {
-        return std::isnan(x) || std::isnan(y);
+        return isNaN(x) || isNaN(y);
     }
 };
 
@@ -164,7 +172,7 @@ public:
     }
 
     Vector3(T x, T y, T z) : x(x), y(y), z(z) {
-        Assert(!HasNans());
+        Assert(!HasNaNs());
     }
 
     // Cast Normal3<T> to Vector3<T>.
@@ -255,7 +263,7 @@ public:
     }
 
     bool HasNaNs() {
-        return std::isnan(x) || std::isnan(y) || std::isnan(z);
+        return isNaN(x) || isNaN(y) || isNaN(z);
     }
 };
 
@@ -393,7 +401,7 @@ public:
     // Addition of points only makes sense in the context of computing a weighted
     // sum of points, with the sum of the weights being 1.
     Point2<T> operator+(const Point2<T> &p) const {
-        return Point3<T>(x+p.x, y+p.y);
+        return Point2<T>(x+p.x, y+p.y);
     }
 
     // Subtracting a point from this point results in the vector between them.
@@ -439,8 +447,8 @@ public:
         return y;
     }
 
-    bool HasNaNs() {
-        return std::isnan(x) || std::isnan(y);
+    bool HasNaNs() const {
+        return isNaN(x) || isNaN(y);
     }
 };
 
@@ -460,6 +468,11 @@ template <typename T> inline Point2<T> operator*(T s, const Point2<T> &p) {
     return p * s;
 }
 
+template <typename T, typename U> inline Point2<T> operator*(U f, const Point2<T> &p) {
+    Assert(!p.HasNaNs());
+    return p * f;
+}
+
 // Linear interpolation (0 <= t <= 1) and extrapolation (t < 0, t > 1).
 template <typename T> inline Point2<T> Lerp(Float t, const Point2<T> &p0, const Point2<T> &p1) {
     return (1-t)*p0 + t*p1;
@@ -469,7 +482,7 @@ template <typename T> inline Point2<T> Lerp(Float t, const Point2<T> &p0, const 
 template <typename T> inline Point2<T> Min(const Point2<T> &p1, const Point2<T> &p2) {
     return Point2<T>(
         std::min(p1.x, p2.x),
-        std::min(p1.y, p2.y),
+        std::min(p1.y, p2.y)
     );
 }
 
@@ -477,7 +490,7 @@ template <typename T> inline Point2<T> Min(const Point2<T> &p1, const Point2<T> 
 template <typename T> inline Point2<T> Max(const Point2<T> &p1, const Point2<T> &p2) {
     return Point2<T>(
         std::max(p1.x, p2.x),
-        std::max(p1.y, p2.y),
+        std::max(p1.y, p2.y)
     );
 }
 
@@ -578,8 +591,22 @@ public:
         return Point3<T>(x*reciprocal, y*reciprocal, z*reciprocal);
     }
 
+    T operator[](int i) const {
+        Assert(i >= 0 && i <= 2);
+        if (i == 0) return x;
+        if (i == 1) return y;
+        return z;
+    }
+
+    T &operator[](int i) {
+        Assert(i >= 0 && i <= 2);
+        if (i == 0) return x;
+        if (i == 1) return y;
+        return z;
+    }
+
     bool HasNaNs() {
-        return std::isnan(x) || std::isnan(y);
+        return isNaN(x) || isNaN(y);
     }
 };
 
@@ -690,7 +717,7 @@ public:
     }
 
     bool HasNaNs() {
-        return std::isnan(x) || std::isnan(y);
+        return isNaN(x) || isNaN(y) || isNaN(z);
     }
 };
 
@@ -827,8 +854,8 @@ public:
         // pMin.x > pMax.x, pMin.y > pMax.y.
         // The union or intersection of this BB (with a valid BB) will see it empty, which would
         // yield the correct results.
-        pMin = Point2<T>(maxNum, maxNum, maxNum);
-        pMax = Point2<T>(minNum, minNum, minNum);
+        pMin = Point2<T>(maxNum, maxNum);
+        pMax = Point2<T>(minNum, minNum);
     }
 
     // Enclose a single point.
@@ -837,8 +864,8 @@ public:
     // p1 and p2 may indeed be the opposite corner points of a box, but they may not have been
     // passed in the order that satisfies the pMin, pMax invariant.
     Bounds2(const Point2<T> &p1, const Point2<T> &p2)
-        : pMin(Vector2(Min(p1, p2))),
-          pMax(Vector2(Max(p1, p2)))
+        : pMin(Point2<T>(Min(p1, p2))),
+          pMax(Point2<T>(Max(p1, p2)))
     {}
 
     // Cast between Bounds2 types.

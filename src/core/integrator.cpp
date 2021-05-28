@@ -44,7 +44,7 @@ Spectrum UniformSampleAllLights(
             L += EstimateDirect(it, uScattering, *light, uLight, scene, sampler, arena, handleMedia);
         } else {
             // Incident radiance coming from this light source.
-            Spectrumd Ld(0.f)
+            Spectrum Ld(0.f);
 
             // Evaluate and sum the outgoing radiance / scattering equation for the incident direction
             // formed between the Interaction point and each of the random sample points on this light

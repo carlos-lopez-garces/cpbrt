@@ -6,6 +6,7 @@
 #include "material.h"
 #include "medium.h"
 #include "memory.h"
+#include "primitive.h"
 #include "transform.h"
 
 class Interaction {
@@ -134,6 +135,8 @@ public:
         bool allowMultipleLobes = false,
         TransportMode mode = TransportMode::Radiance
     );
+
+    Spectrum Le(const Vector3f &w) const;
 };
 
 #endif // CPBRT_CORE_INTERACTION_H

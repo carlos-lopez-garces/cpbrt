@@ -257,7 +257,7 @@ public:
     // the spectrum.
     friend CoefficientSpectrum Exp(const CoefficientSpectrum &sp) {
         CoefficientSpectrum ret;
-        for (int = 0; i < nSpectrumSamples; ++i) {
+        for (int i = 0; i < nSpectrumSamples; ++i) {
             ret.c[i] = std::exp(s.c[i]);
         }
         return ret;
@@ -265,7 +265,7 @@ public:
 
     CoefficientSpectrum Clamp(Float low = 0, Float high = Infinity) const {
         CoefficientSpectrum ret;
-        for (int = 0; i < nSpectrumSamples; ++i) {
+        for (int i = 0; i < nSpectrumSamples; ++i) {
             ret.c[i] = ::Clamp(c[i], low, high);
         }
         return ret;

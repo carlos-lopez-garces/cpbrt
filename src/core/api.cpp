@@ -1,6 +1,8 @@
 #include "api.h"
 #include "error.h"
+#include "lights/point.h"
 #include "materials/matte.h"
+#include "materials/plastic.h"
 #include "spectrum.h"
 #include "textures/constant.h"
 #include "transform.h"
@@ -54,8 +56,6 @@ struct RenderOptions {
     TransformSet CameraToWorld;
 
     std::vector<std::shared_ptr<Light>> lights;
-    ParamSet areaLightParams;
-    std::string areaLight;
 };
 
 // An instance of a material.
@@ -91,6 +91,9 @@ struct GraphicsState {
     using NamedMaterialMap = std::map<std::string, std::shared_ptr<MaterialInstance>>;
     std::shared_ptr<NamedMaterialMap> namedMaterials;
     bool namedMaterialsShared = false;
+
+    ParamSet areaLightParams;
+    std::string areaLight;
 
     GraphicsState() 
         : floatTextures(std::make_shared<FloatTextureMap>()),
@@ -305,10 +308,10 @@ void cpbrtLookAt(
 ) {
     VERIFY_INITIALIZED("LookAt");
     Transform lookAt = LookAt(Point3f(ex, ey, ez), Point3f(lx, ly, lz), Vector3f(ux, uy, uz));
-    FOR_ACTIVE_TRANSFORMS(curTransform[i] = curTransform[i] * lookat;);
+    FOR_ACTIVE_TRANSFORMS(curTransform[i] = curTransform[i] * lookAt;);
 }
 
-void cpbrtConcatTransform(Float transform[16]) {
+void cpbrtConcatTransform(Float tr[16]) {
     VERIFY_INITIALIZED("ConcatTransform");
     FOR_ACTIVE_TRANSFORMS(
         curTransform[i] =
@@ -318,7 +321,7 @@ void cpbrtConcatTransform(Float transform[16]) {
                                 tr[3], tr[7], tr[11], tr[15])););
 }
 
-void cpbrtTransform(Float transform[16]) {
+void cpbrtTransform(Float tr[16]) {
     VERIFY_INITIALIZED("Transform");
     FOR_ACTIVE_TRANSFORMS(
         curTransform[i] = Transform(Matrix4x4(

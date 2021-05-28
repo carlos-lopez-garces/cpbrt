@@ -3,20 +3,21 @@
 
 #include <memory>
 
+#include "cpbrt.h"
 #include "geometry.h"
 #include "light.h"
 #include "primitive.h"
 
 class Scene {
 private:
-    std::vector<std::shared_ptr<Light>> lights;
-
     // All the primitives in the scene.
     std::shared_ptr<Primitive> aggregate;
 
     Bounds3f worldBound;
 
 public:
+    std::vector<std::shared_ptr<Light>> lights;
+
     Scene(
         std::shared_ptr<Primitive> aggregate,
         const std::vector<std::shared_ptr<Light>> &lights

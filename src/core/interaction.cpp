@@ -1,4 +1,5 @@
 #include "interaction.h"
+#include "spectrum.h"
 #include "transform.h"
 
 SurfaceInteraction::SurfaceInteraction(
@@ -160,4 +161,9 @@ void SurfaceInteraction::ComputeScatteringFunctions(
 
     // Delegate BSDF creation to primitive.
     primitive->ComputeScatteringFunctions(this, arena, mode, allowMultipleLobes);
+}
+
+Spectrum SurfaceInteraction::Le(const Vector3f &w) const {
+    // TODO: implement.
+    return Spectrum(0.f);
 }

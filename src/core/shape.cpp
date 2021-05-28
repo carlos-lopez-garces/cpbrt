@@ -10,6 +10,14 @@ Shape::Shape(
     transformSwapsHandedness(ObjectToWorld->SwapsHandedness()) {
 }
 
+Bounds3f Shape::WorldBound() const {
+    // Transforming a Bounds3f involves computing a new AABB that contains the original
+    // AABB's corner points. What the world-space AABB actually bounds is then the
+    // object-space AABB; as a result, the Shape may not be tightly bound by the 
+    // world-space AABB.
+    return (*ObjectToWorld)(ObjectBound());
+}
+
 Float Shape::Pdf(const Interaction &it, const Vector3f &wi) const {
     // Does the sample ray from the given point (on some other surface) intersect
     // this Shape? This PDF is defined only over the set of directions along which

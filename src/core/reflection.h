@@ -275,7 +275,7 @@ public:
     // Adds the input BxDF to the collection.
     void Add(BxDF *bxdf) {
         Assert(nBxDFs < MaxBxDFs);
-        bxdfs[nBxDFs++] = b;
+        bxdfs[nBxDFs++] = bxdf;
     }
 
     int NumComponents(BxDFType flags = BSDF_ALL) const;
@@ -308,11 +308,11 @@ public:
     // the (possibly unique) corresponding incident direction.
     Spectrum Sample_f(
         const Vector3f &woWorld,
-        Vector3f *wiWorld
+        Vector3f *wiWorld,
         const Point2f &u,
         Float *pdf,
         BxDFType type = BSDF_ALL,
-        BxDFType *sampledType
+        BxDFType *sampledType = nullptr
     ) const;
 
     // Computes the sum of the hemispherical-directional reflectances of the types specified.

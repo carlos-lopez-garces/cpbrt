@@ -3,11 +3,8 @@
 
 #include <memory>
 
-#include "geometry.h"
-#include "interaction.h"
-#include "material.h"
-#include "memory.h"
-#include "shape.h"
+#include "cpbrt.h"
+#include "transform.h"
 
 class Primitive {
 public:
@@ -44,12 +41,18 @@ private:
     MediumInterface mediumInterface;
 
 public:
-    Primitive(
+    GeometricPrimitive(
         const std::shared_ptr<Shape> &shape,
         const std::shared_ptr<Material> &material,
         const std::shared_ptr<AreaLight> &areaLight,
         const MediumInterface &mediumInterface)
     :   shape(shape), material(material), areaLight(areaLight), mediumInterface(mediumInterface) {}
+
+    Bounds3f WorldBound() const;
+
+    bool Intersect(const Ray &ray, SurfaceInteraction &si) const;
+    // P is for "predicate". No intersection details are returned.
+    bool IntersectP(const Ray &ray) const;
 
     // Creates the BSDF at the surface-ray intersection point.
     void ComputeScatteringFunctions(

@@ -1,6 +1,8 @@
 #ifndef CPBRT_CORE_SHAPE_H
 #define CPBRT_CORE_SHAPE_H
 
+#include "cpbrt.h"
+#include "interaction.h"
 #include "transform.h"
 #include "geometry.h"
 
@@ -27,13 +29,7 @@ public:
     virtual Bounds3f ObjectBound() const = 0;
 
     // Bounding volume in world space.
-    Bounds3f WorldBound() const {
-        // Transforming a Bounds3f involves computing a new AABB that contains the original
-        // AABB's corner points. What the world-space AABB actually bounds is then the
-        // object-space AABB; as a result, the Shape may not be tightly bound by the 
-        // world-space AABB.
-        return (*ObjectToWorld)(ObjectBound());
-    }
+    Bounds3f WorldBound() const;
 
     // Returns the details of the closest intersection between the ray and this Shape's geometry.
     // The input ray is always in world space and the returned intersection details should be in

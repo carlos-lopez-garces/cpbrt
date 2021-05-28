@@ -95,6 +95,7 @@ public:
     void ReportUnused() const;
 
 private:
+    friend class TextureParams;
     std::vector<std::shared_ptr<ParamSetItem<bool>>> bools;
     std::vector<std::shared_ptr<ParamSetItem<int>>> ints;
     std::vector<std::shared_ptr<ParamSetItem<Float>>> floats;

@@ -67,7 +67,7 @@ void *MemoryArena::Alloc(size_t nBytes) {
     return requested;
 }
 
-template <typename T> T *MemoryArena::Alloc(size_t n = 1, bool runConstructor = true) {
+template <typename T> T *MemoryArena::Alloc(size_t n, bool runConstructor) {
     T *requested = (T *) Alloc(sizeof(T) * n);
 
     if (runConstructor) {

@@ -1,8 +1,8 @@
 #ifndef CPBRT_CORE_LIGHT_H
 #define CPBRT_CORE_LIGHT_H
 
+#include "cpbrt.h"
 #include "sampler.h"
-#include "scene.h"
 #include "spectrum.h"
 #include "transform.h"
 
@@ -26,8 +26,6 @@ inline bool IsDeltaLight(int flags) {
 }
 
 class Light {
-protected:
-
 public:
     // Flags that characterize the light source.
     const int flags;

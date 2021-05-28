@@ -88,7 +88,8 @@ struct MortonPrimitive {
 // Takes a 32-bit value and returns the result of shifting the ith bit to be at the 
 // 3ith bit, leaving zeros in other bits.
 inline uint32_t LeftShift3(uint32_t x) {
-    CHECK_LE(x, (1 << 10));
+    // TODO: define.
+    // CHECK_LE(x, (1 << 10));
     if (x == (1 << 10)) --x;
 #ifdef CPBRT_HAVE_BINARY_CONSTANTS
     x = (x | (x << 16)) & 0b00000011000000000000000011111111;
@@ -115,7 +116,7 @@ inline uint32_t LeftShift3(uint32_t x) {
 // The Morton encoding of a coordinate interleaves the bits of the z, y, and x components,
 // ...z3y3x3z2y2x2z1y1x1.
 inline uint32_t EncodeMorton3(const Vector3f &v) {
-    return (LeftShift3(v.z) << 2) | (LeftShift(v.y) << 1) | LeftShift(v.x);
+    return (LeftShift3(v.z) << 2) | (LeftShift3(v.y) << 1) | LeftShift3(v.x);
 }
 
 static void RadixSort(std::vector<MortonPrimitive> *mortonPrims) {
@@ -138,7 +139,7 @@ static void RadixSort(std::vector<MortonPrimitive> *mortonPrims) {
         // 'in' is a reference to the input array to be sorted. It alternates on every pass.
         std::vector<MortonPrimitive> &in = (pass & 1) ? tmpMortonPrims : *mortonPrims;
         // 'out' is a reference to the array that will store the sorted values. It alternates too.
-        std::vector<MortonPrimitive> &out = (pass & 1) ? *mortonPrims : tempvector;
+        std::vector<MortonPrimitive> &out = (pass & 1) ? *mortonPrims : tmpMortonPrims;
 
         constexpr int bitMask = (1 << bitsPerPass) - 1;
 
@@ -162,7 +163,7 @@ static void RadixSort(std::vector<MortonPrimitive> *mortonPrims) {
 
         // Store sorted Morton primitives at the calculated indices of the output array.
         for (const MortonPrimitive &mp : in) {
-            int bucket = (mp.mortonCode >> lowBit) & bitmask;
+            int bucket = (mp.mortonCode >> lowBit) & bitMask;
             // As Morton primitives of a given bucket get stored at the bucket's output index,
             // the bucket's output index needs to get advanced for the next primitive of the
             // same bucket.
@@ -180,7 +181,7 @@ BVHAccel::BVHAccel(
     const std::vector<std::shared_ptr<Primitive>> &p,
     int maxPrimsInNode,
     SplitMethod splitMethod
-) : primitives(p), maxPrimsInNode(std::min(255, maxPrimsInNode), splitMethod(splitMethod) {
+) : primitives(p), maxPrimsInNode(std::min(255, maxPrimsInNode)), splitMethod(splitMethod) {
     if (primitives.size() == 0) {
         return;
     }
@@ -324,7 +325,7 @@ BVHBuildNode *BVHAccel::recursiveBuild(
                         &primitiveInfo[start],
                         &primitiveInfo[mid],
                         &primitiveInfo[end-1]+1,
-                        [dim](const BVHPrimitive &a, const BVHPrimitive &b) {
+                        [dim](const BVHPrimitiveInfo &a, const BVHPrimitiveInfo &b) {
                             return a.centroid[dim] < b.centroid[dim];
                         }
                     );
@@ -639,7 +640,7 @@ BVHBuildNode *BVHAccel::emitLBVH(
         // Morton subcluster while avoiding data races with other concurrent or parallel
         // threads.
         int firstPrimOffset = orderedPrimsOffset->fetch_add(nPrimitives);
-        if (int i = 0; i < nPrimitives; ++i) {
+        for (int i = 0; i < nPrimitives; ++i) {
             int primitiveIndex = mortonPrims[i].primitiveIndex;
             orderedPrims[firstPrimOffset + i] = primitives[primitiveIndex];
             bounds = Union(bounds, primitiveInfo[primitiveIndex].bounds);
@@ -716,7 +717,8 @@ BVHBuildNode *BVHAccel::buildUpperSAH(
     int start, int end,
     int *totalNodes
 ) const {
-    CHECK_LT(start, end);
+    // TODO: define.
+    // CHECK_LT(start, end);
     int nNodes = end - start;
     if (nNodes == 1) {
         return treeletRoots[start];
@@ -739,10 +741,11 @@ BVHBuildNode *BVHAccel::buildUpperSAH(
     int dim = centroidBounds.MaximumExtent();
     // FIXME: if this hits, what do we need to do?
     // Make sure the SAH split below does something?
-    CHECK_NE(centroidBounds.pMax[dim], centroidBounds.pMin[dim]);
+    // TODO: define.
+    // CHECK_NE(centroidBounds.pMax[dim], centroidBounds.pMin[dim]);
 
     // Allocate _BucketInfo_ for SAH partition buckets.
-    PBRT_CONSTEXPR int nBuckets = 12;
+    CPBRT_CONSTEXPR int nBuckets = 12;
     struct BucketInfo {
         int count = 0;
         Bounds3f bounds;
@@ -756,8 +759,9 @@ BVHBuildNode *BVHAccel::buildUpperSAH(
         if (b == nBuckets) {
             b = nBuckets - 1;
         }
-        CHECK_GE(b, 0);
-        CHECK_LT(b, nBuckets);
+        // TODO: define.
+        // CHECK_GE(b, 0);
+        // CHECK_LT(b, nBuckets);
         buckets[b].count++;
         buckets[b].bounds = Union(buckets[b].bounds, treeletRoots[i]->bounds);
     }
@@ -796,14 +800,16 @@ BVHBuildNode *BVHAccel::buildUpperSAH(
             int b = 
                 nBuckets * ((centroid - centroidBounds.pMin[dim]) / (centroidBounds.pMax[dim] - centroidBounds.pMin[dim]));
             if (b == nBuckets) b = nBuckets - 1;
-            CHECK_GE(b, 0);
-            CHECK_LT(b, nBuckets);
+            // TODO: define.
+            // CHECK_GE(b, 0);
+            // CHECK_LT(b, nBuckets);
             return b <= minCostSplitBucket;
         }
     );
     int mid = pmid - &treeletRoots[0];
-    CHECK_GT(mid, start);
-    CHECK_LT(mid, end);
+    // TODO: define.
+    // CHECK_GT(mid, start);
+    // CHECK_LT(mid, end);
     node->InitInterior(
         dim, this->buildUpperSAH(arena, treeletRoots, start, mid, totalNodes),
         this->buildUpperSAH(arena, treeletRoots, mid, end, totalNodes)
