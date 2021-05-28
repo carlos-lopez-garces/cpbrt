@@ -193,6 +193,8 @@ public:
     Spectrum FindSpectrum(const std::string &n, const Spectrum &d) const {
         return geomParams.FindOneSpectrum(n, materialParams.FindOneSpectrum(n, d));
     }
+
+    void ReportUnused() const;
 };
 
 #endif // CPBRT_CORE_PARAMSET_H

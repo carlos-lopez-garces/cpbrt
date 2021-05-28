@@ -527,6 +527,8 @@ void ParamSet::ReportUnused() const {
     CHECK_UNUSED(textures);
 }
 
+// TextureParams methods.
+
 std::shared_ptr<Texture<Spectrum>> TextureParams::GetSpectrumTexture(
     const std::string &n,
     const Spectrum &def
@@ -631,4 +633,38 @@ std::shared_ptr<Texture<Float>> TextureParams::GetFloatTextureOrNull(
               name.c_str(), n.c_str());
         return nullptr;
     }
+}
+
+template <typename T> static void reportUnusedMaterialParams(
+    const std::vector<std::shared_ptr<ParamSetItem<T>>> &mtl,
+    const std::vector<std::shared_ptr<ParamSetItem<T>>> &geom) {
+    for (const auto &param : mtl) {
+        if (param->lookedUp)
+            continue;
+
+        // Don't complain about any unused material parameters if their
+        // values were provided by a shape parameter.
+        if (std::find_if(
+                geom.begin(), geom.end(),
+                [&param](const std::shared_ptr<ParamSetItem<T>> &gp) {
+                             return gp->name == param->name;
+                }) == geom.end()) {
+            Warning("Parameter \"%s\" not used", param->name.c_str());
+        }
+    }
+}
+
+void TextureParams::ReportUnused() const {
+    geomParams.ReportUnused();
+    reportUnusedMaterialParams(materialParams.ints, geomParams.ints);
+    reportUnusedMaterialParams(materialParams.bools, geomParams.bools);
+    reportUnusedMaterialParams(materialParams.floats, geomParams.floats);
+    reportUnusedMaterialParams(materialParams.point2fs, geomParams.point2fs);
+    reportUnusedMaterialParams(materialParams.vector2fs, geomParams.vector2fs);
+    reportUnusedMaterialParams(materialParams.point3fs, geomParams.point3fs);
+    reportUnusedMaterialParams(materialParams.vector3fs, geomParams.vector3fs);
+    reportUnusedMaterialParams(materialParams.normals, geomParams.normals);
+    reportUnusedMaterialParams(materialParams.spectra, geomParams.spectra);
+    reportUnusedMaterialParams(materialParams.strings, geomParams.strings);
+    reportUnusedMaterialParams(materialParams.textures, geomParams.textures);
 }
