@@ -2,6 +2,7 @@
 #define CPBRT_CORE_FILTER_H
 
 #include "cpbrt.h"
+#include "geometry.h"
 
 class Filter {
 public:

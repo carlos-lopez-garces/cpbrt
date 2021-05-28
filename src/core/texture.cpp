@@ -1,4 +1,5 @@
 #include "texture.h"
+#include "shape.h"
 
 Point2f UVMapping2D::Map(const SurfaceInteraction &si, Vector2f *dstdx, Vector2f *dstdy) const {
     // Let T be the mapping (u,v) -> (s,t) as defined by the returned value of this Map function.

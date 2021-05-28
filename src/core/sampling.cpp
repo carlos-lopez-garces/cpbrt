@@ -1,4 +1,6 @@
 #include "sampling.h"
+#include "geometry.h"
+#include "shape.h"
 
 void StratifiedSample1D(Float *sample, int nSamples, RNG &rng, bool jitter) {
     // Normalized size of stratum.

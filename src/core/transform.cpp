@@ -1,4 +1,5 @@
 #include "transform.h"
+#include "interaction.h"
 
 // Matrix4x4 method definitions.
 

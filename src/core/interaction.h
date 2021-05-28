@@ -3,6 +3,7 @@
 
 #include "cpbrt.h"
 #include "geometry.h"
+#include "transform.h"
 #include "medium.h"
 #include "material.h"
 
@@ -104,10 +105,6 @@ public:
         Float time,
         const Shape *shape
     );
-
-    bool IsSurfaceInteraction() const { 
-        return n != Normal3f();
-    }
 
     void SetShadingGeometry(
         const Vector3f &dpdus,

@@ -2,6 +2,8 @@
 #define PBRT_CORE_MEDIUM_H
 
 #include "cpbrt.h"
+#include "geometry.h"
+#include "spectrum.h"
 
 struct MediumInterface {
     // TODO: implement.

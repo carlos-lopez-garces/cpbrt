@@ -4,6 +4,7 @@
 #include <memory>
 
 #include "cpbrt.h"
+#include "geometry.h"
 #include "primitive.h"
 #include "light.h"
 

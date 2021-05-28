@@ -1,6 +1,7 @@
 #include <cmath>
 
 #include "film.h"
+#include "paramset.h"
 #include "imageio.h"
 
 Bounds2i Film::GetSampleBounds() const {

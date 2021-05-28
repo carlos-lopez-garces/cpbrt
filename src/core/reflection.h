@@ -2,6 +2,8 @@
 #define CPBRT_CORE_REFLECTION_H
 
 #include "cpbrt.h"
+#include "geometry.h"
+#include "shape.h"
 #include "spectrum.h"
 
 // The shading coordinate system is defined by the orthonormal basis {s, t, n} = {x, y, z},

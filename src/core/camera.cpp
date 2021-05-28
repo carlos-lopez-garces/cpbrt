@@ -1,4 +1,6 @@
 #include "camera.h"
+#include "sampling.h"
+#include "sampler.h"
 
 Float Camera::GenerateRayDifferential(
     const CameraSample &sample,

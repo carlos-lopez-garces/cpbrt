@@ -1,6 +1,10 @@
 #include "cpbrt.h"
 #include "reflection.h"
+#include "spectrum.h"
+#include "sampler.h"
 #include "sampling.h"
+#include "scene.h"
+#include "interaction.h"
 
 Spectrum BxDF::Sample_f(
     // wo and wi are expressed with respect to the local coordinate system.

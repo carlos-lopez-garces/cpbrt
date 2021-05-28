@@ -1,6 +1,8 @@
 #include "interaction.h"
-#include "spectrum.h"
 #include "transform.h"
+#include "primitive.h"
+#include "shape.h"
+#include "light.h"
 
 SurfaceInteraction::SurfaceInteraction(
     const Point3f &p,

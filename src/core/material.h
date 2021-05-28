@@ -2,6 +2,7 @@
 #define CPBRT_CORE_MATERIAL_H
 
 #include "cpbrt.h"
+#include "memory.h"
 
 // TODO: describe.
 enum class TransportMode {

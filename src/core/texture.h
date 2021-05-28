@@ -2,6 +2,10 @@
 #define CPBRT_CORE_TEXTURE_H
 
 #include "cpbrt.h"
+#include "spectrum.h"
+#include "geometry.h"
+#include "transform.h"
+#include "memory.h"
 
 class TextureMapping2D {
 public:

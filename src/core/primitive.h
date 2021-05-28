@@ -4,6 +4,7 @@
 #include <memory>
 
 #include "cpbrt.h"
+#include "shape.h"
 #include "material.h"
 #include "medium.h"
 #include "transform.h"

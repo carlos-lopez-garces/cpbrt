@@ -1,4 +1,6 @@
 #include "sampler.h"
+#include "sampling.h"
+#include "camera.h"
 
 void Sampler::StartPixel(const Point2i &p) {
     currentPixel = p;

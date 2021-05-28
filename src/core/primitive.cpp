@@ -1,4 +1,8 @@
-#include "primitive.h"
+#include "cpbrt.h"
+#include "shape.h"
+#include "material.h"
+#include "medium.h"
+#include "transform.h"
 
 Bounds3f GeometricPrimitive::WorldBound() const {
     return shape->WorldBound();

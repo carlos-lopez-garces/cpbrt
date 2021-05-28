@@ -1,8 +1,6 @@
 #include <map>
 
-#include "fileutil.h"
 #include "paramset.h"
-#include "spectrum.h"
 #include "textures/constant.h"
 
 // ParamSet data members.

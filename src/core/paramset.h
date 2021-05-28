@@ -6,7 +6,9 @@
 #include <vector>
 
 #include "cpbrt.h"
+#include "fileutil.h"
 #include "geometry.h"
+#include "texture.h"
 #include "spectrum.h"
 
 template <typename T> struct ParamSetItem {

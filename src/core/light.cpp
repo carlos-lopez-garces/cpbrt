@@ -1,4 +1,7 @@
 #include "light.h"
+#include "scene.h"
+#include "sampling.h"
+#include "paramset.h"
 
 Spectrum Light::Le(const RayDifferential &rd) const {
     // This is typically implemented only by environment lights, which are

@@ -4,6 +4,8 @@
 #include <vector>
 
 #include "cpbrt.h"
+#include "geometry.h"
+#include "rng.h"
 
 void StratifiedSample1D(Float *sample, int nSamples, RNG &rng, bool jitter);
 

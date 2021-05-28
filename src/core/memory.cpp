@@ -1,6 +1,5 @@
 #include <malloc.h>
 
-#include "cpbrt.h"
 #include "memory.h"
 
 // Allocates a block of the given size aligned to a L1 cache line boundary.

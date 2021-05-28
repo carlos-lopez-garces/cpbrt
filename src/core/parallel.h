@@ -4,6 +4,7 @@
 #include <atomic>
 
 #include "cpbrt.h"
+#include "geometry.h"
 
 // TODO: std::atomic supports floating-point types since C++20.
 class AtomicFloat {

@@ -2,9 +2,8 @@
 #define CPBRT_CORE_LIGHT_H
 
 #include "cpbrt.h"
+#include "memory.h"
 #include "interaction.h"
-#include "medium.h"
-#include "transform.h"
 
 enum class LightFlags : int {
     // Single position delta distribution.
@@ -92,6 +91,8 @@ private:
     Interaction p1;
 
 public:
+    VisibilityTester() {}
+
     VisibilityTester(const Interaction &p0, const Interaction &p1) : p0(p0), p1(p1) {}
 
     const Interaction &P0() const {
