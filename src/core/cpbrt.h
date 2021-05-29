@@ -129,6 +129,7 @@ static const Float Inv4Pi  = 0.07957747154594766788;
 static const Float PiOver2 = 1.57079632679489661923;
 static const Float PiOver4 = 0.78539816339744830961;
 static const Float Sqrt2   = 1.41421356237309504880;
+static CPBRT_CONSTEXPR Float ShadowEpsilon = 0.0001f;
 
 // Dynamic memory allocation on the stack.
 #ifdef _MSC_VER
