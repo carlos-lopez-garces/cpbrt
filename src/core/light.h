@@ -84,6 +84,16 @@ public:
     virtual void Preprocess(const Scene &scene) {}
 };
 
+// TODO: implement.
+class AreaLight : public Light {
+  public:
+    AreaLight(const Transform &LightToWorld, const MediumInterface &medium, int nSamples)
+        : Light((int)LightFlags::Area, LightToWorld, medium, nSamples)
+    {}
+
+    virtual Spectrum L(const Interaction &intr, const Vector3f &w) const = 0;
+};
+
 class VisibilityTester {
 private:
     // Departure and destination points of a shadow ray.
