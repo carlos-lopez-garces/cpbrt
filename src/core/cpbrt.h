@@ -220,4 +220,52 @@ inline double BitsToFloat(uint64_t bits) {
     return f;
 }
 
+inline float NextFloatUp(float v) {
+    // Handle infinity and negative zero for _NextFloatUp()_
+    if (std::isinf(v) && v > 0.) return v;
+    if (v == -0.f) v = 0.f;
+
+    // Advance _v_ to next higher float
+    uint32_t ui = FloatToBits(v);
+    if (v >= 0)
+        ++ui;
+    else
+        --ui;
+    return BitsToFloat(ui);
+}
+
+inline float NextFloatDown(float v) {
+    // Handle infinity and positive zero for NextFloatDown().
+    if (std::isinf(v) && v < 0.) return v;
+    if (v == 0.f) v = -0.f;
+    uint32_t ui = FloatToBits(v);
+    if (v > 0)
+        --ui;
+    else
+        ++ui;
+    return BitsToFloat(ui);
+}
+
+inline double NextFloatUp(double v, int delta = 1) {
+    if (std::isinf(v) && v > 0.) return v;
+    if (v == -0.f) v = 0.f;
+    uint64_t ui = FloatToBits(v);
+    if (v >= 0.)
+        ui += delta;
+    else
+        ui -= delta;
+    return BitsToFloat(ui);
+}
+
+inline double NextFloatDown(double v, int delta = 1) {
+    if (std::isinf(v) && v < 0.) return v;
+    if (v == 0.f) v = -0.f;
+    uint64_t ui = FloatToBits(v);
+    if (v > 0.)
+        ui -= delta;
+    else
+        ui += delta;
+    return BitsToFloat(ui);
+}
+
 #endif // CPBRT_CORE_PBRT_H
