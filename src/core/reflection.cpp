@@ -166,7 +166,15 @@ Spectrum BSDF::Sample_f(
     if (!(bxdf->type & BSDF_SPECULAR) && matchingComps > 1) {
         // As explained earlier, we don't care about f's current value, because it corresponds
         // to only a single BxDF. We want the combined spectrum of all the matching BxDFs.
-        return f(woWorld, wiWorld, type);
+        bool reflect = Dot(*wiWorld, ng) * Dot(woWorld, ng) > 0;
+        f = 0.;
+        for (int i = 0; i < nBxDFs; ++i) {
+            if (bxdfs[i]->MatchesFlags(type) &&
+                ((reflect && (bxdfs[i]->type & BSDF_REFLECTION)) ||
+                (!reflect && (bxdfs[i]->type & BSDF_TRANSMISSION)))) {
+                f += bxdfs[i]->f(wo, wi);
+            }
+        }
     }
 
     return f;

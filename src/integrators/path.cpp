@@ -123,6 +123,6 @@ Spectrum PathIntegrator::Li(
             beta /= 1 - q;
         }
     }
-)
+
     return L;
 }

@@ -42,8 +42,41 @@ public:
         const MediumInterface &mediumInterface
     ) : p(p), time(time), mediumInterface(mediumInterface) {}
 
-    bool isSurfaceInteraction() const {
+    bool IsSurfaceInteraction() const {
         return n != Normal3f();
+    }
+
+    Ray SpawnRay(const Vector3f &d) const {
+        Point3f o = OffsetRayOrigin(p, pError, n, d);
+        return Ray(o, d, Infinity, time, GetMedium(d));
+    }
+
+    Ray SpawnRayTo(const Point3f &p2) const {
+        Point3f origin = OffsetRayOrigin(p, pError, n, p2 - p);
+        Vector3f d = p2 - p;
+        return Ray(origin, d, 1 - ShadowEpsilon, time, GetMedium(d));
+    }
+
+    Ray SpawnRayTo(const Interaction &it) const {
+        Point3f origin = OffsetRayOrigin(p, pError, n, it.p - p);
+        Point3f target = OffsetRayOrigin(it.p, it.pError, it.n, origin - it.p);
+        Vector3f d = target - origin;
+        return Ray(origin, d, 1 - ShadowEpsilon, time, GetMedium(d));
+    }
+
+    // TODO: explain.
+    bool IsMediumInteraction() const { 
+        return !IsSurfaceInteraction();
+    }
+
+    // TODO: explain.
+    const Medium *GetMedium(const Vector3f &w) const {
+        return Dot(w, n) > 0 ? mediumInterface.outside : mediumInterface.inside;
+    }
+
+    // TODO: explain.
+    const Medium *GetMedium() const {
+        return mediumInterface.inside;
     }
 };
 

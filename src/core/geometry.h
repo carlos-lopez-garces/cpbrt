@@ -297,6 +297,26 @@ template <typename T> inline Vector3<T> Cross(const Vector3<T> &v1, const Vector
     );
 }
 
+template <typename T> inline Vector3<T> Cross(const Vector3<T> &v, const Normal3<T> &n) {
+    double vx = v.x, vy = v.y, vz = v.z;
+    double nx = n.x, ny = n.y, nz = n.z;
+    return Vector3<T>(
+        (vy * nz) - (vz * ny),
+        (vz * nx) - (vx * nz),
+        (vx * ny) - (vy * nx)
+    );
+}
+
+template <typename T> inline Vector3<T> Cross(const Normal3<T> &v, const Vector3<T> &n) {
+    double vx = v.x, vy = v.y, vz = v.z;
+    double nx = n.x, ny = n.y, nz = n.z;
+    return Vector3<T>(
+        (vy * nz) - (vz * ny),
+        (vz * nx) - (vx * nz),
+        (vx * ny) - (vy * nx)
+    );
+}
+
 template <typename T> inline Vector3<T> Normalize(const Vector3<T> &v) {
     return v / v.Length();
 }
@@ -378,6 +398,12 @@ public:
     // Cast Point2<T> to Vector2<U>.
     template <typename U> explicit operator Vector2<U>() const {
         return Vector2<U>(x, y);
+    }
+
+    Point2<T> &operator=(const Point2<T> &p) {
+        x = p.x;
+        y = p.y;
+        return *this;
     }
 
     bool operator==(const Point2<T> &p) const {
@@ -534,6 +560,13 @@ public:
         return Vector3<U>(x, y, z);
     }
 
+    Point3<T> &operator=(const Point3<T> &p) {
+        x = p.x;
+        y = p.y;
+        z = p.z;
+        return *this;
+    }
+
     bool operator==(const Point3<T> &p) const {
         return x == p.x && y == p.y && z == p.z;
     }
@@ -613,6 +646,10 @@ public:
 typedef Point3<Float> Point3f;
 typedef Point3<int> Point3i;
 
+template <typename T, typename U> inline Point3<T> operator*(U f, const Point3<T> &p) {
+    return p * f;
+}
+
 template <typename T> inline Float Distance(const Point3<T> &p1, const Point3<T> &p2) {
     // Guaranteed to be positive.
     return (p1-p2).Length();
@@ -675,7 +712,7 @@ public:
     }
 
     Normal3(T x, T y, T z) : x(x), y(y), z(z) {
-        Assert(!HasNans());
+        Assert(!HasNaNs());
     }
 
     explicit Normal3<T>(const Vector3<T> &v)
@@ -690,6 +727,13 @@ public:
 
     bool operator!=(const Normal3<T> &p) const {
         return x != p.x || y != p.y || y != p.z;
+    }
+
+    template <typename U> Normal3<T> &operator*=(U f) {
+        x *= f;
+        y *= f;
+        z *= f;
+        return *this;
     }
 
     Normal3<T> operator+(const Normal3<T> &n) const {
@@ -738,6 +782,14 @@ template <typename T> inline Vector3<T>::Vector3(const Normal3<T> &n)
     Assert(!HasNaNs());
 }
 
+template <typename T> inline T Dot(const Normal3<T> &n1, const Normal3<T> &n2) {
+    return n1.x * n2.x + n1.y * n2.y + n1.z * n2.z;
+}
+
+template <typename T> inline T AbsDot(const Normal3<T> &n1, const Normal3<T> &n2) {
+    return std::abs(n1.x * n2.x + n1.y * n2.y + n1.z * n2.z);
+}
+
 template <typename T> inline T Dot(const Normal3<T> &n, const Vector3<T> &v) {
     return n.x*v.x + n.y*v.y + n.z*v.z;
 }
@@ -747,7 +799,7 @@ template <typename T> inline T AbsDot(const Normal3<T> &n, const Vector3<T> &v) 
 }
 
 template <typename T> inline T Dot(const Vector3<T> &v, const Normal3<T> &n) {
-    return Dot(v, n);
+    return v.x * n.x + v.y * n.y + v.z * n.z;
 }
 
 template <typename T> inline T AbsDot(const Vector3<T> &v, const Normal3<T> &n) {
@@ -755,10 +807,24 @@ template <typename T> inline T AbsDot(const Vector3<T> &v, const Normal3<T> &n) 
 }
 
 // Flip a normal so that it lies in the same hemisphere as the vector.
-template <typename T> inline Normal3<T> FaceForward(
-    const Normal3<T> &n, const Vector3<T> &v
-) {
+template <typename T> inline Normal3<T> Faceforward(const Normal3<T> &n, const Vector3<T> &v) {
     return (Dot(n, v) < 0.f) ? -n : n;
+}
+
+template <typename T> inline Normal3<T> Faceforward(const Normal3<T> &n, const Normal3<T> &n2) {
+    return (Dot(n, n2) < 0.f) ? -n : n;
+}
+
+template <typename T> inline Vector3<T> Faceforward(const Vector3<T> &v, const Vector3<T> &v2) {
+    return (Dot(v, v2) < 0.f) ? -v : v;
+}
+
+template <typename T> inline Vector3<T> Faceforward(const Vector3<T> &v, const Normal3<T> &n2) {
+    return (Dot(v, n2) < 0.f) ? -v : v;
+}
+
+template <typename T> Normal3<T> Abs(const Normal3<T> &v) {
+    return Normal3<T>(std::abs(v.x), std::abs(v.y), std::abs(v.z));
 }
 
 class Ray {
@@ -1251,6 +1317,28 @@ inline Float SphericalTheta(const Vector3f &v) {
 inline Float SphericalPhi(const Vector3f &v) {
     Float phi = std::atan2(v.y, v.x);
     return (phi < 0) ? (phi + 2*Pi) : phi;
+}
+
+inline Point3f OffsetRayOrigin(
+    const Point3f &p,
+    const Vector3f &pError,
+    const Normal3f &n,
+    const Vector3f &w
+) {
+    Float d = Dot(Abs(n), pError);
+    Vector3f offset = d * Vector3f(n);
+    if (Dot(w, n) < 0) offset = -offset;
+    Point3f po = p + offset;
+    // Round offset point _po_ away from _p_.
+    for (int i = 0; i < 3; ++i) {
+        if (offset[i] > 0) {
+            po[i] = NextFloatUp(po[i]);
+        }
+        else if (offset[i] < 0) {
+            po[i] = NextFloatDown(po[i]);
+        }
+    }
+    return po;
 }
 
 #endif // CPBRT_CORE_GEOMETRY_H

@@ -1,9 +1,9 @@
 
 /*
-    pbrt source code is Copyright(c) 1998-2016
+    cpbrt source code is Copyright(c) 1998-2016
                         Matt Pharr, Greg Humphreys, and Wenzel Jakob.
 
-    This file is part of pbrt.
+    This file is part of cpbrt.
 
     Redistribution and use in source and binary forms, with or without
     modification, are permitted provided that the following conditions are
@@ -35,8 +35,8 @@
 #pragma once
 #endif
 
-#ifndef PBRT_CORE_PARSER_H
-#define PBRT_CORE_PARSER_H
+#ifndef CPBRT_CORE_PARSER_H
+#define CPBRT_CORE_PARSER_H
 
 // core/parser.h*
 #include "cpbrt.h"
@@ -46,7 +46,7 @@
 #include <string>
 #include <vector>
 
-namespace pbrt {
+namespace cpbrt {
 
 // Loc represents a position in a file being parsed.
 struct Loc {
@@ -99,7 +99,7 @@ class string_view {
     size_t length;
 };
 
-// Tokenizer converts a single pbrt scene file into a series of tokens.
+// Tokenizer converts a single cpbrt scene file into a series of tokens.
 class Tokenizer {
   public:
     static std::unique_ptr<Tokenizer> CreateFromFile(
@@ -118,7 +118,7 @@ class Tokenizer {
 
   private:
     Tokenizer(std::string str, std::function<void(const char *)> errorCallback);
-#if defined(PBRT_HAVE_MMAP) || defined(PBRT_IS_WINDOWS)
+#if defined(CPBRT_HAVE_MMAP) || defined(CPBRT_IS_WINDOWS)
     Tokenizer(void *ptr, size_t len, std::string filename,
               std::function<void(const char *)> errorCallback);
 #endif
@@ -144,7 +144,7 @@ class Tokenizer {
     // This function is called if there is an error during lexing.
     std::function<void(const char *)> errorCallback;
 
-#if defined(PBRT_HAVE_MMAP) || defined(PBRT_IS_WINDOWS)
+#if defined(CPBRT_HAVE_MMAP) || defined(CPBRT_IS_WINDOWS)
     // Scene files on disk are mapped into memory for lexing.  We need to
     // hold on to the starting pointer and total length so they can be
     // unmapped in the destructor.
@@ -170,6 +170,6 @@ class Tokenizer {
     std::string sEscaped;
 };
 
-}  // namespace pbrt
+}  // namespace cpbrt
 
-#endif  // PBRT_CORE_PARSER_H
+#endif  // CPBRT_CORE_PARSER_H

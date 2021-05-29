@@ -50,13 +50,13 @@ template <typename T> inline Point3<T> Transform::operator()(const Point3<T> &p)
     T weight       = (m.m[3][0] * p.x) + (m.m[3][1] * p.y) + (m.m[3][2] * p.z) + m.m[3][3];
 
    if (weight != 1.0f) {
-       return Vector3<T>(
+       return Point3<T>(
            homogeneousX, 
            homogeneousY,
            homogeneousZ
        ) / weight;
    }
-   return Vector3<T>(homogeneousX, homogeneousY, homogeneousZ);
+   return Point3<T>(homogeneousX, homogeneousY, homogeneousZ);
 };
 
 template <typename T> inline Vector3<T> Transform::operator()(const Vector3<T> &v) const {

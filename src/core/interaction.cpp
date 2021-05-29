@@ -59,9 +59,9 @@ void SurfaceInteraction::SetShadingGeometry(
     if (orientationIsAuthoritative) {
         // Make the true geometric normal lie on the same hemisphere as the shading
         // normal.
-        n = FaceForward(n, shading.n);
+        n = Faceforward(n, shading.n);
     } else {
-        shading.n = FaceForward(shading.n, n);
+        shading.n = Faceforward(shading.n, n);
     }
 
     shading.dpdu = dpdus;

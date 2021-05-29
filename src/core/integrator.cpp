@@ -188,7 +188,7 @@ Spectrum EstimateDirect(
     if (!IsDeltaLight(light.flags)) {
         Spectrum f;
         bool sampledSpecular = false;
-        if (it.isSurfaceInteraction()) {
+        if (it.IsSurfaceInteraction()) {
             // Sample incident direction for surface interactions.
             BxDFType sampledType;
             const SurfaceInteraction &si = (const SurfaceInteraction &) it;

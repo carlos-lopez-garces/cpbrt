@@ -48,6 +48,6 @@ public:
         MemoryArena &arena,
         int depth
     ) const;
-}
+};
 
 #endif // CPBRT_INTEGRATORS_DIRECT_LIGHTING_H

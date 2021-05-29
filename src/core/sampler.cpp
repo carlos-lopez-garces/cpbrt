@@ -122,6 +122,7 @@ void GlobalSampler::StartPixel(const Point2i &p) {
     }
 
     // Compute 2D array samples for GlobalSampler.
+    int dim = arrayStartDim + samples1DArraySizes.size();
     for (size_t i = 0; i < samples2DArraySizes.size(); ++i) {
         // samples2DArraySizes records the number of dimensions per sample of a given
         // array request.
@@ -129,7 +130,8 @@ void GlobalSampler::StartPixel(const Point2i &p) {
 
         for (int j = 0; j < nSamples; ++j) {
             int64_t index = GetIndexForSample(j);
-            sampleArray2D[i][j] = SampleDimension(index, arrayStartDim + i);
+            sampleArray2D[i][j].x = SampleDimension(index, dim);
+            sampleArray2D[i][j].y = SampleDimension(index, dim + 1);
         }
     }
 }

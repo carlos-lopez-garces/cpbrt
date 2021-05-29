@@ -21,14 +21,14 @@ void MatteMaterial::ComputeScatteringFunctions(
     Spectrum kd = Kd->Evaluate(*si).Clamp();
 
     // Oren-Nayar diffuse reflection model parameter.
-    Float sigma = Clamp(sigma->Evaluate(*si), 0, 90);
+    Float sig = Clamp(sigma->Evaluate(*si), 0, 90);
 
     if (!kd.IsBlack()) {
         if (sigma == 0) {
             si->bsdf->Add(ARENA_ALLOC(arena, LambertianReflection)(kd));
         } else {
             // TODO: implement OrenNayarReflection.
-            // si->bsdf->Add(ARENA_ALLOC(arena, OrenNayarReflection)(kd, sigma));
+            // si->bsdf->Add(ARENA_ALLOC(arena, OrenNayarReflection)(kd, sig));
         }
     }
 }

@@ -63,7 +63,7 @@ Spectrum DirectLightingIntegrator::Li(
     }
 
     // Outgoing direction as computed by the BSDF.
-    Vector3f wo = isect.wo;
+    Vector3f wo = si.wo;
 
     // If the intersected object is emissive (an area light, for example), it contributes to the
     // radiance carried by the ray.
