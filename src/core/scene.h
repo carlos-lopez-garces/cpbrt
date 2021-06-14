@@ -38,6 +38,8 @@ public:
 
     // P is for "predicate". No intersection details are returned.
     bool IntersectP(const Ray &ray) const;
+
+    bool IntersectTr(Ray ray, Sampler &sampler, SurfaceInteraction *si, Spectrum *transmittance) const;
 };
 
 #endif // CPBRT_CORE_SCENE_H
