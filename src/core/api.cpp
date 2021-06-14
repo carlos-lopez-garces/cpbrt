@@ -120,7 +120,15 @@ struct GraphicsState {
         std::shared_ptr<Material> mtl(CreateMatteMaterial(tp));
         currentMaterial = std::make_shared<MaterialInstance>("matte", mtl, ParamSet());
     }
+
+    MediumInterface CreateMediumInterface();    
 };
+
+MediumInterface GraphicsState::CreateMediumInterface() {
+    // TODO: implement.
+    MediumInterface m;
+    return m;
+}
 
 // API static data.
 
@@ -540,7 +548,8 @@ void cpbrtNamedMaterial(const std::string &name) {
 
 void cpbrtLightSource(const std::string &name, const ParamSet &params) {
     VERIFY_WORLD("LightSource");
-    // TODO: create medium interface.
+
+     MediumInterface mi = graphicsState.CreateMediumInterface();
 
     std::shared_ptr<Light> lt = MakeLight(name, params, curTransform[0], mi);
 
