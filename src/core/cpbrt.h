@@ -34,6 +34,7 @@ typedef float Float;
 #endif // CPBRT_FLOAT_AS_DOUBLE
 
 struct Options {
+    // Number of worker threads for parallel for loops.
     int nThreads = 0;
     bool quickRender = false;
     bool quiet = false;

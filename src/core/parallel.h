@@ -2,6 +2,7 @@
 #define CPBRT_CORE_PARALLEL_H
 
 #include <atomic>
+#include <functional>
 
 #include "cpbrt.h"
 #include "geometry.h"
@@ -46,5 +47,20 @@ public:
         } while (!bits.compare_exchange_weak(oldBits, newBits));
     }
 };
+
+// Thread-local variable that tells the thread what its identity is.
+// External linkage so that other translation units can reference it.
+extern CPBRT_THREAD_LOCAL int ThreadIndex;
+
+void ParallelFor(
+    // Wraps a callable: a lambda expression, a function, a pointer to a function, etc.
+    // The callable receives the iteration's index.
+    const std::function<void(int64_t)> &func,
+    // Total number of iterations.
+    int64_t  count,
+    int chunkSize = 1
+);
+
+int NumSystemCores();
 
 #endif // CPBRT_CORE_PARALLEL_H

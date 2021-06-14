@@ -384,7 +384,7 @@ SET ( CPBRT_CORE_SOURCE
   # src/core/medium.cpp
   src/core/memory.cpp
   # src/core/microfacet.cpp
-  # src/core/parallel.cpp
+  src/core/parallel.cpp
   src/core/paramset.cpp
   src/core/parser.cpp
   src/core/primitive.cpp
