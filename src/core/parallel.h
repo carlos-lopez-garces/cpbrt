@@ -61,6 +61,9 @@ void ParallelFor(
     int chunkSize = 1
 );
 
+// Signals all threads to exit and cleans up resources.
+void ParallelCleanup();
+
 int NumSystemCores();
 
 #endif // CPBRT_CORE_PARALLEL_H

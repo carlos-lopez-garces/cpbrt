@@ -208,6 +208,28 @@ void ParallelFor(
     }
 }
 
+void ParallelCleanup() {
+    if (threads.empty()) {
+        return;
+    }
+
+    {
+        // lock_guard releases the mutex when it goes out of scope.
+        std::lock_guard<std::mutex> lock(workListMutex);
+        // The workerThreadFunc of a thread checks this value on every iteration of its main loop.
+        shutdownThreads = true;
+        workListCondition.notify_all();
+    }
+
+    for (std::thread &thread : threads) {
+        thread.join();
+    }
+
+    threads.erase(threads.begin(), threads.end());
+
+    shutdownThreads = false;
+}
+
 int NumSystemCores() {
     return std::max(1u, std::thread::hardware_concurrency());
 }
