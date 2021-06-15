@@ -31,3 +31,21 @@ std::string ResolveFilename(const std::string &filename) {
         return searchDirectory + "\\" + filename;
     }
 }
+
+std::string DirectoryContaining(const std::string &filename) {
+    char drive[_MAX_DRIVE];
+    char dir[_MAX_DIR];
+    char ext[_MAX_EXT];
+
+    errno_t err = _splitpath_s(filename.c_str(), drive, _MAX_DRIVE, dir, _MAX_DIR, nullptr, 0, ext, _MAX_EXT);
+    if (err == 0) {
+        char fullDir[_MAX_PATH];
+        err = _makepath_s(fullDir, _MAX_PATH, drive, dir, nullptr, nullptr);
+        if (err == 0) return std::string(fullDir);
+    }
+    return filename;
+}
+
+void SetSearchDirectory(const std::string &dirname) {
+    searchDirectory = dirname;
+}
