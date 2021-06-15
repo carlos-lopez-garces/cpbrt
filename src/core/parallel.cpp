@@ -197,9 +197,91 @@ void ParallelFor(
         for (int64_t index = indexStart; index < indexEnd; ++index) {
             if (loop.func1D) {
                 loop.func1D(index);
+            } else {
+                loop.func2D(Point2i(index % loop.nX, index / loop.nX));
             }
 
             // TODO: Handle other types of loops. (2D loops.)
+        }
+
+        // Update loop to reflect completion of iterations.
+        lock.lock();
+        loop.activeWorkers--;
+    }
+}
+
+void ParallelFor2D(
+    std::function<void(Point2i)> func,
+    const Point2i &count
+) {
+    // Run iterations immediately if not using threads or if count is small.
+    // TODO: in repo, CpbrtOptions.nThreads == 1 is threads.empty() instead.
+    if (CpbrtOptions.nThreads == 1 || count.x * count.y <= 1) {
+        for (int y = 0; y < count.y; ++y) {
+            for (int x = 0; x < count.x; ++x) {
+                func(Point2i(x, y));
+            }
+        }
+        return;
+    }
+
+    // launch worker threads if needed. Only the first ParalellFor call creates the worker
+    // thread pool; subsequent calls will use the existing pool; threads will persist until
+    // explicitly told to shut down with ParallelCleanup().
+    // TODO: in repo, thread creation takes place in ParallelInit().
+    if (threads.size() == 0) {
+        ThreadIndex = 0;
+        // Create 1 fewer thread than there are cores: the thread executing this ParallelFor
+        // call also counts.
+        for (int i = 0; i < NumSystemCores() - 1; ++i) {
+            threads.push_back(std::thread(workerThreadFunc, i+1));
+        }
+    }
+
+    // Create and enqueue ParallelForLoop for this loop.
+    // TODO: implement CurrentProfilerState() in stats.h.
+    ParallelForLoop loop(std::move(func), count, 0 /*CurrentProfilerState()*/);
+    
+    {
+        // lock_guard releases the mutex when it goes out of scope.
+        std::lock_guard<std::mutex> lock(workListMutex);
+        loop.next = workList;
+        workList = &loop;
+    }
+
+    // Notify worker threads of work to be done.
+    // Creation of the unique_lock also locks the mutex.
+    std::unique_lock<std::mutex> lock(workListMutex);
+    workListCondition.notify_all();
+
+    // Help out with parallel loop iterations in the current thread.
+    while (!loop.Finished()) {
+        int64_t indexStart = loop.nextIndex;
+        // chunkSize is always 1 for 2D loops.
+        int64_t indexEnd = std::min(indexStart + loop.chunkSize, loop.maxIndex);
+
+        loop.nextIndex = indexEnd;
+        if (loop.nextIndex == loop.maxIndex) {
+             // This thread is the one that'll execute the last chunk of the loop at the head
+            // of the list, completing it. Move the head of the list to the next loop. Note
+            // that the assigned value will be null if there are no more loops in the list;
+            // this is the condition that tells other threads that there isn't any work to do
+            // at the moment.
+            workList = loop.next;
+        }
+        loop.activeWorkers++;
+
+        // Run loop indices in [indexStart, indexEnd). Unlock the mutex so that other threads
+        // can proceed while this one executes the function. (Up until now, all idle worker
+        // threads have been waiting on the lock, after the signalling of the condition variable
+        // that woke them up.)
+        lock.unlock();
+        for (int64_t index = indexStart; index < indexEnd; ++index) {
+            if (loop.func1D) {
+                loop.func1D(index);
+            } else {
+                loop.func2D(Point2i(index % loop.nX, index / loop.nX));
+            }
         }
 
         // Update loop to reflect completion of iterations.

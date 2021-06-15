@@ -61,6 +61,11 @@ void ParallelFor(
     int chunkSize = 1
 );
 
+void ParallelFor2D(
+    std::function<void(Point2i)> func,
+    const Point2i &count
+);
+
 // Signals all threads to exit and cleans up resources.
 void ParallelCleanup();
 
