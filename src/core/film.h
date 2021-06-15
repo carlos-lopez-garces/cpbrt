@@ -155,7 +155,7 @@ public:
     // ?
     void AddSplat(const Point2f &p, const Spectrum &v);
 
-    void WriteImage(Float splatScale);
+    void WriteImage(Float splatScale = 1);
 };
 
 class FilmTile {

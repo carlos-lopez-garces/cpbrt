@@ -1,5 +1,6 @@
 #include <map>
 
+#include "floatfile.h"
 #include "paramset.h"
 #include "textures/constant.h"
 

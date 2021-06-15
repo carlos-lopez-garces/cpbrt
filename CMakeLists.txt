@@ -371,7 +371,7 @@ SET ( CPBRT_CORE_SOURCE
   src/core/fileutil.cpp
   src/core/film.cpp
   src/core/filter.cpp
-  # src/core/floatfile.cpp
+  src/core/floatfile.cpp
   src/core/geometry.cpp
   # src/core/imageio.cpp
   src/core/integrator.cpp
@@ -411,7 +411,7 @@ SET ( CPBRT_CORE_HEADERS
   src/core/fileutil.h
   src/core/film.h
   src/core/filter.h
-  # src/core/floatfile.h
+  src/core/floatfile.h
   src/core/geometry.h
   src/core/imageio.h
   src/core/integrator.h
@@ -440,7 +440,7 @@ SET ( CPBRT_CORE_HEADERS
   # src/core/sobolmatrices.h
   src/core/spectrum.h
   # src/core/stats.h
-  # src/core/stringprint.h
+  src/core/stringprint.h
   src/core/texture.h
   src/core/transform.h
   )
