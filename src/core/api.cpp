@@ -110,6 +110,9 @@ struct GraphicsState {
     ParamSet areaLightParams;
     std::string areaLight;
 
+    // TODO: describe.
+    bool reverseOrientation = false; 
+
     GraphicsState() 
         : floatTextures(std::make_shared<FloatTextureMap>()),
           spectrumTextures(std::make_shared<SpectrumTextureMap>()),
@@ -457,6 +460,11 @@ void cpbrtTransformEnd() {
     pushedTransforms.pop_back();
     activeTransformBits = pushedActiveTransformBits.back();
     pushedActiveTransformBits.pop_back();
+}
+
+void cpbrtReverseOrientation() {
+    VERIFY_WORLD("ReverseOrientation");
+    graphicsState.reverseOrientation = !graphicsState.reverseOrientation;
 }
 
 void cpbrtTexture(

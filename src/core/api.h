@@ -90,6 +90,8 @@ void cpbrtTransformBegin();
 // Pops transformations from the stack.
 void cpbrtTransformEnd();
 
+void cpbrtReverseOrientation();
+
 // Records a named texture in the graphics state.
 void cpbrtTexture(
     const std::string &name,
