@@ -949,8 +949,7 @@ static void parse(std::unique_ptr<Tokenizer> t) {
                 Float v[9];
                 for (int i = 0; i < 9; ++i)
                     v[i] = parseNumber(nextToken(TokenRequired));
-                cpbrtLookAt(v[0], v[1], v[2], v[3], v[4], v[5], v[6], v[7],
-                           v[8]);
+                cpbrtLookAt(v[0], v[1], v[2], v[3], v[4], v[5], v[6], v[7], v[8]);
             } else
                 syntaxError(tok);
             break;
@@ -959,32 +958,36 @@ static void parse(std::unique_ptr<Tokenizer> t) {
             if (tok == "MakeNamedMaterial")
                 basicParamListEntrypoint(SpectrumType::Reflectance,
                                          cpbrtMakeNamedMaterial);
-            else if (tok == "MakeNamedMedium")
-                basicParamListEntrypoint(SpectrumType::Reflectance,
-                                         cpbrtMakeNamedMedium);
+            // TODO: implement cpbrtMakeNamedMedium.
+            // else if (tok == "MakeNamedMedium")
+            //     basicParamListEntrypoint(SpectrumType::Reflectance,
+            //                              cpbrtMakeNamedMedium);
             else if (tok == "Material")
                 basicParamListEntrypoint(SpectrumType::Reflectance,
                                          cpbrtMaterial);
-            else if (tok == "MediumInterface") {
-                string_view n = dequoteString(nextToken(TokenRequired));
-                std::string names[2];
-                names[0] = toString(n);
+            // TODO: implement cpbrtMediumInterface.
+            // else if (tok == "MediumInterface") {
+            //     string_view n = dequoteString(nextToken(TokenRequired));
+            //     std::string names[2];
+            //     names[0] = toString(n);
 
-                // Check for optional second parameter
-                string_view second = nextToken(TokenOptional);
-                if (!second.empty()) {
-                    if (isQuotedString(second))
-                        names[1] = toString(dequoteString(second));
-                    else {
-                        ungetToken(second);
-                        names[1] = names[0];
-                    }
-                } else
-                    names[1] = names[0];
+            //     // Check for optional second parameter
+            //     string_view second = nextToken(TokenOptional);
+            //     if (!second.empty()) {
+            //         if (isQuotedString(second))
+            //             names[1] = toString(dequoteString(second));
+            //         else {
+            //             ungetToken(second);
+            //             names[1] = names[0];
+            //         }
+            //     } else
+            //         names[1] = names[0];
 
-                cpbrtMediumInterface(names[0], names[1]);
-            } else
+            //     cpbrtMediumInterface(names[0], names[1]);
+            // }
+            else {
                 syntaxError(tok);
+            }
             break;
 
         case 'N':
@@ -1060,12 +1063,15 @@ static void parse(std::unique_ptr<Tokenizer> t) {
                 for (int i = 0; i < 3; ++i)
                     v[i] = parseNumber(nextToken(TokenRequired));
                 cpbrtTranslate(v[0], v[1], v[2]);
-            } else if (tok == "TransformTimes") {
-                Float v[2];
-                for (int i = 0; i < 2; ++i)
-                    v[i] = parseNumber(nextToken(TokenRequired));
-                cpbrtTransformTimes(v[0], v[1]);
-            } else if (tok == "Texture") {
+            }
+            // TODO: implement cpbrtTransformTimes.
+            // else if (tok == "TransformTimes") {
+            //     Float v[2];
+            //     for (int i = 0; i < 2; ++i)
+            //         v[i] = parseNumber(nextToken(TokenRequired));
+            //     cpbrtTransformTimes(v[0], v[1]);
+            // } 
+            else if (tok == "Texture") {
                 string_view n = dequoteString(nextToken(TokenRequired));
                 std::string name = toString(n);
                 n = dequoteString(nextToken(TokenRequired));
