@@ -30,12 +30,12 @@
 
  */
 
-// core/parser.cpp*
 #include "parser.h"
 #include "api.h"
 #include "fileutil.h"
 #include "memory.h"
 #include "paramset.h"
+#include "stringprint.h"
 
 #include <ctype.h>
 #include <stdio.h>
@@ -64,7 +64,8 @@ static std::string toString(string_view s) {
     return std::string(s.data(), s.size());
 }
 
-STAT_MEMORY_COUNTER("Memory/Tokenizer buffers", tokenizerMemory);
+// TODO: implement in stat.h
+// STAT_MEMORY_COUNTER("Memory/Tokenizer buffers", tokenizerMemory);
 
 static char decodeEscaped(int ch) {
     switch (ch) {
@@ -210,7 +211,8 @@ Tokenizer::Tokenizer(std::string str,
       contents(std::move(str)) {
     pos = contents.data();
     end = pos + contents.size();
-    tokenizerMemory += contents.size();
+    // TODO: implement STAT_MEMORY_COUNTER to be able to define tokenizerMemory.
+    // tokenizerMemory += contents.size();
 }
 
 #if defined(CPBRT_HAVE_MMAP) || defined(CPBRT_IS_WINDOWS)
@@ -830,7 +832,8 @@ static void parse(std::unique_ptr<Tokenizer> t) {
     };
 
     auto ungetToken = [&](string_view s) {
-        CHECK(!ungetTokenSet);
+        // TODO: define.
+        // CHECK(!ungetTokenSet);
         ungetTokenValue = std::string(s.data(), s.size());
         ungetTokenSet = true;
     };
