@@ -83,8 +83,9 @@ Spectrum DirectLightingIntegrator::Li(
 
     if (depth+1 < maxDepth) {
         // Trace rays recursively for specular reflection and transmission.
-        L += SpecularReflect(ray, si, scene, sampler, arena, depth);
-        L += SpecularTransmit(ray, si, scene, sampler, arena, depth);
+        // TODO: implement; only Lambertian reflection is currently supported.
+        // L += SpecularReflect(ray, si, scene, sampler, arena, depth);
+        // L += SpecularTransmit(ray, si, scene, sampler, arena, depth);
     }
 
     return L;

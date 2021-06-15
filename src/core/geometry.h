@@ -1140,8 +1140,8 @@ public:
     // p1 and p2 may indeed be the opposite corner points of a box, but they may not have been
     // passed in the order that satisfies the pMin, pMax invariant.
     Bounds3(const Point3<T> &p1, const Point3<T> &p2)
-        : pMin(Vector3(Min(p1, p2))),
-          pMax(Vector3(Max(p1, p2)))
+        : pMin(std::min(p1.x, p2.x), std::min(p1.y, p2.y), std::min(p1.z, p2.z)),
+          pMax(std::max(p1.x, p2.x), std::max(p1.y, p2.y), std::max(p1.z, p2.z))
     {}
 
     Point3<T> operator[](int i) const {
@@ -1182,7 +1182,7 @@ public:
     // Returns the index of the longest axis. Useful when deciding which axis to
     // subdivide when building some of the ray-intersection acceleration structures.
     int MaximumExtent() const {
-        Vector3<T> = Diagonal();
+        Vector3<T> d = Diagonal();
         if (d.x > d.y && d.x > d.z) {
             return 0;
         } else if (d.y > d.z) {

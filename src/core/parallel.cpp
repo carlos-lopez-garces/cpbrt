@@ -200,8 +200,6 @@ void ParallelFor(
             } else {
                 loop.func2D(Point2i(index % loop.nX, index / loop.nX));
             }
-
-            // TODO: Handle other types of loops. (2D loops.)
         }
 
         // Update loop to reflect completion of iterations.

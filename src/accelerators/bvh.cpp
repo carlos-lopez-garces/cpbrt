@@ -9,6 +9,8 @@ struct BVHPrimitiveInfo {
     Bounds3f bounds;
     Point3f centroid;
 
+    BVHPrimitiveInfo() {}
+
     BVHPrimitiveInfo(size_t primitiveNumber, const Bounds3f &bounds)
         : primitiveNumber(primitiveNumber),
           bounds(bounds),

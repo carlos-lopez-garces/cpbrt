@@ -821,7 +821,7 @@ static void parse(std::unique_ptr<Tokenizer> t) {
         } else if (tok[0] == '#') {
             // Swallow comments, unless --cat or --toply was given, in
             // which case they're printed to stdout.
-            if (PbrtOptions.cat || PbrtOptions.toPly)
+            if (CpbrtOptions.cat || CpbrtOptions.toPly)
                 printf("%*s%s\n", catIndentCount, "", toString(tok).c_str());
             return nextToken(flags);
         } else
@@ -920,7 +920,7 @@ static void parse(std::unique_ptr<Tokenizer> t) {
                 // Switch to the given file.
                 std::string filename =
                     toString(dequoteString(nextToken(TokenRequired)));
-                if (PbrtOptions.cat || PbrtOptions.toPly)
+                if (CpbrtOptions.cat || CpbrtOptions.toPly)
                     printf("%*sInclude \"%s\"\n", catIndentCount, "", filename.c_str());
                 else {
                     filename = AbsolutePath(ResolveFilename(filename));
