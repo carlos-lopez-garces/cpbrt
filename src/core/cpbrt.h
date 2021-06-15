@@ -18,6 +18,10 @@
 
 #include "error.h"
 
+#if defined(_WIN32) || defined(_WIN64)
+  #define CPBRT_IS_WINDOWS
+#endif
+
 // Global macros.
 
 // Dynamic memory allocation on the stack.
