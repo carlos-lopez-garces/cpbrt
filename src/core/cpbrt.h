@@ -129,6 +129,26 @@ static CPBRT_CONSTEXPR Float Infinity = std::numeric_limits<Float>::infinity();
 static CPBRT_CONSTEXPR Float MaxFloat = std::numeric_limits<Float>::max();
 #endif // _MSC_VER
 
+// The machine epsilon is half the magnitude of the minimum spacing between real numbers
+// that are representable in floating-point. The spacing between consecutive floating-
+// point numbers varies with the range of powers of 2: the spacing between numbers in 
+// the [2^ek, 2^ek+1] range is smaller than the spacing in the [2^ek+1, 2^ek+2] range.
+// The range closest to 0 is where the spacing is the smallest.
+//
+// Half the epsilon is the upper bound on the floating-point rounding error of an
+// arithmetic operation, when the result falls in the power of 2 range closest to 0. An
+// arithmetic operation rounds the resulting real number up or down to the closest
+// floating-point number; the difference between the real number and the closest floating-
+// point number is the rounding error and it can't be larger than half the epsilon (again,
+// when the real number falls in the power of 2 range closest to 0; for other ranges,
+// the upper bound of the rounding error scales in proportion to the spacing of that range). 
+#ifdef _MSC_VER
+#define MachineEpsilon (std::numeric_limits<Float>::epsilon() * 0.5)
+#else
+static PBRT_CONSTEXPR Float MachineEpsilon =
+    std::numeric_limits<Float>::epsilon() * 0.5;
+#endif
+
 static const Float Pi      = 3.14159265358979323846;
 static const Float InvPi   = 0.31830988618379067154;
 static const Float Inv2Pi  = 0.15915494309189533577;
