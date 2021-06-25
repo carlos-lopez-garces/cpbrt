@@ -97,6 +97,8 @@ public:
 
 private:
     friend class TextureParams;
+    // This API function accesses these private members.
+    friend bool shapeMaySetMaterialParameters(const ParamSet &ps);
     std::vector<std::shared_ptr<ParamSetItem<bool>>> bools;
     std::vector<std::shared_ptr<ParamSetItem<int>>> ints;
     std::vector<std::shared_ptr<ParamSetItem<Float>>> floats;

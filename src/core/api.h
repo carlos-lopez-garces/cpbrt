@@ -114,6 +114,8 @@ void cpbrtLightSource(const std::string &name, const ParamSet &params);
 
 void cpbrtAreaLightSource(const std::string &name, const ParamSet &params);
 
+void cpbrtShape(const std::string &name, const ParamSet &params);
+
 // Main program API.
 
 void cpbrtParseFile(std::string filename);

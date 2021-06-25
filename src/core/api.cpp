@@ -20,6 +20,7 @@
 #include "materials/matte.h"
 #include "materials/plastic.h"
 #include "samplers/stratified.h"
+#include "shapes/sphere.h"
 #include "textures/constant.h"
 
 // API local classes.
@@ -28,6 +29,107 @@ constexpr int MaxTransforms = 2;
 constexpr int StartTransformBits = 1 << 0;
 constexpr int EndTransformBits   = 1 << 1;
 constexpr int AllTransformsBits = (1 << MaxTransforms) - 1;
+
+// Static functions.
+
+std::shared_ptr<Texture<Float>> MakeFloatTexture(
+    const std::string &name,
+    const Transform &tex2world,
+    const TextureParams &tp
+) {
+    Texture<Float> *tex = nullptr;
+    
+    // TODO: add other types.
+    if (name == "constant")
+        tex = CreateConstantFloatTexture(tex2world, tp);
+    else
+        Warning("Float texture \"%s\" unknown.", name.c_str());
+    tp.ReportUnused();
+
+    return std::shared_ptr<Texture<Float>>(tex);
+}
+
+std::shared_ptr<Texture<Spectrum>> MakeSpectrumTexture(
+    const std::string &name,
+    const Transform &tex2world,
+    const TextureParams &tp
+) {
+    Texture<Spectrum> *tex = nullptr;
+
+    // TODO: add other types.
+    if (name == "constant")
+        tex = CreateConstantSpectrumTexture(tex2world, tp);
+    else
+        Warning("Spectrum texture \"%s\" unknown.", name.c_str());
+    tp.ReportUnused();
+
+    return std::shared_ptr<Texture<Spectrum>>(tex);
+}
+
+std::shared_ptr<Material> MakeMaterial(const std::string &name, const TextureParams &mp) {
+    Material *material = nullptr;
+
+    // TODO: add other types.
+    if (name == "" || name == "none")
+        return nullptr;
+    else if (name == "matte")
+        material = CreateMatteMaterial(mp);
+    else if (name == "plastic")
+        material = CreatePlasticMaterial(mp);
+    else {
+        Warning("Material \"%s\" unknown. Using \"matte\".", name.c_str());
+        material = CreateMatteMaterial(mp);
+    }
+    mp.ReportUnused();
+
+    if (!material) Error("Unable to create material \"%s\"", name.c_str());
+    return std::shared_ptr<Material>(material);
+}
+
+std::shared_ptr<Light> MakeLight(
+    const std::string &name,
+    const ParamSet &paramSet,
+    const Transform &light2world,
+    const MediumInterface &mediumInterface
+) {
+    std::shared_ptr<Light> light;
+
+    // TODO: add other types.
+    if (name == "point") {
+        light =
+            CreatePointLight(light2world, mediumInterface.outside, paramSet);
+    }
+    else {
+        Warning("Light \"%s\" unknown.", name.c_str()); 
+    }
+    paramSet.ReportUnused();
+    
+    return light;
+}
+
+std::vector<std::shared_ptr<Shape>> MakeShapes(
+    const std::string &name,
+    const Transform *ObjectToWorld,
+    const Transform *WorldToObject,
+    bool reverseOrientation,
+    const ParamSet &paramSet
+) {
+    std::vector<std::shared_ptr<Shape>> shapes;
+    std::shared_ptr<Shape> s;
+
+    // TODO: add other types.
+    if (name == "sphere") {
+        s = CreateSphereShape(ObjectToWorld, WorldToObject, reverseOrientation, paramSet);
+    }
+    
+    if (s != nullptr) {
+        shapes.push_back(s);
+    } else {
+        Warning("Shape \"%s\" unknown.", name.c_str());
+    }
+
+    return shapes;
+}
 
 // Stores an array of transformations.
 struct TransformSet {
@@ -46,6 +148,48 @@ public:
             tInv.t[i] = Inverse(ts.t[i]);
         }
         return tInv;
+    }
+
+    bool IsAnimated() const {
+        for (int i = 0; i < MaxTransforms - 1; ++i) {
+            if (t[i] != t[i+1]) {
+                return true;
+            }
+        }
+        return false;
+    }
+};
+
+// Caches the inverse of a transformation.
+class TransformCache {
+private:
+    std::map<Transform, std::pair<Transform *, Transform *>> cache;
+    MemoryArena arena;
+
+public:
+    void Lookup(const Transform &t, Transform **tCached, Transform **tCachedInverse) {
+        auto iter = cache.find(t);
+        if (iter == cache.end()) {
+            // Cache miss. Allocate and store.
+            Transform *tr = arena.Alloc<Transform>();
+            *tr = t;
+            Transform *tInv = arena.Alloc<Transform>();
+            *tInv = Transform(Inverse(t));
+            cache[t] = std::make_pair(tr, tInv);
+            iter  = cache.find(t);
+        }
+
+        if (tCached) {
+            *tCached = iter->second.first;
+        }
+        if (tCachedInverse) {
+            *tCachedInverse = iter->second.second;
+        }
+    }
+
+    void Clear() {
+        arena.Reset();
+        cache.erase(cache.begin(), cache.end());
     }
 };
 
@@ -124,13 +268,64 @@ struct GraphicsState {
         currentMaterial = std::make_shared<MaterialInstance>("matte", mtl, ParamSet());
     }
 
-    MediumInterface CreateMediumInterface();    
+    MediumInterface CreateMediumInterface();
+
+    std::shared_ptr<Material> GetMaterialForShape(const ParamSet &params);
 };
 
 MediumInterface GraphicsState::CreateMediumInterface() {
     // TODO: implement.
     MediumInterface m;
     return m;
+}
+
+// TODO: explain.
+bool shapeMaySetMaterialParameters(const ParamSet &ps) {
+    for (const auto &param : ps.textures)
+        if (param->name != "alpha" && param->name != "shadowalpha")
+            return true;
+    for (const auto &param : ps.floats)
+        if (param->nValues == 1 && param->name != "radius")
+            return true;
+    for (const auto &param : ps.strings)
+        if (param->nValues == 1 && param->name != "filename" &&
+            param->name != "type" && param->name != "scheme")
+            return true;
+    for (const auto &param : ps.bools)
+        if (param->nValues == 1)
+            return true;
+    for (const auto &param : ps.ints)
+        if (param->nValues == 1)
+            return true;
+    for (const auto &param : ps.point2fs)
+        if (param->nValues == 1)
+            return true;
+    for (const auto &param : ps.vector2fs)
+        if (param->nValues == 1)
+            return true;
+    for (const auto &param : ps.point3fs)
+        if (param->nValues == 1)
+            return true;
+    for (const auto &param : ps.vector3fs)
+        if (param->nValues == 1)
+            return true;
+    for (const auto &param : ps.normals)
+        if (param->nValues == 1)
+            return true;
+    for (const auto &param : ps.spectra)
+        if (param->nValues == 1)
+            return true;
+
+    return false;
+}
+
+std::shared_ptr<Material> GraphicsState::GetMaterialForShape(const ParamSet &params) {
+    if (shapeMaySetMaterialParameters(params)) {
+        TextureParams mp(params, currentMaterial->params, *floatTextures, *spectrumTextures);
+        return MakeMaterial(currentMaterial->name, mp);
+    } else {
+        return currentMaterial->material;
+    }
 }
 
 // API static data.
@@ -142,6 +337,9 @@ static uint32_t activeTransformBits = AllTransformsBits;
 // Saved CTMs.
 static std::map<std::string, TransformSet> namedCoordinateSystems;
 
+// Cached inverses of transformations.
+static TransformCache transformCache;
+
 // Scene-wide global options set in the OptionsBlock state.
 static std::unique_ptr<RenderOptions> renderOptions;
 
@@ -149,83 +347,6 @@ static GraphicsState graphicsState;
 static std::vector<GraphicsState> pushedGraphicsStates;
 static std::vector<TransformSet> pushedTransforms;
 static std::vector<uint32_t> pushedActiveTransformBits;
-
-// Static functions.
-
-std::shared_ptr<Texture<Float>> MakeFloatTexture(
-    const std::string &name,
-    const Transform &tex2world,
-    const TextureParams &tp
-) {
-    Texture<Float> *tex = nullptr;
-    
-    // TODO: add other types.
-    if (name == "constant")
-        tex = CreateConstantFloatTexture(tex2world, tp);
-    else
-        Warning("Float texture \"%s\" unknown.", name.c_str());
-    tp.ReportUnused();
-
-    return std::shared_ptr<Texture<Float>>(tex);
-}
-
-std::shared_ptr<Texture<Spectrum>> MakeSpectrumTexture(
-    const std::string &name,
-    const Transform &tex2world,
-    const TextureParams &tp
-) {
-    Texture<Spectrum> *tex = nullptr;
-
-    // TODO: add other types.
-    if (name == "constant")
-        tex = CreateConstantSpectrumTexture(tex2world, tp);
-    else
-        Warning("Spectrum texture \"%s\" unknown.", name.c_str());
-    tp.ReportUnused();
-
-    return std::shared_ptr<Texture<Spectrum>>(tex);
-}
-
-std::shared_ptr<Material> MakeMaterial(const std::string &name, const TextureParams &mp) {
-    Material *material = nullptr;
-
-    // TODO: add other types.
-    if (name == "" || name == "none")
-        return nullptr;
-    else if (name == "matte")
-        material = CreateMatteMaterial(mp);
-    else if (name == "plastic")
-        material = CreatePlasticMaterial(mp);
-    else {
-        Warning("Material \"%s\" unknown. Using \"matte\".", name.c_str());
-        material = CreateMatteMaterial(mp);
-    }
-    mp.ReportUnused();
-
-    if (!material) Error("Unable to create material \"%s\"", name.c_str());
-    return std::shared_ptr<Material>(material);
-}
-
-std::shared_ptr<Light> MakeLight(
-    const std::string &name,
-    const ParamSet &paramSet,
-    const Transform &light2world,
-    const MediumInterface &mediumInterface
-) {
-    std::shared_ptr<Light> light;
-
-    // TODO: add other types.
-    if (name == "point") {
-        light =
-            CreatePointLight(light2world, mediumInterface.outside, paramSet);
-    }
-    else {
-        Warning("Light \"%s\" unknown.", name.c_str()); 
-    }
-    paramSet.ReportUnused();
-    
-    return light;
-}
 
 // API macros.
 
@@ -574,4 +695,43 @@ void cpbrtAreaLightSource(const std::string &name, const ParamSet &params) {
     graphicsState.areaLightParams = params;
     // Unlike cpbrtLightSource, the area light is not created yet: the shapes
     // that make up its geometry need to be created first.
+}
+
+void cpbrtShape(const std::string &name, const ParamSet &params) {
+    VERIFY_WORLD("Shape");
+    std::vector<std::shared_ptr<Primitive>> prims;
+    std::vector<std::shared_ptr<AreaLight>> areaLights;
+    if (!curTransform.IsAnimated()) {
+        // Initialize prims and areaLights for static shape.
+
+        // Create shapes.
+        Transform *ObjToWorld;
+        Transform *WorldToObj;
+        transformCache.Lookup(curTransform[0], &ObjToWorld, &WorldToObj);
+        std::vector<std::shared_ptr<Shape>> shapes 
+            = MakeShapes(name, ObjToWorld, WorldToObj, graphicsState.reverseOrientation, params);
+        if (shapes.size() == 0) {
+            return;
+        }
+
+        std::shared_ptr<Material> mtl = graphicsState.GetMaterialForShape(params);
+        params.ReportUnused();
+        
+        MediumInterface mi = graphicsState.CreateMediumInterface();
+
+        prims.reserve(shapes.size());
+
+        for (auto s : shapes) {
+            // Possibly create area light.
+            std::shared_ptr<AreaLight> areaLight;
+            if (graphicsState.areaLight != "") {
+                // TODO: implement.
+            }
+
+            prims.push_back(std::make_shared<GeometricPrimitive>(s, mtl, areaLight, mi));
+        }
+    } else {
+        // TODO: implement. Also TransformedPrimitive and AnimatedTransforms.
+    }
+    // TODO: Add prims and areaLights to scene or current instance.
 }
