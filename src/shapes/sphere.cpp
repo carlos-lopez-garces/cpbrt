@@ -327,3 +327,21 @@ bool Sphere::IntersectP(
 
     return true;
 }
+
+std::shared_ptr<Shape> CreateSphereShape(
+    // Object to world.
+    const Transform *o2w,
+    // World to object.
+    const Transform * w2o,
+    bool reverseOrientation,
+    const ParamSet &params
+) {
+    Float radius = params.FindOneFloat("radius", 1.f);
+    // If not set, don't clip the sphere.
+    Float zmin = params.FindOneFloat("zmin", -radius);
+    Float zmax = params.FindOneFloat("zmax", radius);
+    Float phimax = params.FindOneFloat("phimax", 360.f);
+    return std::make_shared<Sphere>(
+        o2w, w2o, reverseOrientation, radius, zmin, zmax, phimax
+    );
+}

@@ -6,7 +6,7 @@
 #include "core/shape.h"
 #include "core/transform.h"
 
-class Sphere : public Sphere {
+class Sphere : public Shape {
 private:
     const Float radius;
     // Clipping plane z=zMin that clips the bottom of the sphere.
@@ -57,5 +57,14 @@ public:
         bool testAlphaTexture
     ) const;
 };
+
+std::shared_ptr<Shape> CreateSphereShape(
+    // Object to world.
+    const Transform *o2w,
+    // World to object.
+    const Transform * w2o,
+    bool reverseOrientation,
+    const ParamSet &params
+);
 
 #endif // CPBRT_SHAPES_SPHERE_H
