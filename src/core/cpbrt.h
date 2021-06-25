@@ -123,8 +123,10 @@ class TextureParams;
 // Only so that you don't have to type std::numeric_limits<Float> ... 
 #ifdef _MSC_VER
 #define Infinity std::numeric_limits<Float>::infinity()
+#define MaxFloat std::numeric_limits<Float>::max()
 #else
 static CPBRT_CONSTEXPR Float Infinity = std::numeric_limits<Float>::infinity();
+static CPBRT_CONSTEXPR Float MaxFloat = std::numeric_limits<Float>::max();
 #endif // _MSC_VER
 
 static const Float Pi      = 3.14159265358979323846;
