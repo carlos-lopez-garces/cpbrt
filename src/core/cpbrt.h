@@ -248,28 +248,43 @@ inline double BitsToFloat(uint64_t bits) {
 }
 
 inline float NextFloatUp(float v) {
-    // Handle infinity and negative zero for _NextFloatUp()_
+    // There's no float higher than infinity.
     if (std::isinf(v) && v > 0.) return v;
+
+    // -0 and 0 are different in their floating-point representation: -0 has a 1 in the sign bit.
+    // Since they differ only in sign, their floating-point representations are not consecutive,
+    // so incrementing -0 wouldn't yield 0.
     if (v == -0.f) v = 0.f;
 
-    // Advance _v_ to next higher float
+    // Convert to a base 2 integer so that the increment and decrement operators yield the next
+    // float.
     uint32_t ui = FloatToBits(v);
-    if (v >= 0)
+    if (v >= 0) {
         ++ui;
-    else
+    } else {
         --ui;
+    }
     return BitsToFloat(ui);
 }
 
 inline float NextFloatDown(float v) {
-    // Handle infinity and positive zero for NextFloatDown().
+    // There's no float lower than -infinity.
     if (std::isinf(v) && v < 0.) return v;
+
+    // -0 and 0 are different in their floating-point representation: -0 has a 1 in the sign bit.
+    // Since they differ only in sign, their floating-point representations are not consecutive,
+    // so decrementing 0 wouldn't yield -0.
     if (v == 0.f) v = -0.f;
+
+    // Convert to a base 2 integer so that the increment and decrement operators yield the next
+    // float.
     uint32_t ui = FloatToBits(v);
-    if (v > 0)
+    if (v > 0) {
         --ui;
-    else
+    } else {
         ++ui;
+    }
+
     return BitsToFloat(ui);
 }
 
