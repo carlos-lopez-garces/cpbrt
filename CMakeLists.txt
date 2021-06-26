@@ -366,7 +366,7 @@ SET ( CPBRT_CORE_SOURCE
   src/core/api.cpp
   # src/core/bssrdf.cpp
   src/core/camera.cpp
-  # src/core/efloat.cpp
+  src/core/efloat.cpp
   # src/core/error.cpp
   src/core/fileutil.cpp
   src/core/film.cpp
@@ -406,7 +406,7 @@ SET ( CPBRT_CORE_HEADERS
   src/core/api.h
   # src/core/bssrdf.h
   src/core/camera.h
-  # src/core/efloat.h
+  src/core/efloat.h
   src/core/error.h
   src/core/fileutil.h
   src/core/film.h
@@ -480,7 +480,7 @@ SOURCE_GROUP (media REGULAR_EXPRESSION src/media/.*)
 # cpbrt libraries and executables
 
 ADD_LIBRARY ( cpbrt STATIC
-  ${CPBRT_YACC_LEX_SOURCE}
+  # ${CPBRT_YACC_LEX_SOURCE}
   ${CPBRT_CORE_SOURCE}
   ${CPBRT_CORE_HEADERS}
   ${CPBRT_SOURCE}
