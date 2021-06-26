@@ -113,13 +113,29 @@ public:
 
     template <typename T> Point3<T> operator()(const Point3<T> &p) const;
 
+    template <typename T> inline Point3<T> operator()(const Point3<T> &pt, Vector3<T> *absError) const;
+
+    template <typename T> inline Point3<T> operator()(const Point3<T> &p, const Vector3<T> &pError, Vector3<T> *pTransError) const;
+
     template <typename T> Vector3<T> operator()(const Vector3<T> &v) const;
+
+    template <typename T> inline Vector3<T> operator()(const Vector3<T> &v, Vector3<T> *vTransError) const;
+
+    template <typename T> inline Vector3<T> operator()(const Vector3<T> &v, const Vector3<T> &vError, Vector3<T> *vTransError) const;
 
     template <typename T> Normal3<T> operator()(const Normal3<T> &n) const;
 
-    Ray operator()(const Ray &r) const;
+    inline Ray operator()(const Ray &r) const;
 
-    RayDifferential operator()(const RayDifferential &dr) const;
+    inline Ray operator()(const Ray &r, Vector3f *oError, Vector3f *dError) const;
+
+    inline Ray operator()(
+        const Ray &r,
+        const Vector3f &oErrorIn, const Vector3f &dErrorIn,
+        Vector3f *oErrorOut, Vector3f *dErrorOut
+    ) const;
+
+    inline RayDifferential operator()(const RayDifferential &dr) const;
 
     template <typename T> Bounds3<T> operator()(const Bounds3<T> &aabb) const;
 
