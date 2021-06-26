@@ -616,6 +616,13 @@ public:
         return Point3<T>(s*x, s*y, s*z);
     }
 
+    template <typename U> Point3<T> &operator*=(U f) {
+        x *= f;
+        y *= f;
+        z *= f;
+        return *this;
+    }
+
     Point3<T> operator/(T f) const {
         Assert(f != 0);
         // Multiplication is faster than division. Compilers are generally restricted
