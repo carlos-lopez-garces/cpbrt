@@ -310,4 +310,8 @@ inline double NextFloatDown(double v, int delta = 1) {
     return BitsToFloat(ui);
 }
 
+inline Float gamma(int n) {
+    return (n * MachineEpsilon) / (1 - n * MachineEpsilon);
+}
+
 #endif // CPBRT_CORE_PBRT_H
