@@ -97,6 +97,33 @@ Float UniformSpherePdf() {
     return Inv4Pi;
 }
 
+// TODO: explain.
+Vector3f UniformSampleCone(const Point2f &u, Float cosThetaMax) {
+    Float cosTheta = ((Float)1 - u[0]) + u[0] * cosThetaMax;
+    Float sinTheta = std::sqrt((Float)1 - cosTheta * cosTheta);
+    Float phi = u[1] * 2 * Pi;
+    return Vector3f(std::cos(phi) * sinTheta, std::sin(phi) * sinTheta, cosTheta);
+}
+
+// TODO: explain.
+Vector3f UniformSampleCone(
+    const Point2f &u,
+    Float cosThetaMax,
+    const Vector3f &x,
+    const Vector3f &y,
+    const Vector3f &z
+) {
+    Float cosTheta = Lerp(u[0], cosThetaMax, 1.f);
+    Float sinTheta = std::sqrt((Float)1. - cosTheta * cosTheta);
+    Float phi = u[1] * 2 * Pi;
+    return std::cos(phi) * sinTheta * x + std::sin(phi) * sinTheta * y + cosTheta * z;
+}
+
+// TODO: explain.
+Float UniformConePdf(Float cosThetaMax) {
+    return 1 / (2 * Pi * (1 - cosThetaMax));
+}
+
 // Transforms a distribution of points over the unit disk to one of points over the unit
 // hemisphere above it, and returns a sample direction.
 inline Vector3f CosineSampleHemisphere(const Point2f &u) {
