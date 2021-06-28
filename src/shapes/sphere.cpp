@@ -1,3 +1,5 @@
+#include "core/efloat.h"
+#include "core/paramset.h"
 #include "sphere.h"
 
 Bounds3f Sphere::ObjectBound() const {
@@ -158,7 +160,9 @@ bool Sphere::Intersect(
     Normal3f dndu = Normal3f((f * F - e * G) * invEGF2 * dpdu + (e * F - f * E) * invEGF2 * dpdv);
     Normal3f dndv = Normal3f((g * F - f * G) * invEGF2 * dpdu + (f * F - g * E) * invEGF2 * dpdv);
 
-    // TODO: Compute error bounds for sphere intersection.
+    // Compute error bounds for sphere intersection.
+    // TODO: explain.
+    Vector3f pError = gamma(5) * Abs((Vector3f)pHit);
 
     // Initialize SurfaceInteraction from parametric information.
     *si = (*ObjectToWorld)(SurfaceInteraction(
@@ -323,9 +327,14 @@ bool Sphere::IntersectP(
     Normal3f dndu = Normal3f((f * F - e * G) * invEGF2 * dpdu + (e * F - f * E) * invEGF2 * dpdv);
     Normal3f dndv = Normal3f((g * F - f * G) * invEGF2 * dpdu + (f * F - g * E) * invEGF2 * dpdv);
 
-    // TODO: Compute error bounds for sphere intersection.
-
     return true;
+}
+
+Float Sphere::Area() const {
+    // This expression results from evaluating the definite integral that defines the area
+    // of the surface of revolution that resuls from revolving the circular arc
+    // f(z) = sqrt(r^2 - z^2) around the x axis.
+    return phiMax * radius * (zMax - zMin);
 }
 
 std::shared_ptr<Shape> CreateSphereShape(

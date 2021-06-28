@@ -56,6 +56,8 @@ public:
         const Ray &r,
         bool testAlphaTexture
     ) const;
+
+    Float Area() const;
 };
 
 std::shared_ptr<Shape> CreateSphereShape(
