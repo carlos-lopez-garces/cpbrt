@@ -249,4 +249,6 @@ public:
     }
 };
 
+Film *CreateFilm(const ParamSet &params, std::unique_ptr<Filter> filter);
+
 #endif // CPBRT_CORE_FILM_H
