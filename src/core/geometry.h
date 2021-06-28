@@ -759,6 +759,11 @@ public:
         return Normal3<T>(-x, -y, -z);
     }
 
+    template <typename U> Normal3<T> operator/(U f) const {
+        Float inv = (Float) 1 / f;
+        return Normal3<T>(x * inv, y * inv, z * inv);
+    }
+
     Float LengthSquared() const {
         return x*x + y*y + z*z;
     }
