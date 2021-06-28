@@ -13,4 +13,6 @@ public:
     Float Evaluate(const Point2f &p) const;
 };
 
+BoxFilter *CreateBoxFilter(const ParamSet &ps);
+
 #endif // CPBRT_FILTERS_BOX_H

@@ -36,4 +36,6 @@ public:
     }
 };
 
+GaussianFilter *CreateGaussianFilter(const ParamSet &ps);
+
 #endif // CPBRT_FILTERS_GAUSSIAN_H

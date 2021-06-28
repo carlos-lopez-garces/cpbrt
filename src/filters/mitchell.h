@@ -41,4 +41,6 @@ public:
     }
 };
 
+MitchellFilter *CreateMitchellFilter(const ParamSet &ps);
+
 #endif // CPBRT_FILTERS_MITCHELL_H

@@ -44,4 +44,6 @@ public:
     }
 };
 
+LanczosSincFilter *CreateSincFilter(const ParamSet &ps);
+
 #endif // PBRT_FILTERS_SINC_H

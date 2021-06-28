@@ -12,4 +12,6 @@ public:
     Float Evaluate(const Point2f &p) const;
 };
 
+TriangleFilter *CreateTriangleFilter(const ParamSet &ps);
+
 #endif // CPBRT_FILTERS_TRIANGLE_H
