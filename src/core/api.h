@@ -78,6 +78,12 @@ void cpbrtCamera(const std::string &name, const ParamSet &params);
 
 void cpbrtWorldBegin();
 
+// TODO: explain.
+void cpbrtObjectBegin(const std::string &name);
+
+// TODO: explain.
+void cpbrtObjectEnd();
+
 // Pushes the current graphics state and transformations onto the stack.
 void cpbrtAttributeBegin();
 

@@ -215,6 +215,10 @@ struct RenderOptions {
     TransformSet CameraToWorld;
 
     std::vector<std::shared_ptr<Light>> lights;
+
+    // TODO: describe.
+    std::map<std::string, std::vector<std::shared_ptr<Primitive>>> instances;
+    std::vector<std::shared_ptr<Primitive>> *currentInstance = nullptr;
 };
 
 // An instance of a material.
@@ -541,6 +545,23 @@ void cpbrtWorldBegin() {
     }
     activeTransformBits = AllTransformsBits;
     namedCoordinateSystems["world"] = curTransform;
+}
+
+void pbrtObjectBegin(const std::string &name) {
+    VERIFY_WORLD("ObjectBegin");
+    cpbrtAttributeBegin();
+    if (renderOptions->currentInstance)
+        Error("ObjectBegin called inside of instance definition");
+    renderOptions->instances[name] = std::vector<std::shared_ptr<Primitive>>();
+    renderOptions->currentInstance = &renderOptions->instances[name];
+}
+
+void pbrtObjectEnd() {
+    VERIFY_WORLD("ObjectEnd");
+    if (!renderOptions->currentInstance)
+        Error("ObjectEnd called outside of instance definition");
+    renderOptions->currentInstance = nullptr;
+    cpbrtAttributeEnd();
 }
 
 void cpbrtAttributeBegin() {
