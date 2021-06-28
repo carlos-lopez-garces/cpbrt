@@ -96,6 +96,10 @@ public:
         return Transform(m.Transpose(), mInv.Transpose());
     }
 
+    const Matrix4x4 &GetMatrix() const { 
+        return m;
+    }
+
     bool IsIdentity() const {
         return m == Matrix4x4();
     }
