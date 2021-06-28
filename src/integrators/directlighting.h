@@ -50,4 +50,10 @@ public:
     ) const;
 };
 
+DirectLightingIntegrator *CreateDirectLightingIntegrator(
+    const ParamSet &params, 
+    std::shared_ptr<Sampler> sampler,
+    std::shared_ptr<const Camera> camera
+);
+
 #endif // CPBRT_INTEGRATORS_DIRECT_LIGHTING_H
