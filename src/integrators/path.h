@@ -28,4 +28,10 @@ public:
     ) const;
 };
 
+PathIntegrator *CreatePathIntegrator(
+    const ParamSet &params,
+    std::shared_ptr<Sampler> sampler,
+    std::shared_ptr<const Camera> camera
+);
+
 #endif // CPBRT_INTEGRATORS_PATH_H
