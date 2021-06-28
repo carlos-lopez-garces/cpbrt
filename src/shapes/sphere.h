@@ -58,6 +58,12 @@ public:
     ) const;
 
     Float Area() const;
+
+    Interaction Sample(const Point2f &u, Float *pdf) const;
+
+    Interaction Sample(const Interaction &ref, const Point2f &u, Float *pdf) const;
+
+    Float Pdf(const Interaction &ref, const Vector3f &wi) const;
 };
 
 std::shared_ptr<Shape> CreateSphereShape(
