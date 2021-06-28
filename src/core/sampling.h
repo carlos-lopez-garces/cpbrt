@@ -71,6 +71,47 @@ Point2f ConcentricSampleDisk(const Point2f &u) {
     return Point2f(r * std::cos(theta), r * std::sin(theta));
 }
 
+// TODO: explain.
+Vector3f UniformSampleHemisphere(const Point2f &u) {
+    Float z = u[0];
+    Float r = std::sqrt(std::max((Float)0, (Float)1. - z * z));
+    Float phi = 2 * Pi * u[1];
+    return Vector3f(r * std::cos(phi), r * std::sin(phi), z);
+}
+
+// TODO: explain.
+Float UniformHemispherePdf() {
+    return Inv2Pi;
+}
+
+// TODO: explain.
+Vector3f UniformSampleSphere(const Point2f &u) {
+    Float z = 1 - 2 * u[0];
+    Float r = std::sqrt(std::max((Float)0, (Float)1 - z * z));
+    Float phi = 2 * Pi * u[1];
+    return Vector3f(r * std::cos(phi), r * std::sin(phi), z);
+}
+
+// TODO: explain.
+Float UniformSpherePdf() {
+    return Inv4Pi;
+}
+
+// Transforms a distribution of points over the unit disk to one of points over the unit
+// hemisphere above it, and returns a sample direction.
+inline Vector3f CosineSampleHemisphere(const Point2f &u) {
+    Point2f d = ConcentricSampleDisk(u);
+    Float z = std::sqrt(std::max((Float) 0, 1 - d.x*d.x - d.y*d.y));
+    return Vector3f(d.x, d.y, z);
+}
+
+// Cosine-weighted hemisphere PDF. The closer the point/direction is to the top of the
+// hemisphere, the higher the probability of sampling it will be. Theta is measured with
+// respect to the axis of the hemisphere.
+inline Float CosineHemispherePdf(Float cosTheta) {
+    return cosTheta * InvPi;
+}
+
 struct Distribution1D {
     // The n images of a piecewise-constant function.
     std::vector<Float> f;
@@ -211,21 +252,6 @@ struct Distribution1D {
         return f.size();
     }
 };
-
-// Transforms a distribution of points over the unit disk to one of points over the unit
-// hemisphere above it, and returns a sample direction.
-inline Vector3f CosineSampleHemisphere(const Point2f &u) {
-    Point2f d = ConcentricSampleDisk(u);
-    Float z = std::sqrt(std::max((Float) 0, 1 - d.x*d.x - d.y*d.y));
-    return Vector3f(d.x, d.y, z);
-}
-
-// Cosine-weighted hemisphere PDF. The closer the point/direction is to the top of the
-// hemisphere, the higher the probability of sampling it will be. Theta is measured with
-// respect to the axis of the hemisphere.
-inline Float CosineHemispherePdf(Float cosTheta) {
-    return cosTheta * InvPi;
-}
 
 // Sample weighting function for multiple importance sampling, used to reduce variance
 // of the Monte Carlo estimator for the integral of a product of functions f and g caused
