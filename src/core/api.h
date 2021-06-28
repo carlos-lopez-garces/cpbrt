@@ -3,9 +3,6 @@
 
 #include "cpbrt.h"
 
-// Initialization options stored for global access.
-Options CpbrtOptions;
-
 enum class APIState {
     // Before cpbrtInit() and after cpbrtCleanup(). No other API calls are legal.
     Uninitialized,

@@ -21,6 +21,63 @@ Matrix4x4 Transpose(const Matrix4x4 &mat) {
     );
 }
 
+Matrix4x4 Matrix4x4::Inverse() const {
+    return ::Inverse(*this);
+}
+
+Matrix4x4 Inverse(const Matrix4x4 &m) {
+    int indxc[4], indxr[4];
+    int ipiv[4] = {0, 0, 0, 0};
+    Float minv[4][4];
+    memcpy(minv, m.m, 4 * 4 * sizeof(Float));
+    for (int i = 0; i < 4; i++) {
+        int irow = 0, icol = 0;
+        Float big = 0.f;
+        for (int j = 0; j < 4; j++) {
+            if (ipiv[j] != 1) {
+                for (int k = 0; k < 4; k++) {
+                    if (ipiv[k] == 0) {
+                        if (std::abs(minv[j][k]) >= big) {
+                            big = Float(std::abs(minv[j][k]));
+                            irow = j;
+                            icol = k;
+                        }
+                    } else if (ipiv[k] > 1)
+                        Error("Singular matrix in MatrixInvert");
+                }
+            }
+        }
+        ++ipiv[icol];
+        if (irow != icol) {
+            for (int k = 0; k < 4; ++k) std::swap(minv[irow][k], minv[icol][k]);
+        }
+        indxr[i] = irow;
+        indxc[i] = icol;
+        if (minv[icol][icol] == 0.f) Error("Singular matrix in MatrixInvert");
+
+        Float pivinv = 1. / minv[icol][icol];
+        minv[icol][icol] = 1.;
+        for (int j = 0; j < 4; j++) minv[icol][j] *= pivinv;
+
+        for (int j = 0; j < 4; j++) {
+            if (j != icol) {
+                Float save = minv[j][icol];
+                minv[j][icol] = 0;
+                for (int k = 0; k < 4; k++) minv[j][k] -= minv[icol][k] * save;
+            }
+        }
+    }
+
+    for (int j = 3; j >= 0; j--) {
+        if (indxr[j] != indxc[j]) {
+            for (int k = 0; k < 4; k++)
+                std::swap(minv[k][indxr[j]], minv[k][indxc[j]]);
+        }
+    }
+
+    return Matrix4x4(minv);
+}
+
 Matrix4x4 Matrix4x4::operator*(const Matrix4x4 &mat) const {
     Matrix4x4 product;
 
@@ -43,216 +100,40 @@ Matrix4x4 Mul(const Matrix4x4 &mat1, const Matrix4x4 &mat2) {
 
 // Transform method definitions.
 
-template <typename T> inline Point3<T> Transform::operator()(const Point3<T> &p) const {
-    T homogeneousX = (m.m[0][0] * p.x) + (m.m[0][1] * p.y) + (m.m[0][2] * p.z) + m.m[0][3];
-    T homogeneousY = (m.m[1][0] * p.x) + (m.m[1][1] * p.y) + (m.m[1][2] * p.z) + m.m[1][3];
-    T homogeneousZ = (m.m[2][0] * p.x) + (m.m[2][1] * p.y) + (m.m[2][2] * p.z) + m.m[2][3];
-    T weight       = (m.m[3][0] * p.x) + (m.m[3][1] * p.y) + (m.m[3][2] * p.z) + m.m[3][3];
-
-   if (weight != 1.0f) {
-       return Point3<T>(
-           homogeneousX, 
-           homogeneousY,
-           homogeneousZ
-       ) / weight;
-   }
-   return Point3<T>(homogeneousX, homogeneousY, homogeneousZ);
-};
-
-template <typename T> inline Point3<T> Transform::operator()(const Point3<T> &p, Vector3<T> *pError) const {
-    T x = p.x, y = p.y, z = p.z;
-    T xp = (m.m[0][0] * x + m.m[0][1] * y) + (m.m[0][2] * z + m.m[0][3]);
-    T yp = (m.m[1][0] * x + m.m[1][1] * y) + (m.m[1][2] * z + m.m[1][3]);
-    T zp = (m.m[2][0] * x + m.m[2][1] * y) + (m.m[2][2] * z + m.m[2][3]);
-    T wp = (m.m[3][0] * x + m.m[3][1] * y) + (m.m[3][2] * z + m.m[3][3]);
-
-    T xAbsSum = (std::abs(m.m[0][0] * x) + std::abs(m.m[0][1] * y) +
-                 std::abs(m.m[0][2] * z) + std::abs(m.m[0][3]));
-    T yAbsSum = (std::abs(m.m[1][0] * x) + std::abs(m.m[1][1] * y) +
-                 std::abs(m.m[1][2] * z) + std::abs(m.m[1][3]));
-    T zAbsSum = (std::abs(m.m[2][0] * x) + std::abs(m.m[2][1] * y) +
-                 std::abs(m.m[2][2] * z) + std::abs(m.m[2][3]));
-    *pError = gamma(3) * Vector3<T>(xAbsSum, yAbsSum, zAbsSum);
-
-    if (wp == 1)
-        return Point3<T>(xp, yp, zp);
-    else
-        return Point3<T>(xp, yp, zp) / wp;
-}
-
-template <typename T> inline Point3<T> Transform::operator()(
-    const Point3<T> &pt,
-    const Vector3<T> &ptError,
-    Vector3<T> *absError
-) const {
-    T x = pt.x, y = pt.y, z = pt.z;
-    T xp = (m.m[0][0] * x + m.m[0][1] * y) + (m.m[0][2] * z + m.m[0][3]);
-    T yp = (m.m[1][0] * x + m.m[1][1] * y) + (m.m[1][2] * z + m.m[1][3]);
-    T zp = (m.m[2][0] * x + m.m[2][1] * y) + (m.m[2][2] * z + m.m[2][3]);
-    T wp = (m.m[3][0] * x + m.m[3][1] * y) + (m.m[3][2] * z + m.m[3][3]);
-
-    absError->x =
-        (gamma(3) + (T)1) *
-            (std::abs(m.m[0][0]) * ptError.x + std::abs(m.m[0][1]) * ptError.y +
-             std::abs(m.m[0][2]) * ptError.z) +
-        gamma(3) * (std::abs(m.m[0][0] * x) + std::abs(m.m[0][1] * y) +
-                    std::abs(m.m[0][2] * z) + std::abs(m.m[0][3]));
-    absError->y =
-        (gamma(3) + (T)1) *
-            (std::abs(m.m[1][0]) * ptError.x + std::abs(m.m[1][1]) * ptError.y +
-             std::abs(m.m[1][2]) * ptError.z) +
-        gamma(3) * (std::abs(m.m[1][0] * x) + std::abs(m.m[1][1] * y) +
-                    std::abs(m.m[1][2] * z) + std::abs(m.m[1][3]));
-    absError->z =
-        (gamma(3) + (T)1) *
-            (std::abs(m.m[2][0]) * ptError.x + std::abs(m.m[2][1]) * ptError.y +
-             std::abs(m.m[2][2]) * ptError.z) +
-        gamma(3) * (std::abs(m.m[2][0] * x) + std::abs(m.m[2][1] * y) +
-                    std::abs(m.m[2][2] * z) + std::abs(m.m[2][3]));
-    if (wp == 1.)
-        return Point3<T>(xp, yp, zp);
-    else
-        return Point3<T>(xp, yp, zp) / wp;
-}
-
-template <typename T> inline Vector3<T> Transform::operator()(const Vector3<T> &v) const {
-    // No need to use the homogeneous representation of vectors to transform them,
-    // because their weight, 0, causes entry (mv)30 to be 0.
-    return Vector3<T>(
-        (m.m[0][0] * v.x) + (m.m[0][1] * v.y) + (m.m[0][2] * v.z),
-        (m.m[1][0] * v.x) + (m.m[1][1] * v.y) + (m.m[1][2] * v.z),
-        (m.m[2][0] * v.x) + (m.m[2][1] * v.y) + (m.m[2][2] * v.z)
-    );
-};
-
-template <typename T>
-inline Vector3<T> Transform::operator()(const Vector3<T> &v, Vector3<T> *absError) const {
-    T x = v.x, y = v.y, z = v.z;
-    absError->x = gamma(3) * (std::abs(m.m[0][0] * v.x) + std::abs(m.m[0][1] * v.y) + std::abs(m.m[0][2] * v.z));
-    absError->y = gamma(3) * (std::abs(m.m[1][0] * v.x) + std::abs(m.m[1][1] * v.y) + std::abs(m.m[1][2] * v.z));
-    absError->z = gamma(3) * (std::abs(m.m[2][0] * v.x) + std::abs(m.m[2][1] * v.y) + std::abs(m.m[2][2] * v.z));
-    return Vector3<T>(
-        m.m[0][0] * x + m.m[0][1] * y + m.m[0][2] * z,
-        m.m[1][0] * x + m.m[1][1] * y + m.m[1][2] * z,
-        m.m[2][0] * x + m.m[2][1] * y + m.m[2][2] * z
-    );
-}
-
-template <typename T> inline Vector3<T> Transform::operator()(
-    const Vector3<T> &v,
-    const Vector3<T> &vError,
-    Vector3<T> *absError
-) const {
-    T x = v.x, y = v.y, z = v.z;
-    absError->x =
-        (gamma(3) + (T)1) *
-            (std::abs(m.m[0][0]) * vError.x + std::abs(m.m[0][1]) * vError.y +
-             std::abs(m.m[0][2]) * vError.z) +
-        gamma(3) * (std::abs(m.m[0][0] * v.x) + std::abs(m.m[0][1] * v.y) +
-                    std::abs(m.m[0][2] * v.z));
-    absError->y =
-        (gamma(3) + (T)1) *
-            (std::abs(m.m[1][0]) * vError.x + std::abs(m.m[1][1]) * vError.y +
-             std::abs(m.m[1][2]) * vError.z) +
-        gamma(3) * (std::abs(m.m[1][0] * v.x) + std::abs(m.m[1][1] * v.y) +
-                    std::abs(m.m[1][2] * v.z));
-    absError->z =
-        (gamma(3) + (T)1) *
-            (std::abs(m.m[2][0]) * vError.x + std::abs(m.m[2][1]) * vError.y +
-             std::abs(m.m[2][2]) * vError.z) +
-        gamma(3) * (std::abs(m.m[2][0] * v.x) + std::abs(m.m[2][1] * v.y) +
-                    std::abs(m.m[2][2] * v.z));
-    return Vector3<T>(m.m[0][0] * x + m.m[0][1] * y + m.m[0][2] * z,
-                      m.m[1][0] * x + m.m[1][1] * y + m.m[1][2] * z,
-                      m.m[2][0] * x + m.m[2][1] * y + m.m[2][2] * z);
-}
-
-template <typename T> inline Normal3<T> Transform::operator()(const Normal3<T> &n) const {
-    // The transform doesn't maintain the orthogonality of the normal and the surface 
-    // (the tangent to the surface). The inverse transpose does.
-    Matrix4x4 mInvTransp = mInv.Transpose();
-    return Normal3<T>(
-        (mInvTransp[0][0] * n.x) + (mInvTransp[0][1] * n.y) + (mInvTransp[0][2] * n.z),
-        (mInvTransp[1][0] * n.x) + (mInvTransp[1][1] * n.y) + (mInvTransp[1][2] * n.z),
-        (mInvTransp[2][0] * n.x) + (mInvTransp[2][1] * n.y) + (mInvTransp[2][2] * n.z)
-    );
-}
-
-inline Ray Transform::operator()(const Ray &r) const {
-    Vector3f oError;
-    Point3f o = (*this)(r.o, &oError);
-    Vector3f d = (*this)(r.d);
-    Float lengthSquared = d.LengthSquared();
-    Float tMax = r.tMax;
-    if (lengthSquared > 0) {
-        Float dt = Dot(Abs(d), oError) / lengthSquared;
-        o += d * dt;
-        tMax -= dt;
-    }
-    return Ray(o, d, tMax, r.time, r.medium);
-}
-
-inline RayDifferential Transform::operator()(const RayDifferential &rd) const {
-    Ray transformedRay = (*this)((Ray) rd);
-    RayDifferential transformedDiff = RayDifferential(transformedRay);
-    transformedDiff.hasDifferentials = rd.hasDifferentials;
-    transformedDiff.rxOrigin = (*this)(rd.rxOrigin);
-    transformedDiff.rxDirection = (*this)(rd.rxDirection);
-    transformedDiff.ryOrigin = (*this)(rd.ryOrigin);
-    transformedDiff.ryDirection = (*this)(rd.ryDirection);
-    return transformedDiff;
-}
-
-inline Ray Transform::operator()(const Ray &r, Vector3f *oError, Vector3f *dError) const {
-    Point3f o = (*this)(r.o, oError);
-    Vector3f d = (*this)(r.d, dError);
-    Float tMax = r.tMax;
-    Float lengthSquared = d.LengthSquared();
-    if (lengthSquared > 0) {
-        Float dt = Dot(Abs(d), *oError) / lengthSquared;
-        o += d * dt;
-    }
-    return Ray(o, d, tMax, r.time, r.medium);
-}
-
-inline Ray Transform::operator()(
-    const Ray &r,
-    const Vector3f &oErrorIn,
-    const Vector3f &dErrorIn,
-    Vector3f *oErrorOut,
-    Vector3f *dErrorOut
-) const {
-
-    Point3f o = (*this)(r.o, oErrorIn, oErrorOut);
-    Vector3f d = (*this)(r.d, dErrorIn, dErrorOut);
-    Float tMax = r.tMax;
-    Float lengthSquared = d.LengthSquared();
-    if (lengthSquared > 0) {
-        Float dt = Dot(Abs(d), *oErrorOut) / lengthSquared;
-        o += d * dt;
-    }
-    return Ray(o, d, tMax, r.time, r.medium);
-}
-
-template <typename T> inline Bounds3<T> Transform::operator()(const Bounds3<T> &aabb) const {
-    Bounds3<T> transformedAABB((*this)(aabb.Corner(0)));
-    transformedAABB = Union(transformedAABB, (*this)(aabb.Corner(1)));
-    transformedAABB = Union(transformedAABB, (*this)(aabb.Corner(2)));
-    transformedAABB = Union(transformedAABB, (*this)(aabb.Corner(3)));
-    transformedAABB = Union(transformedAABB, (*this)(aabb.Corner(4)));
-    transformedAABB = Union(transformedAABB, (*this)(aabb.Corner(5)));
-    transformedAABB = Union(transformedAABB, (*this)(aabb.Corner(6)));
-    transformedAABB = Union(transformedAABB, (*this)(aabb.Corner(7)));
-    return transformedAABB;
-}
-
 SurfaceInteraction Transform::operator()(const SurfaceInteraction &si) const {
-    SurfaceInteraction transformedSI;
-    // TODO: implement when ready to handle floating-point errors.
-    return transformedSI;
+    SurfaceInteraction ret;
+    ret.p = (*this)(si.p, si.pError, &ret.pError);
+
+    const Transform &t = *this;
+    ret.n = Normalize(t(si.n));
+    ret.wo = Normalize(t(si.wo));
+    ret.time = si.time;
+    ret.mediumInterface = si.mediumInterface;
+    ret.uv = si.uv;
+    ret.shape = si.shape;
+    ret.dpdu = t(si.dpdu);
+    ret.dpdv = t(si.dpdv);
+    ret.dndu = t(si.dndu);
+    ret.dndv = t(si.dndv);
+    ret.shading.n = Normalize(t(si.shading.n));
+    ret.shading.dpdu = t(si.shading.dpdu);
+    ret.shading.dpdv = t(si.shading.dpdv);
+    ret.shading.dndu = t(si.shading.dndu);
+    ret.shading.dndv = t(si.shading.dndv);
+    ret.dudx = si.dudx;
+    ret.dvdx = si.dvdx;
+    ret.dudy = si.dudy;
+    ret.dvdy = si.dvdy;
+    ret.dpdx = t(si.dpdx);
+    ret.dpdy = t(si.dpdy);
+    ret.bsdf = si.bsdf;
+    ret.bssrdf = si.bssrdf;
+    ret.primitive = si.primitive;
+    ret.shading.n = Faceforward(ret.shading.n, ret.n);
+    return ret;
 }
 
-inline Transform Transform::operator*(const Transform &t) const {
+Transform Transform::operator*(const Transform &t) const {
     // The inverse of the product is the product of the inverses in reverse order.
     return Transform(m*t.m, t.mInv*mInv);
 }
@@ -524,4 +405,25 @@ Transform LookAt(const Point3f &pos, const Point3f &look, const Vector3f &up) {
     cameraToWorld.m[3][2] = 0.;
 
     return Transform(Inverse(cameraToWorld), cameraToWorld);
+}
+
+// Solves the Ax=b linear system using Cramer's rule.
+bool SolveLinearSystem2x2(const Float A[2][2], const Float b[2], Float *x0, Float *x1) {
+    Float detA = A[0][0]*A[1][1] - A[0][1]*A[1][0];
+    if (std::abs(detA) < 1e-10f) {
+        return false;
+    }
+
+    // A0b is the 2x2 matrix formed by replacing column 0 of A with b.
+    Float detA0b = b[0]*A[1][1] - A[0][1]*b[1];
+    *x0 = detA0b / detA;
+
+    // A1b is the 2x2 matrix formed by replacing column 1 of A with b.
+    Float detA1b = A[0][0]*b[1] - b[0]*A[1][0];
+    *x1 = detA1b / detA;
+
+    if (std::isnan(*x1) || std::isnan(*x1)) {
+        return false;
+    }
+    return true;
 }

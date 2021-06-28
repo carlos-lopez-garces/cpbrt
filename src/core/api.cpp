@@ -23,6 +23,9 @@
 #include "shapes/sphere.h"
 #include "textures/constant.h"
 
+// Initialization options stored for global access.
+Options CpbrtOptions;
+
 constexpr int MaxTransforms = 2;
 constexpr int StartTransformBits = 1 << 0;
 constexpr int EndTransformBits   = 1 << 1;
@@ -629,6 +632,7 @@ std::shared_ptr<Material> GraphicsState::GetMaterialForShape(const ParamSet &par
         if (activeTransformBits & (1 << i)) { expr }
 
 void cpbrtInit(const Options &opt) {
+    printf("init");
     CpbrtOptions = opt;
 
     if (currentApiState != APIState::Uninitialized) {
@@ -808,7 +812,7 @@ void cpbrtWorldEnd() {
     namedCoordinateSystems.erase(namedCoordinateSystems.begin(), namedCoordinateSystems.end());
 }
 
-void pbrtObjectBegin(const std::string &name) {
+void cpbrtObjectBegin(const std::string &name) {
     VERIFY_WORLD("ObjectBegin");
     cpbrtAttributeBegin();
     if (renderOptions->currentInstance)
@@ -817,7 +821,7 @@ void pbrtObjectBegin(const std::string &name) {
     renderOptions->currentInstance = &renderOptions->instances[name];
 }
 
-void pbrtObjectEnd() {
+void cpbrtObjectEnd() {
     VERIFY_WORLD("ObjectEnd");
     if (!renderOptions->currentInstance)
         Error("ObjectEnd called outside of instance definition");

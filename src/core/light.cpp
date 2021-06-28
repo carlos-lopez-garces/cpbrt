@@ -14,3 +14,9 @@ bool VisibilityTester::Unoccluded(const Scene &scene) const {
     // TODO: implement Interaction::SpawnRayTo.
     return !scene.IntersectP(p0.SpawnRayTo(p1));
 }
+
+Spectrum VisibilityTester::Tr(const Scene &scene, Sampler &sampler) const {
+    // TODO: implement when implementing volume scattering.
+    Spectrum Tr(0.f);
+    return Tr;
+}

@@ -38,72 +38,26 @@ void LatinHypercube(Float *sample, int nSamples, int nDimensions, RNG &rng);
 // The value of theta comes from sampling the conditional density function p(theta|r) given
 // the value of r obtained before. p(theta|r) is sampled by the inversion method by evaluating
 // the inverse with the value of a uniform random variable.
-Point2f UniformSampleDisk(const Point2f &u) {
-    Float r = std::sqrt(u[0]);
-    Float theta = 2 * Pi * u[1];
-    // Map the polar coordinate to a cartesian coordinate.
-    return Point2f(r * std::cos(theta), r * std::sin(theta));
-}
+Point2f UniformSampleDisk(const Point2f &u);
 
 // Samples the unit disk using a concentric mapping of the unit square, which transforms a
 // uniformly distributed random point on the unit square to a point on the unit disk. 
-Point2f ConcentricSampleDisk(const Point2f &u) {
-    // Map uniform random numbers to the unit square [-1,1]^2.
-    Point2f uOffset = 2.f * u - Vector2f(1, 1);
-
-    // Handle degeneracy at the origin.
-    if (uOffset.x == 0 && uOffset.y == 0) {
-        return Point2f(0, 0);
-    }
-
-    // Apply concentric mapping from the unit square to the unit disk. This mapping turns
-    // wedges of the square into slices of the disk.
-    Float theta, r;
-    if (std::abs(uOffset.x) > std::abs(uOffset.y)) {
-        r = uOffset.x;
-        theta = PiOver4 * (uOffset.y / uOffset.x);
-    } else {
-        r = uOffset.y;
-        theta = PiOver2 - PiOver4 * (uOffset.x / uOffset.y);
-    }
-
-    // Map the polar coordinate to a cartesian coordinate.
-    return Point2f(r * std::cos(theta), r * std::sin(theta));
-}
+Point2f ConcentricSampleDisk(const Point2f &u);
 
 // TODO: explain.
-Vector3f UniformSampleHemisphere(const Point2f &u) {
-    Float z = u[0];
-    Float r = std::sqrt(std::max((Float)0, (Float)1. - z * z));
-    Float phi = 2 * Pi * u[1];
-    return Vector3f(r * std::cos(phi), r * std::sin(phi), z);
-}
+Vector3f UniformSampleHemisphere(const Point2f &u);
 
 // TODO: explain.
-Float UniformHemispherePdf() {
-    return Inv2Pi;
-}
+Float UniformHemispherePdf();
 
 // TODO: explain.
-Vector3f UniformSampleSphere(const Point2f &u) {
-    Float z = 1 - 2 * u[0];
-    Float r = std::sqrt(std::max((Float)0, (Float)1 - z * z));
-    Float phi = 2 * Pi * u[1];
-    return Vector3f(r * std::cos(phi), r * std::sin(phi), z);
-}
+Vector3f UniformSampleSphere(const Point2f &u);
 
 // TODO: explain.
-Float UniformSpherePdf() {
-    return Inv4Pi;
-}
+Float UniformSpherePdf();
 
 // TODO: explain.
-Vector3f UniformSampleCone(const Point2f &u, Float cosThetaMax) {
-    Float cosTheta = ((Float)1 - u[0]) + u[0] * cosThetaMax;
-    Float sinTheta = std::sqrt((Float)1 - cosTheta * cosTheta);
-    Float phi = u[1] * 2 * Pi;
-    return Vector3f(std::cos(phi) * sinTheta, std::sin(phi) * sinTheta, cosTheta);
-}
+Vector3f UniformSampleCone(const Point2f &u, Float cosThetaMax);
 
 // TODO: explain.
 Vector3f UniformSampleCone(
@@ -112,17 +66,10 @@ Vector3f UniformSampleCone(
     const Vector3f &x,
     const Vector3f &y,
     const Vector3f &z
-) {
-    Float cosTheta = Lerp(u[0], cosThetaMax, 1.f);
-    Float sinTheta = std::sqrt((Float)1. - cosTheta * cosTheta);
-    Float phi = u[1] * 2 * Pi;
-    return std::cos(phi) * sinTheta * x + std::sin(phi) * sinTheta * y + cosTheta * z;
-}
+);
 
 // TODO: explain.
-Float UniformConePdf(Float cosThetaMax) {
-    return 1 / (2 * Pi * (1 - cosThetaMax));
-}
+Float UniformConePdf(Float cosThetaMax);
 
 // Transforms a distribution of points over the unit disk to one of points over the unit
 // hemisphere above it, and returns a sample direction.

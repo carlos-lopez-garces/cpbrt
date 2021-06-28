@@ -4,6 +4,8 @@
 #include "api.h"
 #include "parallel.h"
 
+CPBRT_THREAD_LOCAL int ThreadIndex;
+
 // Local definitions.
 
 class ParallelForLoop {

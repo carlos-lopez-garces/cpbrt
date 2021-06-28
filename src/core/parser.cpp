@@ -56,8 +56,6 @@
 #include <utility>
 #include <vector>
 
-namespace cpbrt {
-
 Loc *parserLoc;
 
 static std::string toString(string_view s) {
@@ -783,8 +781,6 @@ ParamSet parseParams(Next nextToken, Unget ungetToken, MemoryArena &arena,
     return ps;
 }
 
-extern int catIndentCount;
-
 // Parsing Global Interface
 static void parse(std::unique_ptr<Tokenizer> t) {
     std::vector<std::unique_ptr<Tokenizer>> fileStack;
@@ -821,10 +817,6 @@ static void parse(std::unique_ptr<Tokenizer> t) {
             if (!fileStack.empty()) parserLoc = &fileStack.back()->loc;
             return nextToken(flags);
         } else if (tok[0] == '#') {
-            // Swallow comments, unless --cat or --toply was given, in
-            // which case they're printed to stdout.
-            if (CpbrtOptions.cat || CpbrtOptions.toPly)
-                printf("%*s%s\n", catIndentCount, "", toString(tok).c_str());
             return nextToken(flags);
         } else
             // Regular token; success.
@@ -923,17 +915,13 @@ static void parse(std::unique_ptr<Tokenizer> t) {
                 // Switch to the given file.
                 std::string filename =
                     toString(dequoteString(nextToken(TokenRequired)));
-                if (CpbrtOptions.cat || CpbrtOptions.toPly)
-                    printf("%*sInclude \"%s\"\n", catIndentCount, "", filename.c_str());
-                else {
-                    filename = AbsolutePath(ResolveFilename(filename));
-                    auto tokError = [](const char *msg) { Error("%s", msg); };
-                    std::unique_ptr<Tokenizer> tinc =
-                        Tokenizer::CreateFromFile(filename, tokError);
-                    if (tinc) {
-                        fileStack.push_back(std::move(tinc));
-                        parserLoc = &fileStack.back()->loc;
-                    }
+                filename = AbsolutePath(ResolveFilename(filename));
+                auto tokError = [](const char *msg) { Error("%s", msg); };
+                std::unique_ptr<Tokenizer> tinc =
+                    Tokenizer::CreateFromFile(filename, tokError);
+                if (tinc) {
+                    fileStack.push_back(std::move(tinc));
+                    parserLoc = &fileStack.back()->loc;
                 }
             } else if (tok == "Identity")
                 cpbrtIdentity();
@@ -1102,12 +1090,14 @@ static void parse(std::unique_ptr<Tokenizer> t) {
 }
 
 void cpbrtParseFile(std::string filename) {
+    printf("parse");
     if (filename != "-") SetSearchDirectory(DirectoryContaining(filename));
 
     auto tokError = [](const char *msg) { Error("%s", msg); exit(1); };
     std::unique_ptr<Tokenizer> t =
         Tokenizer::CreateFromFile(filename, tokError);
     if (!t) return;
+    printf("tokenized");
     parse(std::move(t));
 }
 
@@ -1118,5 +1108,3 @@ void cpbrtParseString(std::string str) {
     if (!t) return;
     parse(std::move(t));
 }
-
-}  // namespace cpbrt

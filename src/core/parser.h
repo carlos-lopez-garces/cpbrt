@@ -46,8 +46,6 @@
 #include <string>
 #include <vector>
 
-namespace cpbrt {
-
 // Loc represents a position in a file being parsed.
 struct Loc {
     Loc() = default;
@@ -169,7 +167,5 @@ class Tokenizer {
     // after a subsequent call, since we may reuse sEscaped.)
     std::string sEscaped;
 };
-
-}  // namespace cpbrt
 
 #endif  // CPBRT_CORE_PARSER_H

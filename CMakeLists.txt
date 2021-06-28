@@ -367,13 +367,13 @@ SET ( CPBRT_CORE_SOURCE
   # src/core/bssrdf.cpp
   src/core/camera.cpp
   src/core/efloat.cpp
-  # src/core/error.cpp
+  src/core/error.cpp
   src/core/fileutil.cpp
   src/core/film.cpp
   src/core/filter.cpp
   src/core/floatfile.cpp
   src/core/geometry.cpp
-  # src/core/imageio.cpp
+  src/core/imageio.cpp
   src/core/integrator.cpp
   src/core/interaction.cpp
   # src/core/interpolation.cpp
@@ -400,6 +400,8 @@ SET ( CPBRT_CORE_SOURCE
   # src/core/stats.cpp
   src/core/texture.cpp
   src/core/transform.cpp
+  # Shouldn't be here.
+  src/ext/lodepng.cpp
   )
 
 SET ( CPBRT_CORE_HEADERS
@@ -443,6 +445,8 @@ SET ( CPBRT_CORE_HEADERS
   src/core/stringprint.h
   src/core/texture.h
   src/core/transform.h
+  # Shouldn't be here.
+  src/ext/lodepng.h
   )
 
 FILE ( GLOB CPBRT_SOURCE
@@ -509,8 +513,8 @@ SET(ALL_CPBRT_LIBS
   cpbrt
   ${CMAKE_THREAD_LIBS_INIT}
   ${OPENEXR_LIBS}
-  glog
-  Ptex_static
+  # glog
+  # Ptex_static
   ${ZLIB_LIBRARY}
 )
 
