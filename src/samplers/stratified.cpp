@@ -1,6 +1,7 @@
 #include <memory>
 
 #include "stratified.h"
+#include "core/api.h"
 #include "core/paramset.h"
 #include "core/sampling.h"
 
@@ -62,4 +63,13 @@ std::unique_ptr<Sampler> StratifiedSampler::Clone(int seed) {
     StratifiedSampler *ss = new StratifiedSampler(*this);
     ss->rng.SetSequence(seed);
     return std::unique_ptr<Sampler>(ss);
+}
+
+StratifiedSampler *CreateStratifiedSampler(const ParamSet &params) {
+    bool jitter = params.FindOneBool("jitter", true);
+    int xsamp = params.FindOneInt("xsamples", 4);
+    int ysamp = params.FindOneInt("ysamples", 4);
+    int sd = params.FindOneInt("dimensions", 4);
+    if (CpbrtOptions.quickRender) xsamp = ysamp = 1;
+    return new StratifiedSampler(xsamp, ysamp, jitter, sd);
 }

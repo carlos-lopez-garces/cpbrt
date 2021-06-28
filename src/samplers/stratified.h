@@ -4,7 +4,7 @@
 #include "core/sampler.h"
 #include "core/rng.h"
 
-class StratifiedSampler : PixelSampler {
+class StratifiedSampler : public PixelSampler {
 private:
     const int xPixelSamples;
     const int yPixelSamples;
@@ -25,5 +25,7 @@ public:
 
     std::unique_ptr<Sampler> Clone(int seed);
 };
+
+StratifiedSampler *CreateStratifiedSampler(const ParamSet &params);
 
 #endif // CPBRT_SAMPLERS_STRATIFIED_H
