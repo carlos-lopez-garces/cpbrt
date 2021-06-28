@@ -79,6 +79,9 @@ void cpbrtCamera(const std::string &name, const ParamSet &params);
 void cpbrtWorldBegin();
 
 // TODO: explain.
+void cpbrtWorldEnd();
+
+// TODO: explain.
 void cpbrtObjectBegin(const std::string &name);
 
 // TODO: explain.

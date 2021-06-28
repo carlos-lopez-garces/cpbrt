@@ -23,14 +23,334 @@
 #include "shapes/sphere.h"
 #include "textures/constant.h"
 
-// API local classes.
-
 constexpr int MaxTransforms = 2;
 constexpr int StartTransformBits = 1 << 0;
 constexpr int EndTransformBits   = 1 << 1;
 constexpr int AllTransformsBits = (1 << MaxTransforms) - 1;
 
+// API local classes.
+
+// Stores an array of transformations.
+struct TransformSet {
+private:
+    Transform t[MaxTransforms];
+
+public:
+    Transform &operator[](int i) {
+        return t[i];
+    }
+
+    const Transform &operator[](int i) const {
+        return t[i];
+    }
+
+    // Returns the inverses of the transformations in a TansformSet. 
+    friend TransformSet Inverse(const TransformSet &ts) {
+        TransformSet tInv;
+        for (int i = 0; i < MaxTransforms; ++i) {
+            tInv.t[i] = Inverse(ts.t[i]);
+        }
+        return tInv;
+    }
+
+    bool IsAnimated() const {
+        for (int i = 0; i < MaxTransforms - 1; ++i) {
+            if (t[i] != t[i+1]) {
+                return true;
+            }
+        }
+        return false;
+    }
+};
+
+// Caches the inverse of a transformation.
+class TransformCache {
+  public:
+    TransformCache()
+        : hashTable(512), hashTableOccupancy(0) {}
+
+    Transform *Lookup(const Transform &t) {
+        int offset = Hash(t) & (hashTable.size() - 1);
+        int step = 1;
+        while (true) {
+            if (!hashTable[offset] || *hashTable[offset] == t)
+                break;
+            offset = (offset + step * step) & (hashTable.size() - 1);
+            ++step;
+        }
+        Transform *tCached = hashTable[offset];
+        if (!tCached) {
+            tCached = arena.Alloc<Transform>();
+            *tCached = t;
+            Insert(tCached);
+        }
+        return tCached;
+    }
+
+    void Clear() {
+        hashTable.clear();
+        hashTable.resize(512);
+        hashTableOccupancy = 0;
+        arena.Reset();
+    }
+
+  private:
+    void Insert(Transform *tNew);
+    void Grow();
+
+    static uint64_t Hash(const Transform &t) {
+        const char *ptr = (const char *)(&t.GetMatrix());
+        size_t size = sizeof(Matrix4x4);
+        uint64_t hash = 14695981039346656037ull;
+        while (size > 0) {
+            hash ^= *ptr;
+            hash *= 1099511628211ull;
+            ++ptr;
+            --size;
+        }
+        return hash;
+    }
+
+    std::vector<Transform *> hashTable;
+    int hashTableOccupancy;
+    MemoryArena arena;
+};
+
+void TransformCache::Insert(Transform *tNew) {
+    if (++hashTableOccupancy == hashTable.size() / 2)
+        Grow();
+
+    int baseOffset = Hash(*tNew) & (hashTable.size() - 1);
+    for (int nProbes = 0;; ++nProbes) {
+        // Quadratic probing.
+        int offset = (baseOffset + nProbes/2 + nProbes*nProbes/2) & (hashTable.size() - 1);
+        if (hashTable[offset] == nullptr) {
+            hashTable[offset] = tNew;
+            return;
+        }
+    }
+}
+
+void TransformCache::Grow() {
+    std::vector<Transform *> newTable(2 * hashTable.size());
+
+    for (Transform *tEntry : hashTable) {
+        if (!tEntry) continue;
+
+        int baseOffset = Hash(*tEntry) & (hashTable.size() - 1);
+        for (int nProbes = 0;; ++nProbes) {
+            int offset = (baseOffset + nProbes/2 + nProbes*nProbes/2) & (hashTable.size() - 1);
+            if (newTable[offset] == nullptr) {
+                newTable[offset] = tEntry;
+                break;
+            }
+        }
+    }
+
+    std::swap(hashTable, newTable);
+}
+
+// An instance of a material.
+struct MaterialInstance {
+    MaterialInstance() = default;
+
+    MaterialInstance(
+        const std::string &name,
+        const std::shared_ptr<Material> &mtl,
+        ParamSet params
+    ) : name(name), material(mtl), params(std::move(params))
+    {}
+
+    std::string name;
+    std::shared_ptr<Material> material;
+    ParamSet params;
+};
+
+// Stack of attributes.
+struct GraphicsState {
+    using FloatTextureMap = std::map<std::string, std::shared_ptr<Texture<Float>>>;
+    std::shared_ptr<FloatTextureMap> floatTextures;
+    bool floatTexturesShared = false;
+
+    using SpectrumTextureMap = std::map<std::string, std::shared_ptr<Texture<Spectrum>>>;
+    std::shared_ptr<SpectrumTextureMap> spectrumTextures;
+    bool spectrumTexturesShared = false;
+
+    std::shared_ptr<MaterialInstance> currentMaterial;
+    ParamSet materialParams;
+    std::string material = "matte";
+
+    using NamedMaterialMap = std::map<std::string, std::shared_ptr<MaterialInstance>>;
+    std::shared_ptr<NamedMaterialMap> namedMaterials;
+    bool namedMaterialsShared = false;
+
+    ParamSet areaLightParams;
+    std::string areaLight;
+
+    // TODO: describe.
+    bool reverseOrientation = false; 
+
+    GraphicsState() 
+        : floatTextures(std::make_shared<FloatTextureMap>()),
+          spectrumTextures(std::make_shared<SpectrumTextureMap>()),
+          namedMaterials(std::make_shared<NamedMaterialMap>()) {
+        
+        ParamSet empty;
+        TextureParams tp(empty, empty, *floatTextures, *spectrumTextures);
+        std::shared_ptr<Material> mtl(CreateMatteMaterial(tp));
+        currentMaterial = std::make_shared<MaterialInstance>("matte", mtl, ParamSet());
+    }
+
+    MediumInterface CreateMediumInterface();
+
+    std::shared_ptr<Material> GetMaterialForShape(const ParamSet &params);
+};
+
+// Options that can be set in the OptionsBlock state.
+struct RenderOptions {
+    std::string FilterName = "box";
+    ParamSet FilterParams;
+
+    std::string FilmName = "image";
+    ParamSet FilmParams;
+
+    std::string SamplerName = "stratified";
+    ParamSet SamplerParams;
+
+    std::string AcceleratorName = "bvh";
+    ParamSet AcceleratorParams;
+
+    std::string IntegratorName = "path";
+    ParamSet IntegratorParams;
+
+    std::string CameraName = "perspective";
+    ParamSet CameraParams;
+    TransformSet CameraToWorld;
+
+    std::vector<std::shared_ptr<Light>> lights;
+
+    std::vector<std::shared_ptr<Primitive>> primitives;
+
+    // TODO: describe.
+    std::map<std::string, std::vector<std::shared_ptr<Primitive>>> instances;
+    std::vector<std::shared_ptr<Primitive>> *currentInstance = nullptr;
+
+    Integrator *MakeIntegrator() const;
+
+    Scene *MakeScene();
+
+    Camera *MakeCamera() const;
+};
+
+// API static data.
+
+// Current transformation matrices (CTMs).
+static TransformSet curTransform;
+static uint32_t activeTransformBits = AllTransformsBits;
+
+// Saved CTMs.
+static std::map<std::string, TransformSet> namedCoordinateSystems;
+
+// Cached inverses of transformations.
+static TransformCache transformCache;
+
+// Scene-wide global options set in the OptionsBlock state.
+static std::unique_ptr<RenderOptions> renderOptions;
+
+static GraphicsState graphicsState;
+static std::vector<GraphicsState> pushedGraphicsStates;
+static std::vector<TransformSet> pushedTransforms;
+static std::vector<uint32_t> pushedActiveTransformBits;
+
 // Static functions.
+
+Camera *MakeCamera(
+    const std::string &name,
+    const ParamSet &paramSet,
+    const TransformSet &cam2worldSet,
+    Film *film
+) {
+    Camera *camera = nullptr;
+    MediumInterface mediumInterface = graphicsState.CreateMediumInterface();
+    static_assert(MaxTransforms == 2, "TransformCache assumes only two transforms");
+    Transform *cam2world[2] = {
+        transformCache.Lookup(cam2worldSet[0]),
+        transformCache.Lookup(cam2worldSet[1])
+    };
+    Transform cam2World(cam2world[0]->GetMatrix());
+    if (name == "perspective") {
+        camera
+            = CreatePerspectiveCamera(paramSet, cam2World, film, mediumInterface.outside);
+    }
+    else if (name == "orthographic") {
+        camera
+            = CreateOrthographicCamera(paramSet, cam2World, film, mediumInterface.outside);
+    }
+    else {
+        Warning("Camera \"%s\" unknown.", name.c_str());
+    }
+    paramSet.ReportUnused();
+    
+    return camera;
+}
+
+std::shared_ptr<Sampler> MakeSampler(
+    const std::string &name,
+    const ParamSet &paramSet,
+    const Film *film
+) {
+    Sampler *sampler = nullptr;
+
+    // TODO: add other types.
+    if (name == "stratified") {
+        sampler = CreateStratifiedSampler(paramSet);
+    }
+    else {
+        Warning("Sampler \"%s\" unknown.", name.c_str());
+    }
+    
+    paramSet.ReportUnused();
+    return std::shared_ptr<Sampler>(sampler);
+}
+
+std::unique_ptr<Filter> MakeFilter(const std::string &name,
+                                   const ParamSet &paramSet) {
+    Filter *filter = nullptr;
+
+    if (name == "box")
+        filter = CreateBoxFilter(paramSet);
+    else if (name == "gaussian")
+        filter = CreateGaussianFilter(paramSet);
+    else if (name == "mitchell")
+        filter = CreateMitchellFilter(paramSet);
+    else if (name == "sinc")
+        filter = CreateSincFilter(paramSet);
+    else if (name == "triangle")
+        filter = CreateTriangleFilter(paramSet);
+    else {
+        Error("Filter \"%s\" unknown.", name.c_str());
+        exit(1);
+    }
+    paramSet.ReportUnused();
+
+    return std::unique_ptr<Filter>(filter);
+}
+
+Film *MakeFilm(
+    const std::string &name,
+    const ParamSet &paramSet,
+    std::unique_ptr<Filter> filter
+) {
+    Film *film = nullptr;
+    if (name == "image") {
+        film = CreateFilm(paramSet, std::move(filter));
+    } else {
+        Warning("Film \"%s\" unknown.", name.c_str());
+    }
+    paramSet.ReportUnused();
+
+    return film;
+}
 
 std::shared_ptr<Texture<Float>> MakeFloatTexture(
     const std::string &name,
@@ -149,207 +469,67 @@ std::shared_ptr<Primitive> MakeAccelerator(
     return accel;
 }
 
-// Stores an array of transformations.
-struct TransformSet {
-private:
-    Transform t[MaxTransforms];
+// RenderOptions function definitions.
 
-public:
-    Transform &operator[](int i) {
-        return t[i];
+Integrator *RenderOptions::MakeIntegrator() const {
+    std::shared_ptr<const Camera> camera(MakeCamera());
+    if (!camera) {
+        Error("Unable to create camera");
+        return nullptr;
     }
 
-    // Returns the inverses of the transformations in a TansformSet. 
-    friend TransformSet Inverse(const TransformSet &ts) {
-        TransformSet tInv;
-        for (int i = 0; i < MaxTransforms; ++i) {
-            tInv.t[i] = Inverse(ts.t[i]);
-        }
-        return tInv;
+    std::shared_ptr<Sampler> sampler = MakeSampler(SamplerName, SamplerParams, camera->film);
+    if (!sampler) {
+        Error("Unable to create sampler.");
+        return nullptr;
     }
 
-    bool IsAnimated() const {
-        for (int i = 0; i < MaxTransforms - 1; ++i) {
-            if (t[i] != t[i+1]) {
-                return true;
-            }
-        }
-        return false;
+    Integrator *integrator = nullptr;
+    if (IntegratorName == "directlighting") {
+        integrator = CreateDirectLightingIntegrator(IntegratorParams, sampler, camera);
     }
-};
-
-// Caches the inverse of a transformation.
-class TransformCache {
-  public:
-    TransformCache()
-        : hashTable(512), hashTableOccupancy(0) {}
-
-    Transform *Lookup(const Transform &t) {
-        int offset = Hash(t) & (hashTable.size() - 1);
-        int step = 1;
-        while (true) {
-            if (!hashTable[offset] || *hashTable[offset] == t)
-                break;
-            offset = (offset + step * step) & (hashTable.size() - 1);
-            ++step;
-        }
-        Transform *tCached = hashTable[offset];
-        if (!tCached) {
-            tCached = arena.Alloc<Transform>();
-            *tCached = t;
-            Insert(tCached);
-        }
-        return tCached;
+    else if (IntegratorName == "path") {
+        integrator = CreatePathIntegrator(IntegratorParams, sampler, camera);
+    } else {
+        Error("Integrator \"%s\" unknown.", IntegratorName.c_str());
+        return nullptr;
     }
 
-    void Clear() {
-        hashTable.clear();
-        hashTable.resize(512);
-        hashTableOccupancy = 0;
-        arena.Reset();
+    IntegratorParams.ReportUnused();
+    if (lights.empty()) {
+        Warning(
+            "No light sources defined in scene; "
+            "rendering a black image.");
     }
 
-  private:
-    void Insert(Transform *tNew);
-    void Grow();
-
-    static uint64_t Hash(const Transform &t) {
-        const char *ptr = (const char *)(&t.GetMatrix());
-        size_t size = sizeof(Matrix4x4);
-        uint64_t hash = 14695981039346656037ull;
-        while (size > 0) {
-            hash ^= *ptr;
-            hash *= 1099511628211ull;
-            ++ptr;
-            --size;
-        }
-        return hash;
-    }
-
-    std::vector<Transform *> hashTable;
-    int hashTableOccupancy;
-    MemoryArena arena;
-};
-
-void TransformCache::Insert(Transform *tNew) {
-    if (++hashTableOccupancy == hashTable.size() / 2)
-        Grow();
-
-    int baseOffset = Hash(*tNew) & (hashTable.size() - 1);
-    for (int nProbes = 0;; ++nProbes) {
-        // Quadratic probing.
-        int offset = (baseOffset + nProbes/2 + nProbes*nProbes/2) & (hashTable.size() - 1);
-        if (hashTable[offset] == nullptr) {
-            hashTable[offset] = tNew;
-            return;
-        }
-    }
+    return integrator;
 }
 
-void TransformCache::Grow() {
-    std::vector<Transform *> newTable(2 * hashTable.size());
-
-    for (Transform *tEntry : hashTable) {
-        if (!tEntry) continue;
-
-        int baseOffset = Hash(*tEntry) & (hashTable.size() - 1);
-        for (int nProbes = 0;; ++nProbes) {
-            int offset = (baseOffset + nProbes/2 + nProbes*nProbes/2) & (hashTable.size() - 1);
-            if (newTable[offset] == nullptr) {
-                newTable[offset] = tEntry;
-                break;
-            }
-        }
-    }
-
-    std::swap(hashTable, newTable);
+Scene *RenderOptions::MakeScene() {
+    std::shared_ptr<Primitive> accelerator
+        = ::MakeAccelerator(AcceleratorName, std::move(primitives), AcceleratorParams);
+    if (!accelerator) accelerator = std::make_shared<BVHAccel>(primitives);
+    Scene *scene = new Scene(accelerator, lights);
+    primitives.clear();
+    lights.clear();
+    return scene;
 }
 
-// Options that can be set in the OptionsBlock state.
-struct RenderOptions {
-    std::string FilterName = "box";
-    ParamSet FilterParams;
-
-    std::string FilmName = "image";
-    ParamSet FilmParams;
-
-    std::string SamplerName = "stratified";
-    ParamSet SamplerParams;
-
-    std::string AcceleratorName = "bvh";
-    ParamSet AcceleratorParams;
-
-    std::string IntegratorName = "path";
-    ParamSet IntegratorParams;
-
-    std::string CameraName = "perspective";
-    ParamSet CameraParams;
-    TransformSet CameraToWorld;
-
-    std::vector<std::shared_ptr<Light>> lights;
-
-    std::vector<std::shared_ptr<Primitive>> primitives;
-
-    // TODO: describe.
-    std::map<std::string, std::vector<std::shared_ptr<Primitive>>> instances;
-    std::vector<std::shared_ptr<Primitive>> *currentInstance = nullptr;
-};
-
-// An instance of a material.
-struct MaterialInstance {
-    MaterialInstance() = default;
-
-    MaterialInstance(
-        const std::string &name,
-        const std::shared_ptr<Material> &mtl,
-        ParamSet params
-    ) : name(name), material(mtl), params(std::move(params))
-    {}
-
-    std::string name;
-    std::shared_ptr<Material> material;
-    ParamSet params;
-};
-
-// Stack of attributes.
-struct GraphicsState {
-    using FloatTextureMap = std::map<std::string, std::shared_ptr<Texture<Float>>>;
-    std::shared_ptr<FloatTextureMap> floatTextures;
-    bool floatTexturesShared = false;
-
-    using SpectrumTextureMap = std::map<std::string, std::shared_ptr<Texture<Spectrum>>>;
-    std::shared_ptr<SpectrumTextureMap> spectrumTextures;
-    bool spectrumTexturesShared = false;
-
-    std::shared_ptr<MaterialInstance> currentMaterial;
-    ParamSet materialParams;
-    std::string material = "matte";
-
-    using NamedMaterialMap = std::map<std::string, std::shared_ptr<MaterialInstance>>;
-    std::shared_ptr<NamedMaterialMap> namedMaterials;
-    bool namedMaterialsShared = false;
-
-    ParamSet areaLightParams;
-    std::string areaLight;
-
-    // TODO: describe.
-    bool reverseOrientation = false; 
-
-    GraphicsState() 
-        : floatTextures(std::make_shared<FloatTextureMap>()),
-          spectrumTextures(std::make_shared<SpectrumTextureMap>()),
-          namedMaterials(std::make_shared<NamedMaterialMap>()) {
-        
-        ParamSet empty;
-        TextureParams tp(empty, empty, *floatTextures, *spectrumTextures);
-        std::shared_ptr<Material> mtl(CreateMatteMaterial(tp));
-        currentMaterial = std::make_shared<MaterialInstance>("matte", mtl, ParamSet());
+Camera *RenderOptions::MakeCamera() const {
+    std::unique_ptr<Filter> filter = MakeFilter(FilterName, FilterParams);
+    Film *film = MakeFilm(FilmName, FilmParams, std::move(filter));
+    if (!film) {
+        Error("Unable to create film.");
+        return nullptr;
     }
+    Camera *camera = ::MakeCamera(
+        CameraName, CameraParams, CameraToWorld, film
+    );
 
-    MediumInterface CreateMediumInterface();
+    return camera;
+}
 
-    std::shared_ptr<Material> GetMaterialForShape(const ParamSet &params);
-};
+// GraphicsState function definitions.
 
 MediumInterface GraphicsState::CreateMediumInterface() {
     // TODO: implement.
@@ -405,26 +585,6 @@ std::shared_ptr<Material> GraphicsState::GetMaterialForShape(const ParamSet &par
         return currentMaterial->material;
     }
 }
-
-// API static data.
-
-// Current transformation matrices (CTMs).
-static TransformSet curTransform;
-static uint32_t activeTransformBits = AllTransformsBits;
-
-// Saved CTMs.
-static std::map<std::string, TransformSet> namedCoordinateSystems;
-
-// Cached inverses of transformations.
-static TransformCache transformCache;
-
-// Scene-wide global options set in the OptionsBlock state.
-static std::unique_ptr<RenderOptions> renderOptions;
-
-static GraphicsState graphicsState;
-static std::vector<GraphicsState> pushedGraphicsStates;
-static std::vector<TransformSet> pushedTransforms;
-static std::vector<uint32_t> pushedActiveTransformBits;
 
 // API macros.
 
@@ -619,6 +779,33 @@ void cpbrtWorldBegin() {
     }
     activeTransformBits = AllTransformsBits;
     namedCoordinateSystems["world"] = curTransform;
+}
+
+void cpbrtWorldEnd() {
+    VERIFY_WORLD("WorldEnd");
+    while (pushedGraphicsStates.size()) {
+        Warning("Missing end to pbrtAttributeBegin()");
+        pushedGraphicsStates.pop_back();
+        pushedTransforms.pop_back();
+    }
+    while (pushedTransforms.size()) {
+        Warning("Missing end to pbrtTransformBegin()");
+        pushedTransforms.pop_back();
+    }
+
+    std::unique_ptr<Integrator> integrator(renderOptions->MakeIntegrator());
+    std::unique_ptr<Scene> scene(renderOptions->MakeScene());
+
+    if (scene && integrator) integrator->Render(*scene);
+
+    graphicsState = GraphicsState();
+    transformCache.Clear();
+    currentApiState = APIState::OptionsBlock;
+    renderOptions.reset(new RenderOptions);
+
+    for (int i = 0; i < MaxTransforms; ++i) curTransform[i] = Transform();
+    activeTransformBits = AllTransformsBits;
+    namedCoordinateSystems.erase(namedCoordinateSystems.begin(), namedCoordinateSystems.end());
 }
 
 void pbrtObjectBegin(const std::string &name) {
