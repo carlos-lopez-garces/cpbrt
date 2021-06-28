@@ -131,6 +131,24 @@ std::vector<std::shared_ptr<Shape>> MakeShapes(
     return shapes;
 }
 
+std::shared_ptr<Primitive> MakeAccelerator(
+    const std::string &name,
+    std::vector<std::shared_ptr<Primitive>> prims,
+    const ParamSet &paramSet) {
+    std::shared_ptr<Primitive> accel;
+
+    // TODO: add other types.
+    if (name == "bvh") {
+        accel = CreateBVHAccelerator(std::move(prims), paramSet);
+    }
+    else {
+        Warning("Accelerator \"%s\" unknown.", name.c_str());
+    }
+
+    paramSet.ReportUnused();
+    return accel;
+}
+
 // Stores an array of transformations.
 struct TransformSet {
 private:
@@ -162,36 +180,90 @@ public:
 
 // Caches the inverse of a transformation.
 class TransformCache {
-private:
-    std::map<Transform, std::pair<Transform *, Transform *>> cache;
-    MemoryArena arena;
+  public:
+    TransformCache()
+        : hashTable(512), hashTableOccupancy(0) {}
 
-public:
-    void Lookup(const Transform &t, Transform **tCached, Transform **tCachedInverse) {
-        auto iter = cache.find(t);
-        if (iter == cache.end()) {
-            // Cache miss. Allocate and store.
-            Transform *tr = arena.Alloc<Transform>();
-            *tr = t;
-            Transform *tInv = arena.Alloc<Transform>();
-            *tInv = Transform(Inverse(t));
-            cache[t] = std::make_pair(tr, tInv);
-            iter  = cache.find(t);
+    Transform *Lookup(const Transform &t) {
+        int offset = Hash(t) & (hashTable.size() - 1);
+        int step = 1;
+        while (true) {
+            if (!hashTable[offset] || *hashTable[offset] == t)
+                break;
+            offset = (offset + step * step) & (hashTable.size() - 1);
+            ++step;
         }
-
-        if (tCached) {
-            *tCached = iter->second.first;
+        Transform *tCached = hashTable[offset];
+        if (!tCached) {
+            tCached = arena.Alloc<Transform>();
+            *tCached = t;
+            Insert(tCached);
         }
-        if (tCachedInverse) {
-            *tCachedInverse = iter->second.second;
-        }
+        return tCached;
     }
 
     void Clear() {
+        hashTable.clear();
+        hashTable.resize(512);
+        hashTableOccupancy = 0;
         arena.Reset();
-        cache.erase(cache.begin(), cache.end());
     }
+
+  private:
+    void Insert(Transform *tNew);
+    void Grow();
+
+    static uint64_t Hash(const Transform &t) {
+        const char *ptr = (const char *)(&t.GetMatrix());
+        size_t size = sizeof(Matrix4x4);
+        uint64_t hash = 14695981039346656037ull;
+        while (size > 0) {
+            hash ^= *ptr;
+            hash *= 1099511628211ull;
+            ++ptr;
+            --size;
+        }
+        return hash;
+    }
+
+    std::vector<Transform *> hashTable;
+    int hashTableOccupancy;
+    MemoryArena arena;
 };
+
+void TransformCache::Insert(Transform *tNew) {
+    if (++hashTableOccupancy == hashTable.size() / 2)
+        Grow();
+
+    int baseOffset = Hash(*tNew) & (hashTable.size() - 1);
+    for (int nProbes = 0;; ++nProbes) {
+        // Quadratic probing.
+        int offset = (baseOffset + nProbes/2 + nProbes*nProbes/2) & (hashTable.size() - 1);
+        if (hashTable[offset] == nullptr) {
+            hashTable[offset] = tNew;
+            return;
+        }
+    }
+}
+
+void TransformCache::Grow() {
+    std::vector<Transform *> newTable(2 * hashTable.size());
+
+    for (Transform *tEntry : hashTable) {
+        if (!tEntry) continue;
+
+        int baseOffset = Hash(*tEntry) & (hashTable.size() - 1);
+        for (int nProbes = 0;; ++nProbes) {
+            int offset = (baseOffset + nProbes/2 + nProbes*nProbes/2) & (hashTable.size() - 1);
+            if (newTable[offset] == nullptr) {
+                newTable[offset] = tEntry;
+                break;
+            }
+        }
+    }
+
+    std::swap(hashTable, newTable);
+}
 
 // Options that can be set in the OptionsBlock state.
 struct RenderOptions {
@@ -215,6 +287,8 @@ struct RenderOptions {
     TransformSet CameraToWorld;
 
     std::vector<std::shared_ptr<Light>> lights;
+
+    std::vector<std::shared_ptr<Primitive>> primitives;
 
     // TODO: describe.
     std::map<std::string, std::vector<std::shared_ptr<Primitive>>> instances;
@@ -564,6 +638,43 @@ void pbrtObjectEnd() {
     cpbrtAttributeEnd();
 }
 
+void cpbrtObjectInstance(const std::string &name) {
+    VERIFY_WORLD("ObjectInstance");
+
+    if (renderOptions->currentInstance) {
+        Error("ObjectInstance can't be called inside instance definition");
+        return;
+    }
+    if (renderOptions->instances.find(name) == renderOptions->instances.end()) {
+        Error("Unable to find instance named \"%s\"", name.c_str());
+        return;
+    }
+
+    std::vector<std::shared_ptr<Primitive>> &in = renderOptions->instances[name];
+    if (in.empty()) return;
+    if (in.size() > 1) {
+        std::shared_ptr<Primitive> accel(
+            MakeAccelerator(renderOptions->AcceleratorName, std::move(in), renderOptions->AcceleratorParams)
+        );
+        if (!accel) accel = std::make_shared<BVHAccel>(in);
+        in.clear();
+        in.push_back(accel);
+    }
+
+    static_assert(MaxTransforms == 2, "TransformCache assumes only two transforms");
+
+    Transform *InstanceToWorld[2] = {
+        transformCache.Lookup(curTransform[0]),
+        transformCache.Lookup(curTransform[1])
+    };
+
+    Transform instanceToWorld(InstanceToWorld[0]->GetMatrix());
+
+    std::shared_ptr<Primitive> prim(std::make_shared<TransformedPrimitive>(in[0], instanceToWorld));
+
+    renderOptions->primitives.push_back(prim);
+}
+
 void cpbrtAttributeBegin() {
     VERIFY_WORLD("AttributeBegin");
     pushedGraphicsStates.push_back(graphicsState);
@@ -726,9 +837,8 @@ void cpbrtShape(const std::string &name, const ParamSet &params) {
         // Initialize prims and areaLights for static shape.
 
         // Create shapes.
-        Transform *ObjToWorld;
-        Transform *WorldToObj;
-        transformCache.Lookup(curTransform[0], &ObjToWorld, &WorldToObj);
+        Transform *ObjToWorld = transformCache.Lookup(curTransform[0]);
+        Transform *WorldToObj = transformCache.Lookup(Inverse(curTransform[0]));
         std::vector<std::shared_ptr<Shape>> shapes 
             = MakeShapes(name, ObjToWorld, WorldToObj, graphicsState.reverseOrientation, params);
         if (shapes.size() == 0) {

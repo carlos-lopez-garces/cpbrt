@@ -84,6 +84,9 @@ void cpbrtObjectBegin(const std::string &name);
 // TODO: explain.
 void cpbrtObjectEnd();
 
+// TODO: explain.
+void cpbrtObjectInstance(const std::string &name);
+
 // Pushes the current graphics state and transformations onto the stack.
 void cpbrtAttributeBegin();
 
