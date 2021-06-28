@@ -57,4 +57,10 @@ public:
     Float GenerateRayDifferential(const CameraSample &sample, RayDifferential *rd) const;
 };
 
+OrthographicCamera *CreateOrthographicCamera(
+    const ParamSet &params,
+    const Transform &cam2world,
+    Film *film, const Medium *medium
+);
+
 #endif // CPBRT_CAMERAS_ORTHOGRAPHIC_H
