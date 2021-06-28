@@ -223,6 +223,10 @@ BVHAccel::BVHAccel(
     flattenBVHTree(root, &offset);
 }
 
+Bounds3f BVHAccel::WorldBound() const {
+    return nodes ? nodes[0].bounds : Bounds3f();
+}
+
 BVHBuildNode *BVHAccel::recursiveBuild(
     MemoryArena &arena,
     std::vector<BVHPrimitiveInfo> &primitiveInfo,
@@ -999,4 +1003,26 @@ bool BVHAccel::IntersectP(const Ray &ray) const {
     }
 
     return false;
+}
+
+// TODO: explain.
+std::shared_ptr<BVHAccel> CreateBVHAccelerator(
+    std::vector<std::shared_ptr<Primitive>> prims, const ParamSet &ps) {
+    std::string splitMethodName = ps.FindOneString("splitmethod", "sah");
+    BVHAccel::SplitMethod splitMethod;
+    if (splitMethodName == "sah")
+        splitMethod = BVHAccel::SplitMethod::SAH;
+    else if (splitMethodName == "hlbvh")
+        splitMethod = BVHAccel::SplitMethod::HLBVH;
+    else if (splitMethodName == "middle")
+        splitMethod = BVHAccel::SplitMethod::Middle;
+    else if (splitMethodName == "equal")
+        splitMethod = BVHAccel::SplitMethod::EqualCounts;
+    else {
+        Warning("BVH split method \"%s\" unknown.  Using \"sah\".", splitMethodName.c_str());
+        splitMethod = BVHAccel::SplitMethod::SAH;
+    }
+
+    int maxPrimsInNode = ps.FindOneInt("maxnodeprims", 4);
+    return std::make_shared<BVHAccel>(std::move(prims), maxPrimsInNode, splitMethod);
 }

@@ -24,6 +24,8 @@ public:
         SplitMethod splitMethod = SplitMethod::SAH
     );
 
+    Bounds3f WorldBound() const;
+
     BVHBuildNode *recursiveBuild(
         MemoryArena &arena,
         // Array of unprocessed primitive bounding boxes and centroids.
@@ -89,8 +91,6 @@ private:
     LinearBVHNode *nodes = nullptr;
 };
 
-std::shared_ptr<BVHAccel> CreateBVHAccelerator(
-    std::vector<std::shared_ptr<Primitive>> prims, const ParamSet &ps);
-}
+std::shared_ptr<BVHAccel> CreateBVHAccelerator(std::vector<std::shared_ptr<Primitive>> prims, const ParamSet &ps);
 
 #endif // CPBRT_ACCELERATORS_BVH_H
