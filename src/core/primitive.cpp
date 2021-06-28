@@ -44,7 +44,16 @@ void GeometricPrimitive::ComputeScatteringFunctions(
     }
 }
 
-bool TransformedPrimitive::Intersect(const Ray &ray, SurfaceInteraction *si) const {
+Bounds3f TransformedPrimitive::WorldBound() const {
+    return primitive->WorldBound();
+}
+
+bool TransformedPrimitive::Intersect(const Ray &r, SurfaceInteraction *isect) const {
+    // TODO: need to implement AnimatedTransform.
+    return false;
+}
+
+bool TransformedPrimitive::IntersectP(const Ray &r) const {
     // TODO: need to implement AnimatedTransform.
     return false;
 }

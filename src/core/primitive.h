@@ -83,7 +83,25 @@ public:
         const Transform &PrimitiveToWorld
     ) : primitive(primitive), PrimitiveToWorld(PrimitiveToWorld) {}
 
+    Bounds3f WorldBound() const;
+
     bool Intersect(const Ray &ray, SurfaceInteraction *si) const;
+    bool IntersectP(const Ray &ray) const;
+
+    const AreaLight *GetAreaLight() const {
+        return nullptr;
+    }
+
+    const Material *GetMaterial() const {
+        return nullptr;
+    }
+
+    void ComputeScatteringFunctions(
+        SurfaceInteraction *isect,
+        MemoryArena &arena, TransportMode mode,
+        bool allowMultipleLobes) const {
+        // Should not be called.
+    }
 };
 
 class Aggregate : public Primitive {
