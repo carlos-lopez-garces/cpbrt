@@ -1,5 +1,6 @@
 #include <cmath>
 
+#include "api.h"
 #include "film.h"
 #include "paramset.h"
 #include "imageio.h"
@@ -146,13 +147,13 @@ void Film::WriteImage(Float splatScale) {
 Film *CreateFilm(const ParamSet &params, std::unique_ptr<Filter> filter) {
     std::string filename;
     if (CpbrtOptions.imageFile != "") {
-        filename = PbrtOptions.imageFile;
+        filename = CpbrtOptions.imageFile;
         std::string paramsFilename = params.FindOneString("filename", "");
         if (paramsFilename != "") {
             Warning(
                 "Output filename supplied on command line, \"%s\" is overriding "
                 "filename provided in scene description file, \"%s\".",
-                PbrtOptions.imageFile.c_str(), paramsFilename.c_str());
+                CpbrtOptions.imageFile.c_str(), paramsFilename.c_str());
         }
     } else {
         filename = params.FindOneString("filename", "pbrt.exr");
@@ -174,17 +175,15 @@ Film *CreateFilm(const ParamSet &params, std::unique_ptr<Filter> filter) {
     } else if (cr) {
         Error("%d values supplied for \"cropwindow\". Expected 4.", cwi);
     } else {
-        crop = Bounds2f(Point2f(Clamp(PbrtOptions.cropWindow[0][0], 0, 1),
-                                Clamp(PbrtOptions.cropWindow[1][0], 0, 1)),
-                        Point2f(Clamp(PbrtOptions.cropWindow[0][1], 0, 1),
-                                Clamp(PbrtOptions.cropWindow[1][1], 0, 1)));
+        crop = Bounds2f(Point2f(Clamp(CpbrtOptions.cropWindow[0][0], 0, 1),
+                                Clamp(CpbrtOptions.cropWindow[1][0], 0, 1)),
+                        Point2f(Clamp(CpbrtOptions.cropWindow[0][1], 0, 1),
+                                Clamp(CpbrtOptions.cropWindow[1][1], 0, 1)));
     }
 
     Float scale = params.FindOneFloat("scale", 1.);
     Float diagonal = params.FindOneFloat("diagonal", 35.);
-    Float maxSampleLuminance = params.FindOneFloat("maxsampleluminance",
-                                                   Infinity);
     return new Film(
-        Point2i(xres, yres), crop, std::move(filter), diagonal, filename, scale, maxSampleLuminance
+        Point2i(xres, yres), crop, std::move(filter), diagonal, filename, scale
     );
 }
