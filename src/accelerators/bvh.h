@@ -89,4 +89,8 @@ private:
     LinearBVHNode *nodes = nullptr;
 };
 
+std::shared_ptr<BVHAccel> CreateBVHAccelerator(
+    std::vector<std::shared_ptr<Primitive>> prims, const ParamSet &ps);
+}
+
 #endif // CPBRT_ACCELERATORS_BVH_H
