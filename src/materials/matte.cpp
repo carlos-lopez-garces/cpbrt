@@ -24,7 +24,7 @@ void MatteMaterial::ComputeScatteringFunctions(
     Float sig = Clamp(sigma->Evaluate(*si), 0, 90);
 
     if (!kd.IsBlack()) {
-        if (sigma == 0) {
+        if (sig == 0) {
             si->bsdf->Add(ARENA_ALLOC(arena, LambertianReflection)(kd));
         } else {
             // TODO: implement OrenNayarReflection.
