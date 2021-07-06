@@ -217,7 +217,6 @@ BVHAccel::BVHAccel(
     primitives.swap(orderedPrims);
 
     // Build linear array representation of binary tree in depth-first order.
-    // TODO: implement AllocAligned.
     nodes = AllocAligned<LinearBVHNode>(totalNodes);
     int offset = 0;
     flattenBVHTree(root, &offset);
@@ -881,7 +880,8 @@ bool BVHAccel::Intersect(const Ray &ray, SurfaceInteraction *si) const {
     while (true) {
         const LinearBVHNode *node = &nodes[currentNodeIndex];
 
-        if (node->bounds.IntersectP(ray, reciprocalDir, dirIsNeg)) {
+        // TODO: implement Bounds3::IntersectP overload.
+        if (node->bounds.IntersectP(ray) /*node->bounds.IntersectP(ray, reciprocalDir, dirIsNeg)*/) {
             // The ray intersects the node's AABB.
 
             if (node->nPrimitives > 0) {
