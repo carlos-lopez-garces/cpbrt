@@ -60,6 +60,7 @@ public:
             if (currentBlock) {
                 usedBlocks.push_back(std::make_pair(currentAllocSize, currentBlock));
                 currentBlock = nullptr;
+                currentAllocSize = 0;
             }
 
             // Try to get block from availableBlocks with enough memory to satisfy request.
@@ -100,7 +101,7 @@ public:
 
     // Reset the current and all the past blocks.
     void Reset() {
-        currentBlock = 0;
+        currentBlockPos = 0;
         availableBlocks.splice(availableBlocks.begin(), usedBlocks);
     }
 };
