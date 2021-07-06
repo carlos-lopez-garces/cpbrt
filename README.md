@@ -23,18 +23,18 @@ The sections I've covered are marked next. Each covered section is accompanied b
 - [x] 2.7 Transformations
 - [x] 2.8 Applying Transformations
 - [ ] 2.9 Animating Transformations
-- [ ] 2.10 Interactions
+- [x] 2.10 Interactions
 
 3 Shapes ([notes/3 Shapes](notes/3_Shapes.pdf))
 - [x] 3.1 Basic Shape Interface
-- [ ] 3.2 Spheres
+- [x] 3.2 Spheres
 - [ ] 3.3 Cylinders
 - [ ] 3.4 Disks
 - [ ] 3.5 Other Quadrics
 - [ ] 3.6 Triangle Meshes
 - [ ] 3.7 Curves
 - [ ] 3.8 Subdivision Surfaces
-- [ ] 3.9 Managing Rounding Error
+- [x] 3.9 Managing Rounding Error
 
 4 Primitives and Intersection Acceleration ([notes/4 Primitives and Intersection Acceleration](notes/4_Primitives_and_Intersection_Acceleration.pdf))
 - [x] 4.1 Primitive Interface and Geometric Primitives
@@ -140,15 +140,15 @@ The sections I've covered are marked next. Each covered section is accompanied b
 
 A Utilities ([notes/Appendix A](notes/Appendix_A.pdf))
 - [x] A.1 Main Include File
-- [ ] A.2 Image File Input and Output
-- [ ] A.3 Communicating with the User
+- [x] A.2 Image File Input and Output
+- [x] A.3 Communicating with the User
 - [x] A.4 Memory Management
 - [x] A.5 Mathematical Routines
-- [ ] A.6 Parallelism
+- [x] A.6 Parallelism
 - [ ] A.7 Statistics
 
 B Scene Description Interface ([notes/Appendix B](notes/Appendix_B.pdf))
 - [x] B.1 Parameter Sets
-- [ ] B.2 Initialization and Rendering Options
+- [x] B.2 Initialization and Rendering Options
 - [x] B.3 Scene Definition
 - [ ] B.4 Adding New Object Implementations
