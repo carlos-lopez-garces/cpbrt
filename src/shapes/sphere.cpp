@@ -22,7 +22,6 @@ bool Sphere::Intersect(
     Ray ray = (*WorldToObject)(r, &oErr, &dErr);
 
     // Initialize EFloat ray coordinate values.
-    // TODO: Implement EFloat.
     EFloat ox(ray.o.x, oErr.x), oy(ray.o.y, oErr.y), oz(ray.o.z, oErr.z);
     EFloat dx(ray.d.x, dErr.x), dy(ray.d.y, dErr.y), dz(ray.d.z, dErr.z);
 
@@ -35,7 +34,6 @@ bool Sphere::Intersect(
 
     // Solve quadratic equation for t values: up to 2 solutions may exist.
     EFloat t0, t1;
-    // TODO: Implement Quadratic.
     // Quadratic may introduce floating-point error too.
     // Quadratic guarantees that t0 < t1 (if they exist).
     if (!Quadratic(a, b, c, &t0, &t1)) {
@@ -189,7 +187,6 @@ bool Sphere::IntersectP(
     Ray ray = (*WorldToObject)(r, &oErr, &dErr);
 
     // Initialize EFloat ray coordinate values.
-    // TODO: Implement EFloat.
     EFloat ox(ray.o.x, oErr.x), oy(ray.o.y, oErr.y), oz(ray.o.z, oErr.z);
     EFloat dx(ray.d.x, dErr.x), dy(ray.d.y, dErr.y), dz(ray.d.z, dErr.z);
 
@@ -202,7 +199,6 @@ bool Sphere::IntersectP(
 
     // Solve quadratic equation for t values: up to 2 solutions may exist.
     EFloat t0, t1;
-    // TODO: Implement Quadratic.
     // Quadratic may introduce floating-point error too.
     // Quadratic guarantees that t0 < t1 (if they exist).
     if (!Quadratic(a, b, c, &t0, &t1)) {

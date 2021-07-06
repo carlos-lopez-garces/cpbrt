@@ -892,10 +892,11 @@ static void parse(std::unique_ptr<Tokenizer> t) {
                 string_view n = dequoteString(nextToken(TokenRequired));
                 cpbrtCoordinateSystem(toString(n));
             } else if (tok == "CoordSysTransform") {
-                string_view n = dequoteString(nextToken(TokenRequired));
-                cpbrtCoordSysTransform(toString(n));
-            } else if (tok == "Camera")
-                basicParamListEntrypoint(SpectrumType::Reflectance, cpbrtCamera);
+              string_view n = dequoteString(nextToken(TokenRequired));
+              cpbrtCoordSysTransform(toString(n));
+            } else if (tok == "Camera") {
+              basicParamListEntrypoint(SpectrumType::Reflectance, cpbrtCamera);
+            }
             else
                 syntaxError(tok);
             break;
@@ -1090,14 +1091,12 @@ static void parse(std::unique_ptr<Tokenizer> t) {
 }
 
 void cpbrtParseFile(std::string filename) {
-    printf("parse");
     if (filename != "-") SetSearchDirectory(DirectoryContaining(filename));
 
     auto tokError = [](const char *msg) { Error("%s", msg); exit(1); };
     std::unique_ptr<Tokenizer> t =
         Tokenizer::CreateFromFile(filename, tokError);
     if (!t) return;
-    printf("tokenized");
     parse(std::move(t));
 }
 

@@ -225,7 +225,7 @@ void ParallelFor2D(
         return;
     }
 
-    // launch worker threads if needed. Only the first ParalellFor call creates the worker
+    // Launch worker threads if needed. Only the first ParalellFor call creates the worker
     // thread pool; subsequent calls will use the existing pool; threads will persist until
     // explicitly told to shut down with ParallelCleanup().
     // TODO: in repo, thread creation takes place in ParallelInit().

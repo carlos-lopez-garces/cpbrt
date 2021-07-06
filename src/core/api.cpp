@@ -632,7 +632,6 @@ std::shared_ptr<Material> GraphicsState::GetMaterialForShape(const ParamSet &par
         if (activeTransformBits & (1 << i)) { expr }
 
 void cpbrtInit(const Options &opt) {
-    printf("init");
     CpbrtOptions = opt;
 
     if (currentApiState != APIState::Uninitialized) {
@@ -1055,5 +1054,16 @@ void cpbrtShape(const std::string &name, const ParamSet &params) {
     } else {
         // TODO: implement. Also TransformedPrimitive and AnimatedTransforms.
     }
-    // TODO: Add prims and areaLights to scene or current instance.
+
+    if (renderOptions->currentInstance) {
+      // TODO: implement object instancing.
+    }
+    else {
+      renderOptions->primitives.insert(renderOptions->primitives.end(), prims.begin(), prims.end());
+      
+      // Possibly add area light.
+      if (areaLights.size()) {
+        // TODO: implement.
+      }
+    }
 }

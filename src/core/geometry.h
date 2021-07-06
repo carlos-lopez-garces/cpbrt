@@ -1271,7 +1271,8 @@ template <typename T> inline bool Bounds3<T>::IntersectP(
         Float tFar = (pMax[i] - ray.o[i]) * reciprocalDirComponent;
         if (tNear > tFar) std::swap(tNear, tFar);
 
-        // TODO: update tFar to ensure robust ray-bounds intersection (see 3.9.2).
+        // Update tFar to ensure robust ray-bounds intersection (see 3.9.2).
+        tFar *= 1 + 2 * gamma(3);
 
         // Update (shrink) the parametric interval from slab intersection t values: 
         // [t0, t1] = [tNear, tFar].
