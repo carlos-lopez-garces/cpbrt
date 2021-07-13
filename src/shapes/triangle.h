@@ -44,6 +44,53 @@ struct TriangleMesh {
     );
 };
 
+class Triangle : public Shape {
+private:
+    // The Triangle class doesn't store the coordinates of its vertices, just a pointer
+    // to the start of its 3 indices in the mesh.
+    std::shared_ptr<TriangleMesh> mesh;
+    // A pointer to the start of the its 3 indices in TriangleMesh.vertexIndices.
+    const int *v;
+    int faceIndex;
+
+public:
+    Triangle(
+        const Transform *ObjectToWorld,
+        const Transform *WorldToObject,
+        bool reverseOrientation,
+        const std::shared_ptr<TriangleMesh> *mesh,
+        int index
+    ) : Shape(ObjectToWorld, WorldToObject, reverseOrientation),
+        mesh(mesh) {
+
+        v = &mesh->vertexIndices[3 * index];
+        faceIndex = mesh->faceIndices.size() ? mesh->faceIndices[index] : 0;
+    }
+
+    // Bounds in object space.
+    Bounds3f ObjectBound() const;
+
+    // Bounds in world space.
+    Bounds3f WorldBound() const;
+
+    Float SolidAngle(const Point3f &p, int nSamples = 0) const;
+
+private:
+    // Puts the UVs in the input array.
+    void GetUVs(Point2f uv[3]) const {
+        if (mesh->uv) {
+            uv[0] = mesh->uv[v[0]];
+            uv[1] = mesh->uv[v[1]];
+            uv[2] = mesh->uv[v[2]];
+        } else {
+            // Default parameterization. See the constructor: caller-suppied UVs are optional.
+            uv[0] = Point2f(0, 0);
+            uv[1] = Point2f(1, 0);
+            uv[2] = Point2f(1,1);
+        }
+    }
+};
+
 // Creates a TriangleMesh and the component Triangle shapes. Returns the array of
 // Triangle shapes (the TriangleMesh is referenced by each Triangle via a shared_ptr).
 std::vector<std::shared_ptr<Shape>> CreateTriangleMesh(

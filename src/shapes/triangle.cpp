@@ -53,6 +53,27 @@ TriangleMesh::TriangleMesh(
     }
 }
 
+Bounds3f Triangle::ObjectBound() const {
+    const Point3f &p0 = mesh->p[v[0]];
+    const Point3f &p1 = mesh->p[v[1]];
+    const Point3f &p2 = mesh->p[v[2]];
+
+    // Bounding box that encloses the 3 vertices, in object space.
+    return Union(
+        Bounds3f((*WorldToObject)(p0), (*WorldToObject)(p1)),
+        (*WorldToObject)(p2)
+    );
+}
+
+Bounds3f Triangle::WorldBound() const {
+    const Point3f &p0 = mesh->p[v[0]];
+    const Point3f &p1 = mesh->p[v[1]];
+    const Point3f &p2 = mesh->p[v[2]];
+
+    // Bounding box that encloses the 3 vertices, in world space.
+    return Union(Bounds3f(p0, p1), p2);
+}
+
 std::vector<std::shared_ptr<Shape>> CreateTriangleMesh(
     const Transform *ObjectToWorld, 
     const Transform *WorldToObject,
