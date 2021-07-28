@@ -75,6 +75,8 @@ public:
 
     bool Intersect(const Ray &ray, Float *tHit, SurfaceInteraction *si, bool testAlphaTexture = true) const;
 
+    Float Area() const;
+
 private:
     // Puts the UVs in the input array.
     void GetUVs(Point2f uv[3]) const {

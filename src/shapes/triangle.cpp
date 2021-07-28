@@ -409,6 +409,15 @@ bool Triangle::Intersect(const Ray &ray, Float *tHit, SurfaceInteraction *si, bo
     return true;
 }
 
+Float Triangle::Area() const {
+    const Point3f &p0 = mesh->p[v[0]];
+    const Point3f &p1 = mesh->p[v[1]];
+    const Point3f &p2 = mesh->p[v[2]];
+    // The norm of the cross product of 2 vectors equals the area of the parallelogram
+    // defined by them. Half of this parallelgram is a triangle.
+    return 0.5 * Cross(p1 - p0, p2 - p0).Length();
+}
+
 std::vector<std::shared_ptr<Shape>> CreateTriangleMesh(
     const Transform *ObjectToWorld, 
     const Transform *WorldToObject,
