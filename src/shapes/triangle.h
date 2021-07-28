@@ -49,7 +49,7 @@ private:
     // The Triangle class doesn't store the coordinates of its vertices, just a pointer
     // to the start of its 3 indices in the mesh.
     std::shared_ptr<TriangleMesh> mesh;
-    // A pointer to the start of the its 3 indices in TriangleMesh.vertexIndices.
+    // A pointer to the start of its 3 indices in TriangleMesh.vertexIndices.
     const int *v;
     int faceIndex;
 
@@ -73,7 +73,7 @@ public:
     // Bounds in world space.
     Bounds3f WorldBound() const;
 
-    Float SolidAngle(const Point3f &p, int nSamples = 0) const;
+    bool Intersect(const Ray &ray, Float *tHit, SurfaceInteraction *si, bool testAlphaTexture = true) const;
 
 private:
     // Puts the UVs in the input array.
@@ -83,7 +83,7 @@ private:
             uv[1] = mesh->uv[v[1]];
             uv[2] = mesh->uv[v[2]];
         } else {
-            // Default parameterization. See the constructor: caller-suppied UVs are optional.
+            // Default parameterization. See the constructor: caller-supplied UVs are optional.
             uv[0] = Point2f(0, 0);
             uv[1] = Point2f(1, 0);
             uv[2] = Point2f(1,1);
