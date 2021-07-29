@@ -79,6 +79,20 @@ inline Vector3f CosineSampleHemisphere(const Point2f &u) {
     return Vector3f(d.x, d.y, z);
 }
 
+// Samples a point of the surface of a triangle uniformly at random, using the input sample
+// of a uniform random variable. Sampling is done with a PDF equal to the reciprocal of the
+// triangle's area. Note in the implementation, however, that sampling is independent of the
+// triangle's dimensions.
+//
+// The returned point (b0, b1) is a barycentric coordinate that can be used to obtain a
+// world-space coordinate on any triangle of any dimension and shape; you'd use it as follows:
+//
+// p = b0*p0 + b1*p1 + (1 - b0 - b1)*p2
+//
+// where p0, p1, and p2 are the coordinates of the triangle's vertices. Since barycentric
+// coordinates add up to 1, the 3rd component can be derived from the other 2: b2 = 1 - b0 - b1.
+Point2f UniformSampleTriangle(const Point2f &u);
+
 // Cosine-weighted hemisphere PDF. The closer the point/direction is to the top of the
 // hemisphere, the higher the probability of sampling it will be. Theta is measured with
 // respect to the axis of the hemisphere.
