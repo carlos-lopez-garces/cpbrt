@@ -1,3 +1,5 @@
+#include "core/paramset.h"
+#include "textures/constant.h"
 #include "triangle.h"
 
 TriangleMesh::TriangleMesh(
@@ -33,7 +35,7 @@ TriangleMesh::TriangleMesh(
     }
 
     if (N) {
-        n.reset(new Normal4f[nVertices]);
+        n.reset(new Normal3f[nVertices]);
         for (int i = 0; i < nVertices; ++i) {
             // Transforms have an overloaded () operator for transforming normals.
             n[i] = ObjectToWorld(N[i]);
@@ -455,4 +457,153 @@ std::vector<std::shared_ptr<Shape>> CreateTriangleMesh(
     }
 
     return triangles;
+}
+
+std::vector<std::shared_ptr<Shape>> CreateTriangleMeshShape(
+    const Transform *o2w,
+    const Transform *w2o,
+    bool reverseOrientation,
+    const ParamSet &params,
+    std::map<std::string, std::shared_ptr<Texture<Float>>> * floatTextures
+) {
+    // Number/count of ...
+    int nvi, npi, nuvi, nsi, nni;
+
+    // Indices.
+    const int *vi = params.FindInt("indices", &nvi);
+    // Vertex positions, indexed by vi.
+    const Point3f *P = params.FindPoint3f("P", &npi);
+    // Vertex (u,v)s, indexed by vi.
+    const Point2f *uvs = params.FindPoint2f("uv", &nuvi);
+    if (!uvs) {
+        // TODO: what's st?
+        uvs = params.FindPoint2f("st", &nuvi);
+    }
+
+    std::vector<Point2f> tempUVs;
+    if (!uvs) {
+        // TODO: (u,v)s as a single float?
+        const Float *fuv = params.FindFloat("uv", &nuvi);
+        if (!fuv) fuv = params.FindFloat("st", &nuvi);
+        if (fuv) {
+            nuvi /= 2;
+            tempUVs.reserve(nuvi);
+            for (int i = 0; i < nuvi; ++i) {
+                tempUVs.push_back(Point2f(fuv[2 * i], fuv[2 * i + 1]));
+            }
+            uvs = &tempUVs[0];
+        }
+    }
+    
+    // uvs might have been set inside the previous conditional block.
+    if (uvs) {
+        if (nuvi < npi) {
+            Error(
+                "Not enough of \"uv\"s for triangle mesh.  Expected %d, "
+                "found %d.  Discarding.",
+                npi, nuvi);
+            uvs = nullptr;
+        } else if (nuvi > npi) {
+            Warning(
+                "More \"uv\"s provided than will be used for triangle "
+                "mesh.  (%d expcted, %d found)",
+                npi, nuvi);
+        }
+    }
+
+    if (!vi) {
+        Error(
+            "Vertex indices \"indices\" not provided with triangle mesh shape");
+        return std::vector<std::shared_ptr<Shape>>();
+    }
+
+    if (!P) {
+        Error("Vertex positions \"P\" not provided with triangle mesh shape");
+        return std::vector<std::shared_ptr<Shape>>();
+    }
+
+    // Per-vertex tangents.
+    const Vector3f *S = params.FindVector3f("S", &nsi);
+    if (S && nsi != npi) {
+        Error("Number of \"S\"s for triangle mesh must match \"P\"s");
+        S = nullptr;
+    }
+
+    // Per-vertex normals, for computing shading normals at intersection points.
+    const Normal3f *N = params.FindNormal3f("N", &nni);
+    if (N && nni != npi) {
+        Error("Number of \"N\"s for triangle mesh must match \"P\"s");
+        N = nullptr;
+    }
+    for (int i = 0; i < nvi; ++i) {
+        if (vi[i] >= npi) {
+            Error(
+                "trianglemesh has out of-bounds vertex index %d (%d \"P\" "
+                "values were given",
+                vi[i], npi);
+            return std::vector<std::shared_ptr<Shape>>();
+        }
+    }
+
+    int nfi;
+    const int *faceIndices = params.FindInt("faceIndices", &nfi);
+    if (faceIndices && nfi != nvi / 3) {
+        Error("Number of face indices, %d, doesn't match number of faces, %d",
+              nfi, nvi / 3);
+        faceIndices = nullptr;
+    }
+
+    // TODO: implement in Triangle::Intersect.
+    std::shared_ptr<Texture<Float>> alphaTex;
+    std::string alphaTexName = params.FindTexture("alpha");
+    if (alphaTexName != "") {
+        if (floatTextures->find(alphaTexName) != floatTextures->end()) {
+            alphaTex = (*floatTextures)[alphaTexName];
+        }
+        else {
+            Error("Couldn't find float texture \"%s\" for \"alpha\" parameter",
+                  alphaTexName.c_str());
+        }
+    } else if (params.FindOneFloat("alpha", 1.f) == 0.f) {
+        alphaTex.reset(new ConstantTexture<Float>(0.f));
+    }
+
+    // TODO: implement in Triangle::Intersect.
+    std::shared_ptr<Texture<Float>> shadowAlphaTex;
+    std::string shadowAlphaTexName = params.FindTexture("shadowalpha");
+    if (shadowAlphaTexName != "") {
+        if (floatTextures->find(shadowAlphaTexName) != floatTextures->end()) {
+            shadowAlphaTex = (*floatTextures)[shadowAlphaTexName];
+        } else {
+            Error(
+                "Couldn't find float texture \"%s\" for \"shadowalpha\" "
+                "parameter",
+                shadowAlphaTexName.c_str());
+        }
+    } else if (params.FindOneFloat("shadowalpha", 1.f) == 0.f) {
+        shadowAlphaTex.reset(new ConstantTexture<Float>(0.f));
+    }
+
+    return CreateTriangleMesh(
+        o2w, 
+        w2o,
+        reverseOrientation,
+        // Number of triangles. 
+        nvi / 3,
+        // Indices.
+        vi,
+        // Number of vertex positions.
+        npi,
+        // Vertex positions.
+        P,
+        // Per-vertex tangents.
+        S,
+        // Per-vertex normals.
+        N,
+        // Per-vertex parametrization (u,v).
+        uvs,
+        alphaTex,
+        shadowAlphaTex,
+        faceIndices
+    );
 }

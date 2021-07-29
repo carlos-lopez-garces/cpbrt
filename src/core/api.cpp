@@ -21,6 +21,7 @@
 #include "materials/plastic.h"
 #include "samplers/stratified.h"
 #include "shapes/sphere.h"
+#include "shapes/triangle.h"
 #include "textures/constant.h"
 
 // Initialization options stored for global access.
@@ -443,6 +444,10 @@ std::vector<std::shared_ptr<Shape>> MakeShapes(
     // TODO: add other types.
     if (name == "sphere") {
         s = CreateSphereShape(ObjectToWorld, WorldToObject, reverseOrientation, paramSet);
+    } else if (name == "trianglemesh") {
+        shapes = CreateTriangleMeshShape(
+            ObjectToWorld, WorldToObject, reverseOrientation, paramSet, &*graphicsState.floatTextures
+        );
     }
     
     if (s != nullptr) {

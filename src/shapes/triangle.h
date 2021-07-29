@@ -2,6 +2,8 @@
 #ifndef CPBRT_SHAPES_TRIANGLE_H
 #define CPBRT_SHAPES_TRIANGLE_H
 
+#include <map>
+
 #include "core/shape.h"
 
 struct TriangleMesh {
@@ -58,7 +60,7 @@ public:
         const Transform *ObjectToWorld,
         const Transform *WorldToObject,
         bool reverseOrientation,
-        const std::shared_ptr<TriangleMesh> *mesh,
+        const std::shared_ptr<TriangleMesh> &mesh,
         int index
     ) : Shape(ObjectToWorld, WorldToObject, reverseOrientation),
         mesh(mesh) {
@@ -109,6 +111,14 @@ std::vector<std::shared_ptr<Shape>> CreateTriangleMesh(
     const std::shared_ptr<Texture<Float>> &alphaMask,
     const std::shared_ptr<Texture<Float>> &shadowAlphaMask,
     const int *faceIndices = nullptr
+);
+
+std::vector<std::shared_ptr<Shape>> CreateTriangleMeshShape(
+    const Transform *o2w,
+    const Transform *w2o,
+    bool reverseOrientation,
+    const ParamSet &params,
+    std::map<std::string, std::shared_ptr<Texture<Float>>> *floatTextures = nullptr
 );
 
 #endif // CPBRT_SHAPES_TRIANGLE_H
