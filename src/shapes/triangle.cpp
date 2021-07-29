@@ -1,4 +1,5 @@
 #include "core/paramset.h"
+#include "core/sampling.h"
 #include "textures/constant.h"
 #include "triangle.h"
 
@@ -418,6 +419,42 @@ Float Triangle::Area() const {
     // The norm of the cross product of 2 vectors equals the area of the parallelogram
     // defined by them. Half of this parallelgram is a triangle.
     return 0.5 * Cross(p1 - p0, p2 - p0).Length();
+}
+
+Interaction Triangle::Sample(const Point2f &u, Float *pdf) const {
+    const Point3f &p0 = mesh->p[v[0]];
+    const Point3f &p1 = mesh->p[v[1]];
+    const Point3f &p2 = mesh->p[v[2]];
+
+    // A barycentric coordinate sampled uniformly over the surface of the triangle.
+    Point2f b = UniformSampleTriangle(u);
+
+    Interaction it;
+    // Interpolate the coordinates of the 3 vertices using the barycentric coordinates
+    // sample. Note that since the components of a barycentric coordinate add up to 1,
+    // the 3rd component can be computed from the other 2.
+    it.p = b[0]*p0 + b[1]*p1 + (1 - b[0] - b[1])*p2;
+
+    // Compute geometric surface normal for sampled point.
+    if (mesh->n) {
+        // The mesh uses per-vertex normals. Interpolate the vertices' normals using the
+        // barycentric coordinates sample.
+        it.n = Normalize(
+            b[0]*mesh->n[v[0]] + b[1]*mesh->n[v[1]] + (1 - b[0] - b[1])*mesh->n[v[2]]
+        );
+    } else {
+        it.n = Normalize(Normal3f(Cross(p1 - p0, p2 - p0)));
+    }
+    if (reverseOrientation) {
+        it.n *= -1;
+    }
+
+    // Compute error bounds for sampled point.
+    // TODO: explain.
+    Point3f pAbsSum = Abs(b[0] * p0) + Abs(b[1] * p1) + Abs((1 - b[0] - b[1]) * p2);
+    it.pError = gamma(6) * Vector3f(pAbsSum);
+
+    return it;
 }
 
 std::vector<std::shared_ptr<Shape>> CreateTriangleMesh(

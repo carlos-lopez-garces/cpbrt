@@ -79,6 +79,13 @@ public:
 
     Float Area() const;
 
+    // The other Sample() overlaod.
+    using Shape::Sample;
+
+    // Samples a point with respect to area. The PDF is 1 / area, which is also Shape::Pdf's
+    // default implementation, so it doesn't need to be overriden.
+    Interaction Sample(const Point2f &u, Float *pdf) const;
+
 private:
     // Puts the UVs in the input array.
     void GetUVs(Point2f uv[3]) const {
