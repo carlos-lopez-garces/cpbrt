@@ -128,4 +128,12 @@ std::vector<std::shared_ptr<Shape>> CreateTriangleMeshShape(
     std::map<std::string, std::shared_ptr<Texture<Float>>> *floatTextures = nullptr
 );
 
+std::vector<std::shared_ptr<Shape>> CreatePLYMesh(
+    const Transform *o2w,
+    const Transform *w2o,
+    bool reverseOrientation,
+    const ParamSet &params,
+    std::map<std::string, std::shared_ptr<Texture<Float>>> *floatTextures = nullptr
+);
+
 #endif // CPBRT_SHAPES_TRIANGLE_H

@@ -444,14 +444,18 @@ std::vector<std::shared_ptr<Shape>> MakeShapes(
     // TODO: add other types.
     if (name == "sphere") {
         s = CreateSphereShape(ObjectToWorld, WorldToObject, reverseOrientation, paramSet);
-    } else if (name == "trianglemesh") {
-        shapes = CreateTriangleMeshShape(
-            ObjectToWorld, WorldToObject, reverseOrientation, paramSet, &*graphicsState.floatTextures
-        );
     }
     
     if (s != nullptr) {
         shapes.push_back(s);
+    } else if (name == "trianglemesh") {
+        shapes = CreateTriangleMeshShape(
+            ObjectToWorld, WorldToObject, reverseOrientation, paramSet, &*graphicsState.floatTextures
+        );
+    } else if (name == "plymesh") {
+        shapes = CreatePLYMesh(
+            ObjectToWorld, WorldToObject, reverseOrientation, paramSet, &*graphicsState.floatTextures
+        );
     } else {
         Warning("Shape \"%s\" unknown.", name.c_str());
     }
