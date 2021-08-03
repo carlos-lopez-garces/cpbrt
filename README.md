@@ -8,7 +8,7 @@ The sections I've covered are marked next. Each covered section is accompanied b
 - [x] 1.1 Literate Programming
 - [x] 1.2 Photorealistic Rendering and the Ray-Tracing Algorithm
 - [x] 1.3 pbrt: System Overview
-- [ ] 1.4 Parallelization of pbrt
+- [x] 1.4 Parallelization of pbrt
 - [x] 1.5 How to Proceed through This Book
 - [x] 1.6 Using and Understanding the Code
 - [x] 1.7 A Brief History of Physically Based Rendering
@@ -31,7 +31,7 @@ The sections I've covered are marked next. Each covered section is accompanied b
 - [ ] 3.3 Cylinders
 - [ ] 3.4 Disks
 - [ ] 3.5 Other Quadrics
-- [ ] 3.6 Triangle Meshes
+- [x] 3.6 Triangle Meshes
 - [ ] 3.7 Curves
 - [ ] 3.8 Subdivision Surfaces
 - [x] 3.9 Managing Rounding Error
