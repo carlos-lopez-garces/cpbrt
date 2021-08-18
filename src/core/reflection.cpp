@@ -48,6 +48,38 @@ Float FrDielectric(Float cosThetaI, Float etaI, Float etaT) {
     return (parallelR*parallelR + perpendicularR*perpendicularR) / 2;
 }
 
+// Evaluates the general Fresnel equation, but assuming that the transmission medium is a dielectric.
+// Refraction indices are spectra because they are wavelength-dependent. cosThetaI is the angle of
+// incidence measured from the normal; etaI and etaT are the indices of refraction of the incident
+// and transmission media, respectively; and k is the imaginary part of the index of refraction of
+// the incident medium (assumed to be a conductor) also known as absorption coefficient.
+Spectrum FrConductor(Float cosThetaI, const Spectrum &etaI, const Spectrum &etaT, const Spectrum &k) {
+    cosThetaI = Clamp(cosThetaI, -1, 1);
+    // Relative refraction index.
+    Spectrum eta = etaT / etaI;
+    Spectrum etaK = k / etaI;
+
+    Float cosThetaI2 = cosThetaI * cosThetaI;
+    Float sinThetaI2 = 1. - cosThetaI2;
+    Spectrum eta2 = eta * eta;
+    Spectrum etaK2 = etaK * etaK;
+
+    // Compute terms.
+    Spectrum t0 = eta2 - etaK2 - sinThetaI2;
+    Spectrum a2plusb2 = Sqrt(t0 * t0 + 4 * eta2 * etaK2);
+    Spectrum t1 = a2plusb2 + cosThetaI2;
+    Spectrum a = Sqrt(0.5f * (a2plusb2 + t0));
+    Spectrum t2 = (Float) 2 * cosThetaI * a;
+    Spectrum t3 = cosThetaI2 * a2plusb2 + sinThetaI2 * sinThetaI2;
+    Spectrum t4 = t2 * sinThetaI2;
+
+    Spectrum perpendicularR = (t1 - t2) / (t1 + t2);
+    Spectrum parallelR = perpendicularR * (t3 - t4) / (t3 + t4);
+
+    // The reflectance of unpolarized light is the average of the parallel and perpendicular polarized reflectances.
+    return (perpendicularR + parallelR) / 2;
+}
+
 Spectrum BxDF::rho(const Vector3f &w, int nSamples, const Point2f *u) const {
     Spectrum r(0.);
     for (int i = 0; i < nSamples; ++i) {

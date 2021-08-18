@@ -99,6 +99,13 @@ inline bool SameHemisphere(const Vector3f &w, const Vector3f &wp) {
 // indices for dielectrics are assumed to be real numbers.)
 Float FrDielectric(Float cosThetaI, Float etaI, Float etaT);
 
+// Evaluates the general Fresnel equation, but assuming that the transmission medium is a dielectric.
+// Refraction indices are spectra because they are wavelength-dependent. cosThetaI is the angle of
+// incidence measured from the normal; etaI and etaT are the indices of refraction of the incident
+// and transmission media, respectively; and k is the imaginary part of the index of refraction of
+// the incident medium (assumed to be a conductor) also known as absorption coefficient.
+Spectrum FrConductor(Float cosThetaI, const Spectrum &etaI, const Spectrum &etaT, const Spectrum &k);
+
 enum BxDFType {
     BSDF_REFLECTION   = 1 << 0,
     BSDF_TRANSMISSION = 1 << 1,
