@@ -80,6 +80,14 @@ Spectrum FrConductor(Float cosThetaI, const Spectrum &etaI, const Spectrum &etaT
     return (perpendicularR + parallelR) / 2;
 }
 
+Spectrum FresnelDielectric::Evaluate(Float cosThetaI) const {
+    return FresnelDielectric(cosThetaI, etaI, etaT);
+}
+
+Spectrum FresnelConductor::Evaluate(Float cosThetaI) const {
+    return FrConductor(std::abs(cosThetaI), etaI, etaT, k);
+}
+
 Spectrum BxDF::rho(const Vector3f &w, int nSamples, const Point2f *u) const {
     Spectrum r(0.);
     for (int i = 0; i < nSamples; ++i) {

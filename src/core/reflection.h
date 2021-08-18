@@ -106,6 +106,56 @@ Float FrDielectric(Float cosThetaI, Float etaI, Float etaT);
 // the incident medium (assumed to be a conductor) also known as absorption coefficient.
 Spectrum FrConductor(Float cosThetaI, const Spectrum &etaI, const Spectrum &etaT, const Spectrum &k);
 
+class Fresnel {
+public:
+    // Evaluates the Fresnel reflectance equation for the input incidence angle (measured from the
+    // normal).
+    virtual Spectrum Evaluate(Float cosI) const = 0;
+};
+
+class FresnelDielectric : public Fresnel {
+private:
+    // Index of refraction of the incident dielectric medium.
+    Float etaI;
+
+    // Index of refraction of the transmission dielectric medium.
+    Float etaT;
+
+public:
+    FresnelDielectric(Float etaI, Float etaT) : etaI(etaI), etaT(etaT) {}
+
+    Spectrum Evaluate(Float cosThetaI) const;
+};
+
+class FresnelConductor : public Fresnel {
+private:
+    // Index of refraction of the incident medium.
+    Spectrum etaI;
+
+    // Index of refraction of the transmission medium (assumed to be a dielectric).
+    Spectrum etaT;
+
+    // Imaginary part of the index of refraction of the incident medium, also known as absorption
+    // coefficient.
+    Spectrum k;
+
+public:
+    FresnelConductor(const Spectrum &etaI, const Spectrum &etaT, const Spectrum &k)
+        : etaI(etaI), etaT(etaT), k(k)
+    {}
+
+    Spectrum Evaluate(Float cosThetaI) const;
+};
+
+// A Fresnel interface that reflects all the incident light in its entirety: no absorption, no
+// transmission.
+class FresnelNoOp : public Fresnel {
+public:
+    Spectrum Evaluate(Float) const {
+        return Spectrum(1.);
+    }
+};
+
 enum BxDFType {
     BSDF_REFLECTION   = 1 << 0,
     BSDF_TRANSMISSION = 1 << 1,
