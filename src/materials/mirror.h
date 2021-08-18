@@ -23,4 +23,6 @@ public:
     ) const;
 };
 
+MirrorMaterial *CreateMirrorMaterial(const TextureParams &mp);
+
 #endif // CPBRT_MATERIALS_MIRROR_H

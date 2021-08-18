@@ -21,3 +21,9 @@ void MirrorMaterial::ComputeScatteringFunctions(
         si->bsdf->Add(ARENA_ALLOC(arena, SpecularReflection)(R, ARENA_ALLOC(arena, FresnelNoOp)()));
     }
 }
+
+MirrorMaterial *CreateMirrorMaterial(const TextureParams &mp) {
+    std::shared_ptr<Texture<Spectrum>> Kr = mp.GetSpectrumTexture("Kr", Spectrum(0.9f));
+    // TODO: bump mapping.
+    return new MirrorMaterial(Kr);
+}

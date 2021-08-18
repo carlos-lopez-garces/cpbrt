@@ -18,6 +18,7 @@
 #include "integrators/path.h"
 #include "lights/point.h"
 #include "materials/matte.h"
+#include "materials/mirror.h"
 #include "materials/plastic.h"
 #include "samplers/stratified.h"
 #include "shapes/sphere.h"
@@ -394,13 +395,15 @@ std::shared_ptr<Material> MakeMaterial(const std::string &name, const TexturePar
     Material *material = nullptr;
 
     // TODO: add other types.
-    if (name == "" || name == "none")
+    if (name == "" || name == "none") {
         return nullptr;
-    else if (name == "matte")
+    } else if (name == "matte") {
         material = CreateMatteMaterial(mp);
-    else if (name == "plastic")
+    } else if (name == "mirror") {
+        material = CreateMirrorMaterial(mp);
+    } else if (name == "plastic") {
         material = CreatePlasticMaterial(mp);
-    else {
+    } else {
         Warning("Material \"%s\" unknown. Using \"matte\".", name.c_str());
         material = CreateMatteMaterial(mp);
     }
