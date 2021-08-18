@@ -6,6 +6,48 @@
 #include "scene.h"
 #include "interaction.h"
 
+
+// Evaluates the Fresnel reflectance equation between 2 dielectric media, assuming that light is
+// unpolarized. cosThetaI is the angle of incidence measured from the normal; etaI is the refraction
+// index of the medium that light is traveling through before reaching the interface with the
+// other medium, whose refraction index etaT is. (A refraction index is a property of the medium:
+// the ratio of the speed of light in a vacuum to the speed of light through the medium. Refraction
+// indices for dielectrics are assumed to be real numbers.)
+Float FrDielectric(Float cosThetaI, Float etaI, Float etaT) {
+    cosThetaI = Clamp(cosThetaI, -1, 1);
+
+    // Make sure that etaI is really the index of the incident medium and etaT the index of the transmitted
+    // medium. cosThetaI was measured between the surface's normal and the direction vector of incidence: if
+    // it's negative, the 2 are in opposite hemispheres, and the ray is hitting the surface of the medium
+    // from within that surface's medium: this medium's refraction index should really be etaI and not etaT.
+    if (cosThetaI <= 0.f) {
+        // Incidence vector is not inside the transmission medium, but the incident one.
+        std::swap(etaI, etaT);
+        cosThetaI = std::abs(cosThetaI);
+    }
+
+    // Compute cosThetaT using Snell's law: etaI*sinThetaI = etaT*sinThetaT.
+    // sinThetaI and cosThetaT are computed using a trigonometric identity: sin(theta)^2 + cos(theta)^2 = 1.
+    Float sinThetaI = std::sqrt(std::max((Float) 0, 1 - cosThetaI*cosThetaI));
+    Float sinThetaT = etaI / etaT * sinThetaI;
+    if (sinThetaT >= 1) {
+        // Total internal reflection: light grazes the boundary of a medium with lower refraction index.
+        // Snell's law doesn't have a solution, so refraction can't occur: light gets reflected back into
+        // the incident medium.
+        return 1;
+    }
+    Float cosThetaT = std::sqrt(std::max((Float) 0, 1 - sinThetaT*sinThetaT));
+
+    // Evaluate Fresnel reflectance equation for the parallel polarized component of light.
+    Float parallelR = ((etaT*cosThetaI) - (etaI*cosThetaT)) / ((etaT*cosThetaI)+(etaI*cosThetaT));
+
+    // Evaluate Fresnel reflectance equation for the perpendicular polarized component of light.
+    Float perpendicularR = ((etaI*cosThetaI) - (etaT*cosThetaT)) / ((etaI*cosThetaI) + (etaT*cosThetaT));
+
+    // The reflectance of unpolarized light is the average of the parallel and perpendicular polarized reflectances.
+    return (parallelR*parallelR + perpendicularR*perpendicularR) / 2;
+}
+
 Spectrum BxDF::rho(const Vector3f &w, int nSamples, const Point2f *u) const {
     Spectrum r(0.);
     for (int i = 0; i < nSamples; ++i) {

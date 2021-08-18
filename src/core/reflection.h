@@ -91,6 +91,14 @@ inline bool SameHemisphere(const Vector3f &w, const Vector3f &wp) {
     return w.z * wp.z > 0;
 }
 
+// Evaluates the Fresnel reflectance equation between 2 dielectric media, assuming that light is
+// unpolarized. cosThetaI is the angle of incidence measured from the normal; etaI is the refraction
+// index of the medium that light is traveling through before reaching the interface with the
+// other medium, whose refraction index etaT is. (A refraction index is a property of the medium:
+// the ratio of the speed of light in a vacuum to the speed of light through the medium. Refraction
+// indices for dielectrics are assumed to be real numbers.)
+Float FrDielectric(Float cosThetaI, Float etaI, Float etaT);
+
 enum BxDFType {
     BSDF_REFLECTION   = 1 << 0,
     BSDF_TRANSMISSION = 1 << 1,
