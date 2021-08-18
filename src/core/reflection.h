@@ -301,6 +301,40 @@ public:
     }
 };
 
+class SpecularReflection : public BxDF {
+private:
+    // TODO: ?
+    const Spectrum R;
+
+    // Fresnel reflectance equations.
+    const Fresnel *fresnel;
+
+public:
+    SpecularReflection(const Spectrum &R, Fresnel *fresnel)
+        : BxDF(BxDFType(BSDF_REFLECTION | BSDF_SPECULAR)), R(R), fresnel(fresnel)
+    {}
+
+    // Computes the spectral distribution of a radiometric quantity over wavelength for an
+    // arbitrary pair of outgoing and incident directions. Since there's no chance that an
+    // arbitrary pair will satisfy the perfect reflection relation, the returned reflectance
+    // is 0.
+    Spectrum f(const Vector3f &wo, const Vector3f &wi) const {
+        // TODO: ?
+        return Spectrum(0.f);
+    }
+
+    // Samples the BRDF. The only possible incoming direction wi for the input outgoing wo
+    // is its reflection about the surface normal. The normal vector doesn't need to be known
+    // because it corresponds to the vertical axis in the reflection coordinate system.
+    Spectrum Sample_f(
+        const Vector3f &wo,
+        Vector3f *wi,
+        const Point2f &sample,
+        Float *pdf,
+        BxDFType *sampledType
+    ) const;
+};
+
 class BSDF {
 private:
     // Geometric normal.

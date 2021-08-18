@@ -177,6 +177,27 @@ Spectrum ScaledBxDF::rho(int nSamples, const Point2f *samples1, const Point2f *s
     return scale * bxdf->rho(nSamples, samples1, samples2);
 }
 
+Spectrum SpecularReflection::Sample_f(
+    const Vector3f &wo,
+    Vector3f *wi,
+    const Point2f &sample,
+    Float *pdf,
+    BxDFType *sampledType
+) const {
+    // Compute perfect specular reflection direction about the normal. The normal vector doesn't
+    // need to be known because it corresponds to the vertical axis in the reflection coordinate
+    // system.
+    *wi = Vector3f(-wo.x, -wo.y, wo.z);
+    
+    // The perfect reflection direction wi is always sampled with probability 1.
+    *pdf = 1;
+
+    // The 1/|cos(wi)| factor is meant to cancel out the |cos(wi)| factor of the integrand of
+    // the scattering equation, the one that places the area differential on the plane of the
+    // surface.
+    return fresnel->Evaluate(CosTheta(*wi)) * R / AbsCosTheta(*wi);
+}
+
 Spectrum BSDF::f(const Vector3f &woW, const Vector3f &wiW, BxDFType flags) const {
     Vector3f wi = WorldToLocal(wiW);
     Vector3f wo = WorldToLocal(woW);
