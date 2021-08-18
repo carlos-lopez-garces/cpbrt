@@ -91,6 +91,10 @@ inline bool SameHemisphere(const Vector3f &w, const Vector3f &wp) {
     return w.z * wp.z > 0;
 }
 
+inline Vector3f Reflect(const Vector3f &wo, const Vector3f &n) {
+    return -wo + 2*Dot(wo, n)* n;
+}
+
 // Evaluates the Fresnel reflectance equation between 2 dielectric media, assuming that light is
 // unpolarized. cosThetaI is the angle of incidence measured from the normal; etaI is the refraction
 // index of the medium that light is traveling through before reaching the interface with the
