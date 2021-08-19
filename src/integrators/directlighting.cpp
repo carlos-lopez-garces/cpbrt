@@ -82,9 +82,16 @@ Spectrum DirectLightingIntegrator::Li(
     }
 
     if (depth+1 < maxDepth) {
-        // Trace rays recursively for specular reflection and transmission.
-        // TODO: implement; only Lambertian reflection is currently supported.
-        // L += SpecularReflect(ray, si, scene, sampler, arena, depth);
+        // Trace rays recursively for specular reflection and transmission. In general, the direct
+        // lighting integrator estimates incident radiance using samples from light sources that
+        // illuminate the surface directly. But in order for a surface with a (perfect) specular
+        // BDRF to reflect the image of nearby objects, the integrator needs to trace and accumulate
+        // radiance that bounces off of those objects in the direction of perfect specular reflection
+        // toward the intersection point.
+
+        // SpecularReflect calls Li recursively until depth reaches maxDepth.
+        L += SpecularReflect(ray, si, scene, sampler, arena, depth);
+        // TODO: implement.
         // L += SpecularTransmit(ray, si, scene, sampler, arena, depth);
     }
 

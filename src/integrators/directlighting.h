@@ -41,11 +41,18 @@ public:
 
     void Preprocess(const Scene &scene, Sampler &sampler);
 
+    // In general, the estimate of incident radiance that the direct lighting integrator computes
+    // uses samples from light sources that illuminate the intersection point directly. But if the
+    // surface has a (perfect) specular BRDF, the light that bounces off of other surfaces coming
+    // in the (perfect) specular reflection direction must be sampled as well: that's how the
+    // intersected surface can reflect the image of nearby objects.
     Spectrum Li(
         const RayDifferential &ray,
         const Scene &scene,
         Sampler &sampler,
         MemoryArena &arena,
+        // The current ray tracing recursion depth for specular reflection and transmission.
+        // If depth reaches maxDepth, the tracing recursion stops.
         int depth
     ) const;
 };
