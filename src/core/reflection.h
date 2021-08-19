@@ -337,6 +337,13 @@ public:
         Float *pdf,
         BxDFType *sampledType
     ) const;
+
+    // Evaluates the probability that incident direction wi gets sampled for the given outgoing
+    // direction wo. Since there's virtually no chance that wi will be the perfect specular
+    // reflection direction of wo obtained at random, the probability is 0.
+    Float Pdf(const Vector3f &wo, const Vector3f &wi) {
+        return 0;
+    }
 };
 
 class BSDF {
