@@ -335,3 +335,54 @@ void SamplerIntegrator::Render(const Scene &scene) {
     // Save final image after rendering.
     camera->film->WriteImage();
 }
+
+Spectrum SamplerIntegrator::SpecularReflect(
+    const RayDifferential &ray,
+    const SurfaceInteraction &si,
+    const Scene &scene,
+    Sampler &sampler,
+    MemoryArena &arena,
+    int depth
+) const {
+    // Compute specular reflection direction wi and BSDF value. The outgoing direction wo
+    // is the negated ray (camera or bounced/secondary) vector, and we want to find the incident
+    // direction wi that reflects into wo.
+    Vector3f wo = si.wo;
+    Vector3f wi;
+    Float pdf;
+    // Only interested in evaluating specular BRDFs.
+    BxDFType type = BxDFType(BSDF_REFLECTION |  BSDF_SPECULAR);
+    Spectrum f = si->bsdf->Sample_f(wo, &wi, sampler.Get2D(), &pdf, type);
+
+    // Return contribution of specular reflection.
+    const Normal3f &ns = si.shading.n;
+    if (pdf > 0 && !f.IsBlack() && AbsDot(wi, ns) != 0) {
+        // Compute ray differential for specular reflection. For antialiasing textures that get sampled
+        // by a specular reflection ray.
+        // TODO: explain.
+        RayDifferential rd = si.SpawnRay(wi);
+        if (ray.hasDifferentials) {
+            rd.hasDifferentials = true;
+            rd.rxOrigin = si.p + si.dpdx;
+            rd.ryOrigin = si.p + si.dpdy;
+
+            // Compute differential reflected directions. 
+            Normal3f dndx = si.shading.dndu * si.dudx + si.shading.dndv * si.dvdx;
+            Normal3f dndy = si.shading.dndu * si.dudy + si.shading.dndv * si.dvdy;
+            Vector3f dwodx = -ray.rxDirection - wo;
+            Vector3f dwody = -ray.ryDirection - wo;
+            Float dDNdx = Dot(dwodx, ns) + Dot(wo, dndx);
+            Float dDNdy = Dot(dwody, ns) + Dot(wo, dndy);
+            rd.rxDirection = wi - dwodx + 2.f * Vector3f(Dot(wo, ns) * dndx + dDNdx * ns);
+            rd.ryDirection = wi - dwody + 2.f * Vector3f(Dot(wo, ns) * dndy + dDNdy * ns);
+        }
+
+        // Compute sum term of Monte Carlo estimator of scattering equation. The product of the
+        // BRDF f and the incident radiance Li gives the fraction of incident light that will get
+        // reflected. The AbsDot(wi, ns) = cos(wi, ns) factor places the area differential on the
+        // surface (the area differential dA is originally perpendicular to the wi solid angle).
+        return f * Li(rd, scene, sampler, arena, depth+1) * AbsDot(wi, ns) / pdf;
+    } else {
+        return Spectrum(0.f);
+    }
+}

@@ -89,6 +89,15 @@ public:
         // Number of ray bounces from the camera that have occurred up until this call.
         int depth = 0
     ) const = 0;
+
+    Spectrum SpecularReflect(
+        const RayDifferential &ray,
+        const SurfaceInteraction &si,
+        const Scene &scene,
+        Sampler &sampler,
+        MemoryArena &arena,
+        int depth
+    ) const;
 };
 
 #endif // CPBRT_CORE_INTEGRATOR_H
