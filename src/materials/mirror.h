@@ -4,6 +4,8 @@
 #include "core/cpbrt.h"
 #include "core/material.h"
 
+// The BRDF of a mirror is one that reflects all the incident light in its
+// entirety, as opposed to just a fraction of it like other BRDFs do.
 class MirrorMaterial : public Material {
 private:
     std::shared_ptr<Texture<Spectrum>> Kr;
