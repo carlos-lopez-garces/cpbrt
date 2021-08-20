@@ -1,0 +1,48 @@
+Sampler "stratified"
+Film "image" "string filename" "bookmirror5.png"
+    "integer yresolution" [ 1024 ]
+    "integer xresolution" [ 1280 ]
+Scale -1 1 1
+LookAt 0 2.1088 13.574
+    0 2.1088 12.574
+    0 1 0
+Camera "perspective" "float fov" [ 26.5 ]
+
+WorldBegin
+
+LightSource "point" "rgb I" [40 40 40] "point from" [-2.0 5 0.7]
+LightSource "point" "rgb I" [40 40 40] "point from" [-1.5 4 1]
+LightSource "point" "rgb I" [10 10 10] "point from" [2.0 5 0.7]
+
+AttributeBegin
+    Material "matte" "rgb Kd" [1 1 1]
+    Translate 2 2.2 0
+    Rotate 77.3425 0.403388 -0.754838 -0.517202
+    Scale 0.25 0.25 0.25
+
+    AttributeBegin
+        Shape "plymesh" "string filename" [ "bookcover.ply" ]
+    AttributeEnd
+AttributeEnd
+
+AttributeBegin
+    Material "mirror"
+    Translate -2 2.2 0
+    Rotate 77.3425 0.403388 -0.754838 -0.517202
+    Scale 0.25 0.25 0.25
+    Shape "plymesh" "string filename" [ "bookcover.ply" ]
+AttributeEnd
+
+AttributeBegin
+    Material "matte" "rgb Kd" [1 1 1]
+    Translate -2 4 0
+    Shape "sphere" "float radius" 0.5
+AttributeEnd
+
+AttributeBegin
+    Material "matte" "rgb Kd" [1 1 1]
+    Translate -1.5 2.5 1
+    Shape "sphere" "float radius" 0.5
+AttributeEnd
+
+WorldEnd
