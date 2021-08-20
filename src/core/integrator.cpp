@@ -352,7 +352,7 @@ Spectrum SamplerIntegrator::SpecularReflect(
     Float pdf;
     // Only interested in evaluating specular BRDFs.
     BxDFType type = BxDFType(BSDF_REFLECTION |  BSDF_SPECULAR);
-    Spectrum f = si->bsdf->Sample_f(wo, &wi, sampler.Get2D(), &pdf, type);
+    Spectrum f = si.bsdf->Sample_f(wo, &wi, sampler.Get2D(), &pdf, type);
 
     // Return contribution of specular reflection.
     const Normal3f &ns = si.shading.n;

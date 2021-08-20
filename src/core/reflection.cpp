@@ -81,7 +81,7 @@ Spectrum FrConductor(Float cosThetaI, const Spectrum &etaI, const Spectrum &etaT
 }
 
 Spectrum FresnelDielectric::Evaluate(Float cosThetaI) const {
-    return FresnelDielectric(cosThetaI, etaI, etaT);
+    return FrDielectric(cosThetaI, etaI, etaT);
 }
 
 Spectrum FresnelConductor::Evaluate(Float cosThetaI) const {

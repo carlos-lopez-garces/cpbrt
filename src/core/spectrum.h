@@ -244,7 +244,7 @@ public:
     friend CoefficientSpectrum Sqrt(const CoefficientSpectrum &sp) {
         CoefficientSpectrum ret;
         for (int i = 0; i < nSpectrumSamples; ++i) {
-            ret.c[i] = std::sqrt(s.c[i]);
+            ret.c[i] = std::sqrt(sp.c[i]);
         }
         return ret;
     }
