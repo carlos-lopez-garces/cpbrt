@@ -20,7 +20,7 @@ AttributeBegin
     Translate 0 2.2 0
 
     AttributeBegin
-        Shape "plymesh" "string filename" [ "dragon_remeshed.ply" ]
+        Shape "plymesh" "string filename" [ "dragonremeshed.ply" ]
     AttributeEnd
 AttributeEnd
 
