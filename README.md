@@ -1,6 +1,14 @@
 This repository is the result of studying Physically Based Rendering: From Theory to Implementation, by Pharr, Jakob, and Humphreys ([online edition](https://pbrt.org/)).
 
-The 1st objective is to study the sections that lead to a minimal path tracer and write the corresponding code.
+The 1st objective was to study the sections that led to a minimal path tracer and write the corresponding code. That objective was reached on July 5th, 2021. Some of the earliest renders include these of the dragon triangle mesh by Christian Schüller with matte and plastic materials (w/o specular reflection):
+
+<p align="center">
+  <img width="640" height="480" src="scenes/dragon/dragon9.png">
+</p>
+
+<p align="center">
+  <img width="640" height="480" src="scenes/dragon/dragonplastic2.png">
+</p>
 
 The sections I've covered are marked next. Each covered section is accompanied by my personal **[notes](notes/)**.
 
