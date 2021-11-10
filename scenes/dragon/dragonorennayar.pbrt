@@ -1,0 +1,24 @@
+Sampler "stratified"
+Film "image" "string filename" "..\\scenes\\dragon\\dragonorennayar3.png"
+    "integer yresolution" [ 480 ]
+    "integer xresolution" [ 640 ]
+LookAt 0 0 3.5  0 0 0   0 1 0
+Camera "perspective" "float fov" [ 33 ]
+
+WorldBegin
+
+LightSource "point" "rgb I" [8 8 8] "point from" [-0.5 0 4.7]
+LightSource "point" "rgb I" [10 10 10] "point from" [0.5 0 4.7]
+
+AttributeBegin
+    # sigma is standard deviation of microfacet orientation angle in degrees.
+    Material "matte" "rgb Kd" [0.788 0.71 0.659] "float sigma" [ 20 ]
+    Translate 0 -0.35 0
+    Scale 0.01 0.01 0.01
+
+    AttributeBegin
+        Shape "plymesh" "string filename" [ "dragonremeshed.ply" ]
+    AttributeEnd
+AttributeEnd
+
+WorldEnd
