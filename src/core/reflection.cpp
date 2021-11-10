@@ -198,6 +198,42 @@ Spectrum SpecularReflection::Sample_f(
     return fresnel->Evaluate(CosTheta(*wi)) * R / AbsCosTheta(*wi);
 }
 
+Spectrum OrenNayarReflection::f(const Vector3f &wo, const Vector3f &wi) const {
+    // ThetaI (ThetaO) is the colatitude angle of the spherical coordinate of wi (wo) in the
+    // shading coordinate system. See reflection.h.
+    Float sinThetaI = SinTheta(wi);
+    Float sinThetaO = SinTheta(wo);
+
+    // Compute cosine term of Oren-Nayar model.
+    Float maxCos = 0;
+    if (sinThetaI > 1e-4 && sinThetaO > 1e-4) {
+        // PhiI (PhiO) is the polar angle of the spherical coordinate of wi (wo).
+        Float sinPhiI = SinPhi(wi);
+        Float cosPhiI = CosPhi(wi);
+        Float sinPhiO = SinPhi(wo);
+        Float cosPhiO = CosPhi(wo);
+
+        // cos(PhiI - PhiO) computed using the trigonometric identity cos(PhiI)cos(PhiO) + sin(PhiI)sin(PhiO).
+        Float dCos = cosPhiI*cosPhiO + sinPhiI*sinPhiO;
+        maxCos = std::max((Float) 0, dCos);
+    }
+
+    // Compute sine and tangent terms of Oren-Nayar model.
+    // alpha = max(ThetaI, ThetaO) = min(cos(ThetaI), cos(ThetaO))
+    // beta = min(ThetaI, ThetaO) = max(cos(ThetaI), cos(ThetaO)).
+    Float sinAlpha;
+    Float tanBeta;
+    if (AbsCosTheta(wi) > AbsCosTheta(wo)) {
+        sinAlpha = sinThetaO;
+        tanBeta = sinThetaI / AbsCosTheta(wi);
+    } else {
+        sinAlpha = sinThetaI;
+        tanBeta = sinThetaO / AbsCosTheta(wo);
+    }
+
+    return R * InvPi * (A + B*maxCos*sinAlpha*tanBeta);
+}
+
 Spectrum BSDF::f(const Vector3f &woW, const Vector3f &wiW, BxDFType flags) const {
     Vector3f wi = WorldToLocal(wiW);
     Vector3f wo = WorldToLocal(woW);

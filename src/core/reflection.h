@@ -346,6 +346,44 @@ public:
     }
 };
 
+// Oren-Nayar models diffuse reflection of rough surfaces (which appear brighter as the viewing
+// direction approaches the incident direction), which, in general, don't exhibit perfect Lambertian
+// reflection (where the brightness of the surface doesn't appear to change as the viewing direction
+// changes).
+class OrenNayarReflection : public BxDF {
+private:
+    // Albedo.
+    const Spectrum R;
+
+    // A = 1 - (sigma^2 / 2(sigma^2 + 0.33)), where sigma^2 is the standard deviation of the
+    // microfacet angle distribution. With fixed sigma, A is a constant and can be precomputed.
+    Float A;
+
+    // B = 0.45sigma^2 / (sigma^2 + 0.09). See A.
+    Float B;
+
+public:
+    // sigma is the standard deviation of the microfacet angle distribution, in degrees. When sigma=0,
+    // all microfacets have the same orientation and the Oren-Nayar reflectance model reduces to the
+    // Lambertian model. (Oren-Nayar is, in fact, a generalization of the Lambertian reflectance model.)
+    OrenNayarReflection(const Spectrum &R, Float sigma)
+        : BxDF(BxDFType(BSDF_REFLECTION | BSDF_DIFFUSE)), R(R) {
+        
+        sigma = Radians(sigma);
+
+        // Variance.
+        Float sigma2 = sigma * sigma;
+
+        // Part of the BRDF expression.
+        A = 1.f - (sigma2 / (2.f * (sigma2 + 0.33f)));
+        B = 0.45f * sigma2 / (sigma2 + 0.09f);
+    }
+
+    // The Oren-Nayar BRDF is an approximation of the aggregate effect of V-shaped microfacets,
+    // where each microfacet exhibits Lambertian reflection.
+    Spectrum f(const Vector3f &wo, const Vector3f &wi) const;
+};
+
 class BSDF {
 private:
     // Geometric normal.
