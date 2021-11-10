@@ -20,15 +20,17 @@ void MatteMaterial::ComputeScatteringFunctions(
     // Reflectance aka diffuse color aka albedo. Clamp to [0, infinity).
     Spectrum kd = Kd->Evaluate(*si).Clamp();
 
-    // Oren-Nayar diffuse reflection model parameter.
+    // Oren-Nayar microfaceted diffuse reflection model parameter: the standard deviation
+    // of the orientation angle of the microfacets.
     Float sig = Clamp(sigma->Evaluate(*si), 0, 90);
 
     if (!kd.IsBlack()) {
         if (sig == 0) {
+            // Perfect Lambertian reflection. Adequate for surfaces that aren't too rough.
             si->bsdf->Add(ARENA_ALLOC(arena, LambertianReflection)(kd));
         } else {
-            // TODO: implement OrenNayarReflection.
-            // si->bsdf->Add(ARENA_ALLOC(arena, OrenNayarReflection)(kd, sig));
+            // Oren-Nayar reflection. Models reflection from rough surfaces.
+            si->bsdf->Add(ARENA_ALLOC(arena, OrenNayarReflection)(kd, sig));
         }
     }
 }
