@@ -17,6 +17,11 @@ The 1st objective was to study the sections that led to a minimal path tracer an
   <img width="640" height="480" src="scenes/dragon/dragonlambert.png">
 </p>
 
+<p align="center">
+  <i>Spherical area light and matte material with Lambertian reflection</i>
+  <img width="640" height="480" src="scenes/dragon/dragonarealight.png">
+</p>
+
 The sections I've covered are marked next. Each covered section is accompanied by my personal **[notes](notes/)**.
 
 1 Introduction ([notes/1 Introduction](notes/1_Introduction.pdf))
