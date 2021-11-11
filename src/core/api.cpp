@@ -16,6 +16,7 @@
 #include "filters/triangle.h"
 #include "integrators/directlighting.h"
 #include "integrators/path.h"
+#include "lights/diffuse.h"
 #include "lights/point.h"
 #include "materials/matte.h"
 #include "materials/mirror.h"
@@ -425,13 +426,32 @@ std::shared_ptr<Light> MakeLight(
     if (name == "point") {
         light =
             CreatePointLight(light2world, mediumInterface.outside, paramSet);
-    }
-    else {
+    } else {
         Warning("Light \"%s\" unknown.", name.c_str()); 
     }
     paramSet.ReportUnused();
     
     return light;
+}
+
+std::shared_ptr<AreaLight> MakeAreaLight(
+    const std::string &name,
+    const Transform &LightToWorld,
+    const MediumInterface &mediumInterface,
+    const ParamSet &params,
+    const std::shared_ptr<Shape> &shape
+) {
+    std::shared_ptr<AreaLight> areaLight;
+
+    // "area" and "diffuse" are synonymous because only diffuse area lights area supported.
+    if (name == "area" || name == "diffuse") {
+        areaLight = CreateDiffuseAreaLight(LightToWorld, mediumInterface.outside, params, shape);
+    } else {
+        Warning("Area light \"%s\" unknown.", name.c_str()); 
+    }
+    params.ReportUnused();
+
+    return areaLight;
 }
 
 std::vector<std::shared_ptr<Shape>> MakeShapes(
@@ -1054,14 +1074,21 @@ void cpbrtShape(const std::string &name, const ParamSet &params) {
 
         prims.reserve(shapes.size());
 
-        for (auto s : shapes) {
+        for (auto shape : shapes) {
             // Possibly create area light.
             std::shared_ptr<AreaLight> areaLight;
             if (graphicsState.areaLight != "") {
-                // TODO: implement.
+                areaLight = MakeAreaLight(
+                    graphicsState.areaLight,
+                    curTransform[0],
+                    mi,
+                    graphicsState.areaLightParams,
+                    shape
+                );
+                if (areaLight) areaLights.push_back(areaLight);
             }
 
-            prims.push_back(std::make_shared<GeometricPrimitive>(s, mtl, areaLight, mi));
+            prims.push_back(std::make_shared<GeometricPrimitive>(shape, mtl, areaLight, mi));
         }
     } else {
         // TODO: implement. Also TransformedPrimitive and AnimatedTransforms.
@@ -1075,7 +1102,7 @@ void cpbrtShape(const std::string &name, const ParamSet &params) {
       
       // Possibly add area light.
       if (areaLights.size()) {
-        // TODO: implement.
+        renderOptions->lights.insert(renderOptions->lights.end(), areaLights.begin(), areaLights.end());
       }
     }
 }

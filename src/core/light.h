@@ -84,13 +84,16 @@ public:
     virtual void Preprocess(const Scene &scene) {}
 };
 
-// TODO: implement.
+// A light source with an associated Shape that emits light from its surface.
 class AreaLight : public Light {
   public:
     AreaLight(const Transform &LightToWorld, const MediumInterface &medium, int nSamples)
         : Light((int)LightFlags::Area, LightToWorld, medium, nSamples)
     {}
 
+    // Evaluates the radiance emitted by the light source at the given point (the result
+    // of the intersection of a sampling ray) and in the given outgoing direction (the
+    // inverted direction of the sampling ray).
     virtual Spectrum L(const Interaction &intr, const Vector3f &w) const = 0;
 };
 
