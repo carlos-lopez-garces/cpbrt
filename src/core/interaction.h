@@ -163,6 +163,8 @@ public:
         TransportMode mode = TransportMode::Radiance
     );
 
+    // Computes the radiance emitted in the given direction by the intersected surface at
+    // the intersection point. 0 if the surface is not an area light.
     Spectrum Le(const Vector3f &w) const;
 };
 

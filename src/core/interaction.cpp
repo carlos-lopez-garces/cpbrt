@@ -166,6 +166,6 @@ void SurfaceInteraction::ComputeScatteringFunctions(
 }
 
 Spectrum SurfaceInteraction::Le(const Vector3f &w) const {
-    // TODO: implement.
-    return Spectrum(0.f);
+    const AreaLight *areaLight = primitive->GetAreaLight();
+    return areaLight ? areaLight->L(*this, w) : Spectrum(0.0f);
 }
