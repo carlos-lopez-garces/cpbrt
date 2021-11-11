@@ -124,7 +124,7 @@ The sections I've covered are marked next. Each covered section is accompanied b
 - [x] 12.2 Light Interface
 - [x] 12.3 Point Lights
 - [ ] 12.4 Distant Lights
-- [ ] 12.5 Area Lights
+- [x] 12.5 Area Lights
 - [ ] 12.6 Infinite Area Lights
 
 13 Monte Carlo Integration ([notes/13 Monte Carlo Integration](notes/13_Monte_Carlo_Integration.pdf))
