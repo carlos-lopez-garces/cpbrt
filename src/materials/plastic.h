@@ -15,6 +15,12 @@ private:
     // Glossy specular component.
     std::shared_ptr<Texture<Spectrum>> Ks;
 
+    // Root mean square slope of microfacets in radians from 0 to Pi/2, measured
+    // with respect to the surface normal; main parameter of the microfacet
+    // distribution that describes the geometry of the surface.
+    //
+    // If remapRoughness=true, though, roughness ranges from 0 (perfect specular)
+    // to 1 (very rough) and the implementation converts it to root mean square slope.
     std::shared_ptr<Texture<Float>> roughness;
     const bool remapRoughness;
 
