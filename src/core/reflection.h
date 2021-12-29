@@ -5,6 +5,7 @@
 #include "geometry.h"
 #include "shape.h"
 #include "spectrum.h"
+#include "microfacet.h"
 
 // The shading coordinate system is defined by the orthonormal basis {s, t, n} = {x, y, z},
 // where s and t are 2 orthogonal vectors tangent to the shaded point and n is the normal
@@ -350,6 +351,8 @@ public:
 // direction approaches the incident direction), which, in general, don't exhibit perfect Lambertian
 // reflection (where the brightness of the surface doesn't appear to change as the viewing direction
 // changes).
+//
+// See carlos-lopez-garces.github.io/2021/11/24/oren-nayar-reflectance-model.html for more details.
 class OrenNayarReflection : public BxDF {
 private:
     // Albedo.
@@ -382,6 +385,42 @@ public:
     // The Oren-Nayar BRDF is an approximation of the aggregate effect of V-shaped microfacets,
     // where each microfacet exhibits Lambertian reflection.
     Spectrum f(const Vector3f &wo, const Vector3f &wi) const;
+};
+
+// Torrance-Sparrow microfacet model. V-shaped cavities of symmetric microfacets with perfectly
+// specular reflection. Only the microfacets with a normal equal to the half-angle of a pair of
+// directions wo and wi reflect light.
+class TorranceSparrowMicrofacetReflection : public BxDF {
+private:
+    // Single microfacet reflectance.
+    const Spectrum R;
+
+    // Distribution of slope and orientation of V-shaped microfacets. The distribution function
+    // gives the normalized differential area of microfacets with a given normal wh. Gives also
+    // the geometric attenuation factor, GAF, that accounts for masking and shadowing. 
+    const MicrofacetDistribution *distribution;
+
+    // Fresnel reflectance. Evaluates the Fresnel reflectance equations that determine the 
+    // fraction of light that is reflected (the rest is transmitted or absorbed).
+    const Fresnel *fresnel;
+
+public:
+    TorranceSparrowMicrofacetReflection(const Spectrum &R, MicrofacetDistribution *distribution, Fresnel *fresnel)
+        : BxDF(BxDFType(BSDF_REFLECTION | BSDF_GLOSSY)), R(R), distribution(distribution), fresnel(fresnel)
+    {}
+
+    // The Torrance-Sparrow BRDF is given by f(wo, wi) = D(wh)G(wo, wi)Fr(wo)/4cos(thetaO)cos(thetaI),
+    // where D(wh) is the microfacet distribution function evaluated at the half-angle that corresponds
+    // to wo and wi; G(wo, wi) is the geometric attenuation factor, GAF, that reduces reflected radiance
+    // to account for shadowing and masking; and Fr(wo) is the Fresnel reflectance, the fraction of
+    // incident radiance that gets reflected.
+    Spectrum f(const Vector3f &wo, const Vector3f &wi) const;
+
+    // TODO.
+    Spectrum Sample_f(const Vector3f &wo, Vector3f *wi, const Point2f &u, Float *pdf, BxDFType *sampledType) const;
+    
+    // TODO.
+    Float Pdf(const Vector3f &wo, const Vector3f &wi) const;
 };
 
 class BSDF {

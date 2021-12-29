@@ -234,6 +234,54 @@ Spectrum OrenNayarReflection::f(const Vector3f &wo, const Vector3f &wi) const {
     return R * InvPi * (A + B*maxCos*sinAlpha*tanBeta);
 }
 
+Spectrum TorranceSparrowMicrofacetReflection::f(const Vector3f &wo, const Vector3f &wi) const {
+    Float cosThetaO = AbsCosTheta(wo), cosThetaI = AbsCosTheta(wi);
+
+    // Half-angle.
+    Vector3f wh = wi + wo;
+
+    // Edge cases: perfectly grazing incident or outgoing directions.
+    if (cosThetaI == 0 || cosThetaO == 0) {
+        return Spectrum(0.);
+    }
+    if (wh.x == 0 && wh.y == 0 && wh.z == 0) {
+        return Spectrum(0.);
+    }
+
+    wh = Normalize(wh);
+
+    // Fresnel reflectance; fraction of incident light that gets reflected in the half-angle direction.
+    Spectrum F = fresnel->Evaluate(Dot(wi, Faceforward(wh, Vector3f(0,0,1))));
+
+    // Torrance-Sparrow BRDF, where D(wh) gives the fraction of differential area covered by microfacets
+    // with normal equal to the half-angle (only those reflect light for given wo and wi) and G(wo, wi)
+    // is the geometric attenuation factor that accounts for masking and shadowing. 
+    return R * distribution->D(wh) * distribution->G(wo, wi) * F / (4 * cosThetaI * cosThetaO);
+}
+
+// TODO.
+Spectrum TorranceSparrowMicrofacetReflection::Sample_f(const Vector3f &wo, Vector3f *wi,
+                                        const Point2f &u, Float *pdf,
+                                        BxDFType *sampledType) const {
+    // Sample microfacet orientation $\wh$ and reflected direction $\wi$
+    if (wo.z == 0) return 0.;
+    Vector3f wh = distribution->Sample_wh(wo, u);
+    if (Dot(wo, wh) < 0) return 0.;   // Should be rare
+    *wi = Reflect(wo, wh);
+    if (!SameHemisphere(wo, *wi)) return Spectrum(0.f);
+
+    // Compute PDF of _wi_ for microfacet reflection
+    *pdf = distribution->Pdf(wo, wh) / (4 * Dot(wo, wh));
+    return f(wo, *wi);
+}
+
+// TODO.
+Float TorranceSparrowMicrofacetReflection::Pdf(const Vector3f &wo, const Vector3f &wi) const {
+    if (!SameHemisphere(wo, wi)) return 0;
+    Vector3f wh = Normalize(wo + wi);
+    return distribution->Pdf(wo, wh) / (4 * Dot(wo, wh));
+}
+
 Spectrum BSDF::f(const Vector3f &woW, const Vector3f &wiW, BxDFType flags) const {
     Vector3f wi = WorldToLocal(wiW);
     Vector3f wo = WorldToLocal(woW);
