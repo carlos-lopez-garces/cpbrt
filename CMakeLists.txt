@@ -381,9 +381,9 @@ SET ( CPBRT_CORE_SOURCE
   # src/core/lightdistrib.cpp
   # src/core/lowdiscrepancy.cpp
   src/core/material.cpp
-  # src/core/medium.cpp
+  src/core/medium.cpp
   src/core/memory.cpp
-  # src/core/microfacet.cpp
+  src/core/microfacet.cpp
   src/core/parallel.cpp
   src/core/paramset.cpp
   src/core/parser.cpp
@@ -422,9 +422,9 @@ SET ( CPBRT_CORE_HEADERS
   src/core/light.h
   # src/core/lowdiscrepancy.h
   src/core/material.h
-  # src/core/medium.h
+  src/core/medium.h
   src/core/memory.h
-  # src/core/microfacet.h
+  src/core/microfacet.h
   # src/core/mipmap.h
   src/core/parallel.h
   src/core/paramset.h
