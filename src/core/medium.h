@@ -5,17 +5,46 @@
 #include "geometry.h"
 #include "spectrum.h"
 
+// MediumInterfaces are associated with GeometricPrimitives to define the
+// scattering media that exists inside and outside of them. Null pointers
+// indicate a vacuum.
 struct MediumInterface {
-    // TODO: implement.
     const Medium *inside;
     const Medium *outside;
 
     MediumInterface() : inside(nullptr), outside(nullptr) {}
     
+    // Same medium on both sides.
     MediumInterface(const Medium *medium) : inside(medium), outside(medium) {}
     
     MediumInterface(const Medium *inside, const Medium *outside)
         : inside(inside), outside(outside) {}
+    
+    // Checks whether the interface marks a transition between 2 different media.
+    bool IsMediumTransition() const {
+        return inside != outside;
+    }
+};
+
+class Medium {
+public:
+    virtual ~Medium() {}
+
+    // Computes the beam transmittance, the fraction of radiance that is transmitted 
+    // through the medium between 2 points, in this case, between the origin of the
+    // ray and the point that corresponds to tMax. Implementations must account for
+    // the effects of absorption and out-scattering.
+    //
+    // The input ray is assumed to be fully contained by the medium and that there
+    // aren't occluders between its origin and the point that corresponds to tMax.
+    virtual Spectrum Tr(const Ray &ray, Sampler &sampler) const = 0;
+    
+    virtual Spectrum Sample(
+        const Ray &ray,
+        Sampler &sampler,
+        MemoryArena &arena,
+        MediumInteraction *mi
+    ) const = 0;
 };
 
 class PhaseFunction {
