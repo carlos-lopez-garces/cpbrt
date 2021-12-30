@@ -6,6 +6,7 @@
 #include "transform.h"
 #include "medium.h"
 #include "material.h"
+#include "error.h"
 
 class Interaction {
 public:
@@ -42,8 +43,21 @@ public:
         const MediumInterface &mediumInterface
     ) : p(p), time(time), mediumInterface(mediumInterface) {}
 
+    Interaction(
+        const Point3f &p,
+        const Vector3f &wo,
+        Float time,
+        const MediumInterface &mediumInterface
+    ) : p(p), time(time), wo(wo), mediumInterface(mediumInterface) {}
+
+    // Is the intersected primitive a surface?
     bool IsSurfaceInteraction() const {
         return n != Normal3f();
+    }
+
+    // Is the intersected primitive a region filled with participating media?
+    bool IsMediumInteraction() const { 
+        return !IsSurfaceInteraction();
     }
 
     Ray SpawnRay(const Vector3f &d) const {
@@ -64,18 +78,17 @@ public:
         return Ray(origin, d, 1 - ShadowEpsilon, time, GetMedium(d));
     }
 
-    // TODO: explain.
-    bool IsMediumInteraction() const { 
-        return !IsSurfaceInteraction();
-    }
-
-    // TODO: explain.
+    // Returns the medium of the region where the ray will travel next after intersecting
+    // this surface or region boundary.
     const Medium *GetMedium(const Vector3f &w) const {
         return Dot(w, n) > 0 ? mediumInterface.outside : mediumInterface.inside;
     }
 
-    // TODO: explain.
+    // Returns the medium where the intersection occurred, assuming that it occurred
+    // inside a region filled with a participating medium, as opposed to at the
+    // boundary of one or in a vacuum.
     const Medium *GetMedium() const {
+        Assert(mediumInterface.inside == mediumInterface.outside);
         return mediumInterface.inside;
     }
 };
@@ -166,6 +179,25 @@ public:
     // Computes the radiance emitted in the given direction by the intersected surface at
     // the intersection point. 0 if the surface is not an area light.
     Spectrum Le(const Vector3f &w) const;
+};
+
+class MediumInteraction : public Interaction {
+public:
+    // Describes the scattering (directional) distribution of the medium where
+    // this intersection occurred.
+    const PhaseFunction *phase;
+
+    MediumInteraction(
+        const Point3f &p,
+        const Vector3f &wo,
+        Float time,
+        const Medium *medium,
+        const PhaseFunction *phase
+    ) : Interaction(p, wo, time, medium), phase(phase) {}
+
+    bool IsValid() const {
+        return phase != nullptr;
+    }
 };
 
 #endif // CPBRT_CORE_INTERACTION_H
