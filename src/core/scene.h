@@ -39,6 +39,11 @@ public:
     // P is for "predicate". No intersection details are returned.
     bool IntersectP(const Ray &ray) const;
 
+    // Tests the ray for intersection with the scene, including regions filled with
+    // participating media. The beam transmittance at the point of intersection is
+    // returned as well (the fraction of radiance that is transmitted between the
+    // ray's origin and the point of intersection, which is subject to attenuation
+    // due to absorption and out-scattering). 
     bool IntersectTr(Ray ray, Sampler &sampler, SurfaceInteraction *si, Spectrum *transmittance) const;
 };
 

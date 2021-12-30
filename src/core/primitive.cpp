@@ -16,7 +16,19 @@ bool GeometricPrimitive::Intersect(const Ray &ray, SurfaceInteraction *si) const
     // Subsequent Shapes that lie beyond tHit will be ignored in the remaining intersection tests.
     ray.tMax = tHit;
     si->primitive = this;
-    // TODO: initialize SurfaceInteraction::mediumInterface after Shape intersection.
+
+    // Initialize SurfaceInteraction::mediumInterface after Shape intersection.
+    if (mediumInterface.IsMediumTransition()) {
+        // The primitive hit by the ray represents a region filled with a different scattering
+        // medium and its surface is the boundary between 2 different scattering media. Record
+        // the medium interface of the primitive in the hit.
+        si->mediumInterface = mediumInterface;
+    } else {
+        // The ray didn't cross any boundary between scattering media. The ray origin
+        // and the primitive are embedded in the same medium. 
+        si->mediumInterface = MediumInterface(ray.medium);
+    }
+
     return true;
 }
 
