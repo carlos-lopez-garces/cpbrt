@@ -311,6 +311,10 @@ void SamplerIntegrator::Render(const Scene &scene) {
             for (Point2i pixel : tileBounds) {
                 tileSampler->StartPixel(pixel);
 
+                if (!InsideExclusive(pixel, pixelBounds)) {
+                    continue;
+                }
+
                 do {
                     // Initialize CameraSample for current sample.
                     CameraSample cameraSample = tileSampler->GetCameraSample(pixel);
