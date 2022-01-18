@@ -16,6 +16,7 @@
 #include "filters/triangle.h"
 #include "integrators/directlighting.h"
 #include "integrators/path.h"
+#include "integrators/volpath.h"
 #include "lights/diffuse.h"
 #include "lights/point.h"
 #include "materials/matte.h"
@@ -525,6 +526,8 @@ Integrator *RenderOptions::MakeIntegrator() const {
     }
     else if (IntegratorName == "path") {
         integrator = CreatePathIntegrator(IntegratorParams, sampler, camera);
+    } else if (IntegratorName == "volpath") {
+        integrator = CreateVolPathIntegrator(IntegratorParams, sampler, camera);
     } else {
         Error("Integrator \"%s\" unknown.", IntegratorName.c_str());
         return nullptr;
