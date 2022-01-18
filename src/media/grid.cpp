@@ -18,6 +18,28 @@ Float GridDensityMedium::Density(const Point3f &p) const {
     return Lerp(d.z, d0, d1);
 }
 
+Spectrum GridDensityMedium::Tr(const Ray &rWorld, Sampler &sampler) const {
+    Ray ray = WorldToMedium(Ray(rWorld.o, Normalize(rWorld.d), rWorld.tMax * rWorld.d.Length()));
+    
+    // Compute  interval of ray's overlap with medium bounds. 
+    const Bounds3f b(Point3f(0, 0, 0), Point3f(1, 1, 1));
+    Float tMin, tMax;
+    if (!b.IntersectP(ray, &tMin, &tMax)) {
+        return Spectrum(1.f);
+    }
+
+    // Perform ratio tracking to estimate the transmittance value. 
+    Float Tr = 1, t = tMin;
+    while (true) {
+        t -= std::log(1 - sampler.Get1D()) * reciprocalMaxDensity / sigma_t;
+        if (t >= tMax)
+            break;
+        Float density = Density(ray(t));
+        Tr *= 1 - std::max((Float)0, density * reciprocalMaxDensity);
+    }
+    return Spectrum(Tr);
+}
+
 Spectrum GridDensityMedium::Sample(
     const Ray &rWorld, Sampler &sampler, MemoryArena &arena, MediumInteraction *mi
 ) const {

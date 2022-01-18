@@ -73,6 +73,8 @@ public:
         return density[(p.z * ny + p.y) * nx + p.x];
     }
 
+    Spectrum Tr(const Ray &ray, Sampler &sampler) const;
+
     Spectrum Sample(
         const Ray &ray,
         Sampler &sampler,
