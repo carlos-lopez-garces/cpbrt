@@ -1,3 +1,6 @@
+#ifndef CPBRT_MEDIA_HOMOGENEOUS_H
+#define CPBRT_MEDIA_HOMOGENEOUS_H
+
 #include "core/medium.h"
 #include "core/spectrum.h"
 
@@ -48,3 +51,5 @@ public:
         MediumInteraction *mi
     ) const;
 };
+
+#endif // CPBRT_MEDIA_HOMOGENEOUS_H

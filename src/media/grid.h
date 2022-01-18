@@ -1,3 +1,6 @@
+#ifndef CPBRT_MEDIA_GRID_H
+#define CPBRT_MEDIA_GRID_H
+
 #include "core/medium.h"
 #include "core/memory.h"
 #include "core/spectrum.h"
@@ -82,3 +85,5 @@ public:
         MediumInteraction *mi
     ) const;
 };
+
+#endif // CPBRT_MEDIA_GRID_H

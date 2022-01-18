@@ -1,5 +1,5 @@
-#ifndef PBRT_CORE_MEDIUM_H
-#define PBRT_CORE_MEDIUM_H
+#ifndef CPBRT_CORE_MEDIUM_H
+#define CPBRT_CORE_MEDIUM_H
 
 #include "cpbrt.h"
 #include "geometry.h"
@@ -93,4 +93,4 @@ public:
     virtual Float Sample_p(const Vector3f &wo, Vector3f *wi, const Point2f &u) const;
 };
 
-#endif // PBRT_CORE_MEDIUM_H
+#endif // CPBRT_CORE_MEDIUM_H
