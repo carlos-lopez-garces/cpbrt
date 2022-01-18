@@ -17,6 +17,8 @@ private:
 
 public:
     std::vector<std::shared_ptr<Light>> lights;
+    // TODO: implement infinite lights.
+    std::vector<std::shared_ptr<Light>> infiniteLights;
 
     Scene(
         std::shared_ptr<Primitive> aggregate,
