@@ -142,8 +142,12 @@ Spectrum EstimateDirect(
             f = si.bsdf->f(si.wo, wi, bsdfFlags) * AbsDot(wi, si.shading.n);
             scatteringPdf = si.bsdf->Pdf(si.wo, wi, bsdfFlags);
         } else {
-            // TODO: Evaluate phase function for sampled incident direction. This is when the
+            // Evaluate phase function for sampled incident direction. This is when the
             // Interaction is not a surface, but participating media.
+            const MediumInteraction &mi = (const MediumInteraction &)it;
+            Float p = mi.phase->p(mi.wo, wi);
+            f = Spectrum(p);
+            scatteringPdf = p;
         }
 
         if (!f.IsBlack()) {
@@ -200,7 +204,11 @@ Spectrum EstimateDirect(
             f *= AbsDot(wi, si.shading.n);
             sampledSpecular = sampledType & BSDF_SPECULAR;
         } else {
-            // TODO: Sample scattered direction for medium interactions.
+            // Sample scattered direction for medium interactions.
+            const MediumInteraction &mi = (const MediumInteraction &)it;
+            Float p = mi.phase->Sample_p(mi.wo, &wi, uScattering);
+            f = Spectrum(p);
+            scatteringPdf = p;
         }
 
         if (!f.IsBlack() && scatteringPdf > 0) {
