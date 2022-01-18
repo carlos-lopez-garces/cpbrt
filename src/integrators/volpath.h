@@ -29,4 +29,10 @@ public:
     void Preprocess(const Scene &scene, Sampler &sampler);
 };
 
+VolPathIntegrator *CreateVolPathIntegrator(
+    const ParamSet &params, 
+    std::shared_ptr<Sampler> sampler,
+    std::shared_ptr<const Camera> camera
+);
+
 #endif // CPBRT_INTEGRATORS_VOLPATH_H
