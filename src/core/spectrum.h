@@ -289,6 +289,14 @@ public:
         return false;
     }
 
+    Float MaxComponentValue() const {
+        Float m = c[0];
+        for (int i = 1; i < nSpectrumSamples; ++i) {
+            m = std::max(m, c[i]);
+        }
+        return m;
+    }
+
 protected:
     // Coefficients (of the linear combination of basis SPD functions that represents this SPD?).
     Float c[nSpectrumSamples];
