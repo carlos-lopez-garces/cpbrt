@@ -1,6 +1,43 @@
 #include "medium.h"
 #include "geometry.h"
 
+struct MeasuredSS {
+    const char *name;
+    Float sigma_prime_s[3];
+    Float sigma_a[3];
+};
+
+bool GetMediumScatteringProperties(
+    const std::string &name, Spectrum *sigma_a, Spectrum *sigma_prime_s
+) {
+    for (MeasuredSS &mss : SubsurfaceParameterTable) {
+        if (name == mss.name) {
+            *sigma_a = Spectrum::FromRGB(mss.sigma_a);
+            *sigma_prime_s = Spectrum::FromRGB(mss.sigma_prime_s);
+            return true;
+        }
+    }
+    return false;
+}
+
+static MeasuredSS SubsurfaceParameterTable[] = {
+    {
+        "Cream", {7.38, 5.47, 3.15}, {0.0002, 0.0028, 0.0163},
+    },
+    {
+        "Ketchup", {0.18, 0.07, 0.03}, {0.061, 0.97, 1.45},
+    },
+    {
+        "Marble", {2.19, 2.62, 3.00}, {0.0021, 0.0041, 0.0071},
+    },
+    {
+        "Regular Milk", {4.5513, 5.8294, 7.136}, {0.0015333, 0.0046, 0.019933}
+    },
+    {
+        "Espresso", {0.72378, 0.84557, 1.0247}, {4.7984, 6.5751, 8.8493}
+    }
+};
+
 Float HenyeyGreensteinPhaseFunction::p(const Vector3f &wo, const Vector3f &wi) const {
     return PhaseHG(Dot(wo, wi), g);
 }

@@ -24,14 +24,6 @@ struct MediumInterface {
     bool IsMediumTransition() const {
         return inside != outside;
     }
-
-    // Samples the medium's scattering interaction along the ray.
-    virtual Spectrum Sample(
-        const Ray &ray,
-        Sampler &sampler,
-        MemoryArena &arena,
-        MediumInteraction *mi
-    ) const = 0;
 };
 
 class Medium {
@@ -57,6 +49,12 @@ public:
         MediumInteraction *mi
     ) const = 0;
 };
+
+bool GetMediumScatteringProperties(
+    const std::string &name,
+    Spectrum *sigma_a,
+    Spectrum *sigma_s
+);
 
 class PhaseFunction {
 public:
