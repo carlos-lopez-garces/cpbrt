@@ -24,6 +24,14 @@ struct MediumInterface {
     bool IsMediumTransition() const {
         return inside != outside;
     }
+
+    // Samples the medium's scattering interaction along the ray.
+    virtual Spectrum Sample(
+        const Ray &ray,
+        Sampler &sampler,
+        MemoryArena &arena,
+        MediumInteraction *mi
+    ) const = 0;
 };
 
 class Medium {
@@ -34,6 +42,9 @@ public:
     // through the medium between 2 points, in this case, between the origin of the
     // ray and the point that corresponds to tMax. Implementations must account for
     // the effects of absorption and out-scattering.
+    //
+    // The beam transmittance equation is Tr(p->p') = e^(-tau(p->p')), where
+    // tau(p->p') = \int{0}{d}{sigma_t(p + tw, w)}dt and d = ||p - p'||.
     //
     // The input ray is assumed to be fully contained by the medium and that there
     // aren't occluders between its origin and the point that corresponds to tMax.
