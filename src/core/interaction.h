@@ -187,6 +187,8 @@ public:
     // this intersection occurred.
     const PhaseFunction *phase;
 
+    MediumInteraction() : phase(nullptr) {}
+
     MediumInteraction(
         const Point3f &p,
         const Vector3f &wo,
