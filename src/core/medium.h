@@ -63,6 +63,7 @@ public:
     // Evaluates the phase function for the given incident and outgoing directions.
     // Phase functions are reciprocal, so p(wo, wi) = p(wi, wo).
     virtual Float p(const Vector3f &wo, const Vector3f &wi) const = 0;
+
     // Sample the phase function, choosing wi probabilistically.
     virtual Float Sample_p(const Vector3f &wo, Vector3f *wi, const Point2f &u) const = 0;
 };
@@ -86,10 +87,10 @@ public:
 
     // Evaluates the Henyey-Greenstein phase function for the given incident and outgoing
     // directions. Phase functions are reciprocal, so p(wo, wi) = p(wi, wo).
-    virtual Float p(const Vector3f &wo, const Vector3f &wi) const = 0;
+    virtual Float p(const Vector3f &wo, const Vector3f &wi) const;
 
     // Sample the phase function, choosing wi probabilistically.
-    virtual Float Sample_p(const Vector3f &wo, Vector3f *wi, const Point2f &u) const = 0;
+    virtual Float Sample_p(const Vector3f &wo, Vector3f *wi, const Point2f &u) const;
 };
 
 #endif // PBRT_CORE_MEDIUM_H
