@@ -23,4 +23,8 @@ private:
     std::unique_ptr<Distribution1D> distrib;
 };
 
+std::unique_ptr<LightDistribution> CreateLightSampleDistribution(
+    const std::string &name, const Scene &scene
+);
+
 #endif // CPBRT_CORE_LIGHTDISTRIBUTION_H
