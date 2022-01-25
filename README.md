@@ -27,6 +27,12 @@ The 1st objective was to study the sections that led to a minimal path tracer an
   <img width="640" height="480" src="scenes/dragon/dragonplasticarealight.png">
 </p>
 
+<p align="center">
+  <i>Cornell box</i>
+  <br/>
+  <img width="640" height="480" src="scenes/cornell-box/images/cornell-box-20samples.png">
+</p>
+
 The sections I've covered are marked next. Each covered section is accompanied by my personal **[notes](notes/)**.
 
 1 Introduction ([notes/1 Introduction](notes/1_Introduction.pdf))
