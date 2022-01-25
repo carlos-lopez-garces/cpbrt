@@ -27,6 +27,8 @@ SurfaceInteraction::SurfaceInteraction(
         time,
         nullptr
 ), uv(uv), dpdu(dpdu), dpdv(dpdv), dndu(dndu), dndv(dndv), shape(shape) {
+    isSurfaceInteraction = true;
+
     shading.n = n;
     shading.dpdu = dpdu;
     shading.dpdv = dpdv;

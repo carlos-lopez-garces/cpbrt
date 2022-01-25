@@ -26,7 +26,9 @@ public:
     // Scattering medium present at the point p.
     MediumInterface mediumInterface;
 
-    Interaction() : time(0) {}
+    bool isSurfaceInteraction;
+
+    Interaction() : time(0), isSurfaceInteraction(false) {}
 
     Interaction(
         const Point3f &p,
@@ -35,24 +37,24 @@ public:
         const Vector3f &wo,
         Float time,
         const MediumInterface &mediumInterface
-    ) : p(p), n(n), time(time), pError(pError), wo(wo), mediumInterface(mediumInterface) {}
+    ) : p(p), n(n), time(time), pError(pError), wo(wo), mediumInterface(mediumInterface), isSurfaceInteraction(false) {}
 
     Interaction(
         const Point3f &p,
         Float time,
         const MediumInterface &mediumInterface
-    ) : p(p), time(time), mediumInterface(mediumInterface) {}
+    ) : p(p), time(time), mediumInterface(mediumInterface), isSurfaceInteraction(false) {}
 
     Interaction(
         const Point3f &p,
         const Vector3f &wo,
         Float time,
         const MediumInterface &mediumInterface
-    ) : p(p), time(time), wo(wo), mediumInterface(mediumInterface) {}
+    ) : p(p), time(time), wo(wo), mediumInterface(mediumInterface), isSurfaceInteraction(false) {}
 
     // Is the intersected primitive a surface?
     bool IsSurfaceInteraction() const {
-        return n != Normal3f();
+        return isSurfaceInteraction;
     }
 
     // Is the intersected primitive a region filled with participating media?
@@ -137,7 +139,9 @@ public:
     BSDF *bsdf = nullptr;
     BSSRDF *bssrdf = nullptr;
 
-    SurfaceInteraction() {}
+    SurfaceInteraction() {
+        isSurfaceInteraction = true;
+    }
 
     SurfaceInteraction(
         const Point3f &p,
