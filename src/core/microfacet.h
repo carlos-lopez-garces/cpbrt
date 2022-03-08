@@ -83,4 +83,40 @@ public:
     }
 };
 
+// Trowbridge-Reitz microfacet distribution.
+class TrowbridgeReitzDistribution : public MicrofacetDistribution {
+private:
+    // Parameters of the distribution. Alpha X and Y control the roughness of the
+    // surface. RoughnessToAlpha() maps a roughness value in the typical [0,1] range
+    // to alpha X and Y values. 
+    const Float alphaX, alphaY;
+
+public:
+    TrowbridgeReitzDistribution(Float alphaX, Float alphaY, bool sampleVisibleArea = true)
+     : MicrofacetDistribution(sampleVisibleArea),
+       alphaX(std::max(Float(0.001), alphax)),
+       alphay(std::max(Float(0.001), alphay))
+    {}
+
+    // Trowbridge-Reitz microfacet distribution function. Anisotropic in general (dependent on
+    // azimuthal angle phi), isotropic in the case where alphaX = alphaY.
+    Float D(const Vector3f &wh) const;
+
+    Vector3f Sample_wh(const Vector3f &wo, const Point2f &u) const;
+
+    static inline Float RoughnessToAlpha(Float roughness);
+
+private:
+    Float Lambda(const Vector3f &w) const;
+};
+
+// Maps a roughness value in the range [0,1] to a value for one of the Trowbridge-Reitz
+// alpha parameters.
+inline Float TrowbridgeReitzDistribution::RoughnessToAlpha(Float roughness) {
+    // Not explained in PBRT.
+    roughness = std::max(roughness, (Float) 1e-3);
+    Float x = std::log(roughness);
+    return 1.62142f + 0.819955f * x + 0.1734f * x * x + 0.0171201f * x * x * x + 0.000640711f * x * x * x * x;
+}
+
 #endif // CPBRT_CORE_MICROFACET_H
