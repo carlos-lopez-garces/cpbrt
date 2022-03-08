@@ -43,4 +43,6 @@ public:
     ) const;
 };
 
+MetalMaterial *CreateMetalMaterial(const TextureParams &mp);
+
 #endif // CPBRT_MATERIALS_METAL_H

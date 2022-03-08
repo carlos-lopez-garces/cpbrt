@@ -64,3 +64,16 @@ void MetalMaterial::ComputeScatteringFunctions(
     
     si->bsdf->Add(ARENA_ALLOC(arena, MicrofacetDistribution)(1.0, distribution, fresnel));
 }
+
+MetalMaterial *CreateMetalMaterial(const TextureParams &mp) {
+    static Spectrum copperN = Spectrum::FromSampled(CopperWavelengths, CopperN, CopperSamples);
+    std::shared_ptr<Texture<Spectrum>> eta = mp.GetSpectrumTexture("eta", copperN);
+    static Spectrum copperK = Spectrum::FromSampled(CopperWavelengths, CopperK, CopperSamples);
+    std::shared_ptr<Texture<Spectrum>> k = mp.GetSpectrumTexture("k", copperK);
+    std::shared_ptr<Texture<Float>> roughness = mp.GetFloatTexture("roughness", .01f);
+    std::shared_ptr<Texture<Float>> uRoughness = mp.GetFloatTextureOrNull("uroughness");
+    std::shared_ptr<Texture<Float>> vRoughness = mp.GetFloatTextureOrNull("vroughness");
+    std::shared_ptr<Texture<Float>> bumpMap = mp.GetFloatTextureOrNull("bumpmap");
+    bool remapRoughness = mp.FindBool("remaproughness", true);
+    return new MetalMaterial(eta, k, roughness, uRoughness, vRoughness, bumpMap, remapRoughness);
+}
