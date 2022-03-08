@@ -947,33 +947,31 @@ static void parse(std::unique_ptr<Tokenizer> t) {
             if (tok == "MakeNamedMaterial")
                 basicParamListEntrypoint(SpectrumType::Reflectance,
                                          cpbrtMakeNamedMaterial);
-            // TODO: implement cpbrtMakeNamedMedium.
-            // else if (tok == "MakeNamedMedium")
-            //     basicParamListEntrypoint(SpectrumType::Reflectance,
-            //                              cpbrtMakeNamedMedium);
+            else if (tok == "MakeNamedMedium")
+                basicParamListEntrypoint(SpectrumType::Reflectance,
+                                         cpbrtMakeNamedMedium);
             else if (tok == "Material")
                 basicParamListEntrypoint(SpectrumType::Reflectance,
                                          cpbrtMaterial);
-            // TODO: implement cpbrtMediumInterface.
-            // else if (tok == "MediumInterface") {
-            //     string_view n = dequoteString(nextToken(TokenRequired));
-            //     std::string names[2];
-            //     names[0] = toString(n);
+            else if (tok == "MediumInterface") {
+                string_view n = dequoteString(nextToken(TokenRequired));
+                std::string names[2];
+                names[0] = toString(n);
 
-            //     // Check for optional second parameter
-            //     string_view second = nextToken(TokenOptional);
-            //     if (!second.empty()) {
-            //         if (isQuotedString(second))
-            //             names[1] = toString(dequoteString(second));
-            //         else {
-            //             ungetToken(second);
-            //             names[1] = names[0];
-            //         }
-            //     } else
-            //         names[1] = names[0];
+                // Check for optional second parameter
+                string_view second = nextToken(TokenOptional);
+                if (!second.empty()) {
+                    if (isQuotedString(second))
+                        names[1] = toString(dequoteString(second));
+                    else {
+                        ungetToken(second);
+                        names[1] = names[0];
+                    }
+                } else
+                    names[1] = names[0];
 
-            //     cpbrtMediumInterface(names[0], names[1]);
-            // }
+                cpbrtMediumInterface(names[0], names[1]);
+            }
             else {
                 syntaxError(tok);
             }

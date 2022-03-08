@@ -22,6 +22,8 @@
 #include "materials/matte.h"
 #include "materials/mirror.h"
 #include "materials/plastic.h"
+#include "media/grid.h"
+#include "media/homogeneous.h"
 #include "samplers/stratified.h"
 #include "shapes/sphere.h"
 #include "shapes/triangle.h"
@@ -191,6 +193,9 @@ struct GraphicsState {
     std::shared_ptr<NamedMaterialMap> namedMaterials;
     bool namedMaterialsShared = false;
 
+    std::string currentInsideMedium;
+    std::string currentOutsideMedium;
+
     ParamSet areaLightParams;
     std::string areaLight;
 
@@ -237,6 +242,9 @@ struct RenderOptions {
     std::vector<std::shared_ptr<Light>> lights;
 
     std::vector<std::shared_ptr<Primitive>> primitives;
+
+    std::map<std::string, std::shared_ptr<Medium>> namedMedia;
+    bool haveScatteringMedia = false;
 
     // TODO: describe.
     std::map<std::string, std::vector<std::shared_ptr<Primitive>>> instances;
@@ -415,6 +423,63 @@ std::shared_ptr<Material> MakeMaterial(const std::string &name, const TexturePar
     return std::shared_ptr<Material>(material);
 }
 
+std::shared_ptr<Medium> MakeMedium(
+    const std::string &name,
+    const ParamSet &paramSet,
+    const Transform &medium2world
+) {
+    Float sig_a_rgb[3] = {.0011f, .0024f, .014f};
+    Float sig_s_rgb[3] = {2.55f, 3.21f, 3.77f};
+
+    Spectrum sig_a = Spectrum::FromRGB(sig_a_rgb);
+    Spectrum sig_s = Spectrum::FromRGB(sig_s_rgb);
+
+    std::string preset = paramSet.FindOneString("preset", "");
+    
+    bool found = GetMediumScatteringProperties(preset, &sig_a, &sig_s);
+    if (preset != "" && !found) {
+        Warning("Material preset \"%s\" not found.  Using defaults.", preset.c_str());
+    }
+
+    Float scale = paramSet.FindOneFloat("scale", 1.f);
+    Float g = paramSet.FindOneFloat("g", 0.0f);
+    sig_a = paramSet.FindOneSpectrum("sigma_a", sig_a) * scale;
+    sig_s = paramSet.FindOneSpectrum("sigma_s", sig_s) * scale;
+
+    Medium *m = NULL;
+    if (name == "homogeneous") {
+        m = new HomogeneousMedium(sig_a, sig_s, g);
+    } else if (name == "heterogeneous") {
+        int nitems;
+        const Float *data = paramSet.FindFloat("density", &nitems);
+        if (!data) {
+            Error("No \"density\" values provided for heterogeneous medium?");
+            return NULL;
+        }
+
+        int nx = paramSet.FindOneInt("nx", 1);
+        int ny = paramSet.FindOneInt("ny", 1);
+        int nz = paramSet.FindOneInt("nz", 1);
+        Point3f p0 = paramSet.FindOnePoint3f("p0", Point3f(0.f, 0.f, 0.f));
+        Point3f p1 = paramSet.FindOnePoint3f("p1", Point3f(1.f, 1.f, 1.f));
+
+        if (nitems != nx * ny * nz) {
+            Error(
+                "GridDensityMedium has %d density values; expected nx*ny*nz = "
+                "%d",
+                nitems, nx * ny * nz);
+            return NULL;
+        }
+
+        Transform data2Medium = Translate(Vector3f(p0)) * Scale(p1.x - p0.x, p1.y - p0.y, p1.z - p0.z);
+        m = new GridDensityMedium(sig_a, sig_s, g, nx, ny, nz, medium2world * data2Medium, data);
+    } else {
+        Warning("Medium \"%s\" unknown.", name.c_str());
+    }
+    paramSet.ReportUnused();
+    return std::shared_ptr<Medium>(m);
+}
+
 std::shared_ptr<Light> MakeLight(
     const std::string &name,
     const ParamSet &paramSet,
@@ -570,8 +635,25 @@ Camera *RenderOptions::MakeCamera() const {
 // GraphicsState function definitions.
 
 MediumInterface GraphicsState::CreateMediumInterface() {
-    // TODO: implement.
-    MediumInterface m;
+MediumInterface m;
+    if (currentInsideMedium != "") {
+        if (renderOptions->namedMedia.find(currentInsideMedium) 
+            != renderOptions->namedMedia.end()
+        ) {
+            m.inside = renderOptions->namedMedia[currentInsideMedium].get();
+        }
+        else {
+            Error("Named medium \"%s\" undefined.", currentInsideMedium.c_str());
+        }
+    }
+    if (currentOutsideMedium != "") {
+        if (renderOptions->namedMedia.find(currentOutsideMedium)
+            != renderOptions->namedMedia.end()) {
+            m.outside = renderOptions->namedMedia[currentOutsideMedium].get();
+        } else {
+            Error("Named medium \"%s\" undefined.", currentOutsideMedium.c_str());
+        }
+    }
     return m;
 }
 
@@ -1030,6 +1112,25 @@ void cpbrtNamedMaterial(const std::string &name) {
         return;
     }
     graphicsState.currentMaterial = iter->second;
+}
+
+void cpbrtMakeNamedMedium(const std::string &name, const ParamSet &params) {
+    VERIFY_INITIALIZED("MakeNamedMedium");
+
+    std::string type = params.FindOneString("type", "");
+    if (type == "") {
+        Error("No parameter string \"type\" found in MakeNamedMedium");
+    } else {
+        std::shared_ptr<Medium> medium = MakeMedium(type, params, curTransform[0]);
+        if (medium) renderOptions->namedMedia[name] = medium;
+    }
+}
+
+void cpbrtMediumInterface(const std::string &insideName, const std::string &outsideName) {
+    VERIFY_INITIALIZED("MediumInterface");
+    graphicsState.currentInsideMedium = insideName;
+    graphicsState.currentOutsideMedium = outsideName;
+    renderOptions->haveScatteringMedia = true;
 }
 
 void cpbrtLightSource(const std::string &name, const ParamSet &params) {

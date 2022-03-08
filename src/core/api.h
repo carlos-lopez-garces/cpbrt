@@ -119,6 +119,11 @@ void cpbrtMakeNamedMaterial(const std::string &name, const ParamSet &params);
 // must have been called to create such named material.
 void cpbrtNamedMaterial(const std::string &name);
 
+// Creates a named medium.
+void cpbrtMakeNamedMedium(const std::string &name, const ParamSet &params);
+
+void cpbrtMediumInterface(const std::string &insideName, const std::string &outsideName);
+
 void cpbrtLightSource(const std::string &name, const ParamSet &params);
 
 void cpbrtAreaLightSource(const std::string &name, const ParamSet &params);
