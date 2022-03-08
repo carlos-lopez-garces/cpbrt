@@ -2,7 +2,9 @@
 #define CPBRT_MEDIA_GRID_H
 
 #include "core/medium.h"
+#include "core/interaction.h"
 #include "core/memory.h"
+#include "core/sampler.h"
 #include "core/spectrum.h"
 #include "core/transform.h"
 

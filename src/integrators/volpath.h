@@ -2,6 +2,7 @@
 #define CPBRT_INTEGRATORS_VOLPATH_H
 
 #include "core/cpbrt.h"
+#include "core/camera.h"
 #include "core/integrator.h"
 #include "core/lightdistribution.h"
 
@@ -19,8 +20,8 @@ public:
         std::shared_ptr<Sampler> sampler,
         const Bounds2i &pixelBounds,
         Float rrThreshold = 1,
-        const std::string &lightSampleStrategy = "spatial"
-    ) : SamplerIntegrator(camera, sampler, pixelBounds),
+        const std::string &lightSampleStrategy = "uniform"
+    ) : SamplerIntegrator(camera, sampler),
         maxDepth(maxDepth),
         rrThreshold(rrThreshold),
         lightSampleStrategy(lightSampleStrategy)

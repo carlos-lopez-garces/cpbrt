@@ -7,19 +7,6 @@ struct MeasuredSS {
     Float sigma_a[3];
 };
 
-bool GetMediumScatteringProperties(
-    const std::string &name, Spectrum *sigma_a, Spectrum *sigma_prime_s
-) {
-    for (MeasuredSS &mss : SubsurfaceParameterTable) {
-        if (name == mss.name) {
-            *sigma_a = Spectrum::FromRGB(mss.sigma_a);
-            *sigma_prime_s = Spectrum::FromRGB(mss.sigma_prime_s);
-            return true;
-        }
-    }
-    return false;
-}
-
 static MeasuredSS SubsurfaceParameterTable[] = {
     {
         "Cream", {7.38, 5.47, 3.15}, {0.0002, 0.0028, 0.0163},
@@ -37,6 +24,19 @@ static MeasuredSS SubsurfaceParameterTable[] = {
         "Espresso", {0.72378, 0.84557, 1.0247}, {4.7984, 6.5751, 8.8493}
     }
 };
+
+bool GetMediumScatteringProperties(
+    const std::string &name, Spectrum *sigma_a, Spectrum *sigma_prime_s
+) {
+    for (MeasuredSS &mss : SubsurfaceParameterTable) {
+        if (name == mss.name) {
+            *sigma_a = Spectrum::FromRGB(mss.sigma_a);
+            *sigma_prime_s = Spectrum::FromRGB(mss.sigma_prime_s);
+            return true;
+        }
+    }
+    return false;
+}
 
 Float HenyeyGreensteinPhaseFunction::p(const Vector3f &wo, const Vector3f &wi) const {
     return PhaseHG(Dot(wo, wi), g);

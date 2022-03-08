@@ -2,9 +2,7 @@
 #include "core/error.h"
 #include "core/paramset.h"
 
-void VolPathIntegrator::Preprocess(const Scene &scene, Sampler &sampler) {
-    lightDistribution = CreateLightSampleDistribution(lightSampleStrategy, scene);
-}
+void VolPathIntegrator::Preprocess(const Scene &scene, Sampler &sampler) {}
 
 Spectrum VolPathIntegrator::Li(
     const RayDifferential &r,
@@ -30,17 +28,13 @@ Spectrum VolPathIntegrator::Li(
         if (mi.IsValid()) {
             if (bounces >= maxDepth) break;
 
-            ++volumeInteractions;
-            const Distribution1D *lightDistrib = lightDistribution->Lookup(mi.p);
-            L += beta * UniformSampleOneLight(mi, scene, arena, sampler, true, lightDistrib);
+            L += beta * UniformSampleOneLight(mi, scene, arena, sampler, true);
 
             Vector3f wo = -ray.d, wi;
             mi.phase->Sample_p(wo, &wi, sampler.Get2D());
             ray = mi.SpawnRay(wi);
             specularBounce = false;
         } else {
-            ++surfaceInteractions;
-
             if (bounces == 0 || specularBounce) {
                 if (foundIntersection) {
                     L += beta * isect.Le(-ray.d);
@@ -60,8 +54,7 @@ Spectrum VolPathIntegrator::Li(
                 continue;
             }
 
-            const Distribution1D *lightDistrib = lightDistribution->Lookup(isect.p);
-            L += beta * UniformSampleOneLight(isect, scene, arena, sampler, true, lightDistrib);
+            L += beta * UniformSampleOneLight(isect, scene, arena, sampler, true);
 
             Vector3f wo = -ray.d, wi;
             Float pdf;
@@ -115,6 +108,6 @@ VolPathIntegrator *CreateVolPathIntegrator(
         }
     }
     Float rrThreshold = params.FindOneFloat("rrthreshold", 1.);
-    std::string lightStrategy = params.FindOneString("lightsamplestrategy", "spatial");
+    std::string lightStrategy = params.FindOneString("lightsamplestrategy", "uniform");
     return new VolPathIntegrator(maxDepth, camera, sampler, pixelBounds, rrThreshold, lightStrategy);
 }

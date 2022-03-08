@@ -66,17 +66,14 @@ private:
     // Supplies sample points on the image at which to compute radiance.
     std::shared_ptr<Sampler> sampler;
 
-    const Bounds2i pixelBounds;
-
 protected:
     std::shared_ptr<const Camera> camera;
 
 public:
     SamplerIntegrator(
         std::shared_ptr<const Camera> camera,
-        std::shared_ptr<Sampler> sampler,
-        const Bounds2i &pixelBounds
-    ) : camera(camera), sampler(sampler), pixelBounds(pixelBounds) {}
+        std::shared_ptr<Sampler> sampler
+    ) : camera(camera), sampler(sampler) {}
 
     void Render(const Scene &scene);
 

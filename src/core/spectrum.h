@@ -132,6 +132,10 @@ public:
         return c[i];
     }
 
+    Float operator[](int i) const {
+        return c[i];
+    }
+
     // Spectrum addition is defined as the coefficient-wise sum of the 2 spectra.
     CoefficientSpectrum &operator+=(const CoefficientSpectrum &sp2) {
         for (int i = 0; i < nSpectrumSamples; ++i) {
@@ -258,7 +262,7 @@ public:
     friend CoefficientSpectrum Exp(const CoefficientSpectrum &sp) {
         CoefficientSpectrum ret;
         for (int i = 0; i < nSpectrumSamples; ++i) {
-            ret.c[i] = std::exp(s.c[i]);
+            ret.c[i] = std::exp(sp.c[i]);
         }
         return ret;
     }

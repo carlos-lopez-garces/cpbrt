@@ -8,7 +8,7 @@
 
 class DiffuseAreaLight : public AreaLight {
 protected:
-    // Emitted radiance (constant accross the surface).
+    // Emitted radiance (constant across the surface).
     const Spectrum emittedL;
 
     std::shared_ptr<Shape> shape;

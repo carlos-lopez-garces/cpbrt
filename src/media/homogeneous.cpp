@@ -1,4 +1,5 @@
 #include "homogeneous.h"
+#include "core/memory.h"
 
 Spectrum HomogeneousMedium::Tr(const Ray &ray, Sampler &sampler) const {
     return Exp(-sigma_t * std::min(ray.tMax * ray.d.Length(), MaxFloat));
@@ -13,7 +14,7 @@ Spectrum HomogeneousMedium::Sample(
     Float t = std::min(dist * ray.d.Length(), ray.tMax);
     bool sampledMedium = t < ray.tMax;
     if (sampledMedium) {
-        *mi = MediumInteraction(ray(t), -ray.d, ray.time, this, ARENA_ALLOC(arena, HenyeyGreenstein)(g));
+        *mi = MediumInteraction(ray(t), -ray.d, ray.time, this, ARENA_ALLOC(arena, HenyeyGreensteinPhaseFunction)(g));
     }
 
     // Compute the transmittance and sampling density. 

@@ -2,6 +2,8 @@
 #define CPBRT_MEDIA_HOMOGENEOUS_H
 
 #include "core/medium.h"
+#include "core/interaction.h"
+#include "core/sampler.h"
 #include "core/spectrum.h"
 
 class HomogeneousMedium : public Medium {
