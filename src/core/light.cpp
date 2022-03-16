@@ -15,7 +15,22 @@ bool VisibilityTester::Unoccluded(const Scene &scene) const {
 }
 
 Spectrum VisibilityTester::Tr(const Scene &scene, Sampler &sampler) const {
-    // TODO: implement when implementing volume scattering.
-    Spectrum Tr(0.f);
+    Ray ray(p0.SpawnRayTo(p1));
+    Spectrum Tr(1.f);
+    while (true) {
+        SurfaceInteraction si;
+        bool hitSurface = scene.Intersect(ray, &si);
+        if (hitSurface && si.primitive->GetMaterial() != nullptr) {
+            // The surface is opaque. No transmittance.
+            return Spectrum(0.0f);
+        }
+        if (ray.medium) {
+            Tr *= ray.medium->Tr(ray, sampler);
+        }
+        if (!hitSurface) {
+            break;
+        }
+        ray = si.SpawnRayTo(p1);
+    }
     return Tr;
 }
