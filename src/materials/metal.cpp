@@ -62,7 +62,7 @@ void MetalMaterial::ComputeScatteringFunctions(
 
     MicrofacetDistribution *distribution = ARENA_ALLOC(arena, TrowbridgeReitzDistribution)(uRough, vRough);
     
-    si->bsdf->Add(ARENA_ALLOC(arena, MicrofacetDistribution)(1.0, distribution, fresnel));
+    si->bsdf->Add(ARENA_ALLOC(arena, TorranceSparrowMicrofacetReflection)(1.0, distribution, fresnel));
 }
 
 MetalMaterial *CreateMetalMaterial(const TextureParams &mp) {

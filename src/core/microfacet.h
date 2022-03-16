@@ -94,8 +94,8 @@ private:
 public:
     TrowbridgeReitzDistribution(Float alphaX, Float alphaY, bool sampleVisibleArea = true)
      : MicrofacetDistribution(sampleVisibleArea),
-       alphaX(std::max(Float(0.001), alphax)),
-       alphay(std::max(Float(0.001), alphay))
+       alphaX(std::max(Float(0.001), alphaX)),
+       alphaY(std::max(Float(0.001), alphaY))
     {}
 
     // Trowbridge-Reitz microfacet distribution function. Anisotropic in general (dependent on

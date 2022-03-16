@@ -250,15 +250,15 @@ Float TrowbridgeReitzDistribution::D(const Vector3f &wh) const {
     Float tan2Theta = Tan2Theta(wh);
     if (std::isinf(tan2Theta)) return 0.;
     const Float cos4Theta = Cos2Theta(wh) * Cos2Theta(wh);
-    Float e = (Cos2Phi(wh) / (alphax * alphax) + Sin2Phi(wh) / (alphay * alphay)) * tan2Theta;
-    return 1 / (Pi * alphax * alphay * cos4Theta * (1 + e) * (1 + e));
+    Float e = (Cos2Phi(wh) / (alphaX * alphaX) + Sin2Phi(wh) / (alphaY * alphaY)) * tan2Theta;
+    return 1 / (Pi * alphaX * alphaY * cos4Theta * (1 + e) * (1 + e));
 }
 
 Float TrowbridgeReitzDistribution::Lambda(const Vector3f &w) const {
     // Not explained in PBRT.
     Float absTanTheta = std::abs(TanTheta(w));
     if (std::isinf(absTanTheta)) return 0.;
-    Float alpha = std::sqrt(Cos2Phi(w) * alphax * alphax + Sin2Phi(w) * alphay * alphay);
+    Float alpha = std::sqrt(Cos2Phi(w) * alphaX * alphaX + Sin2Phi(w) * alphaY * alphaY);
     Float alpha2Tan2Theta = (alpha * absTanTheta) * (alpha * absTanTheta);
     return (-1 + std::sqrt(1.f + alpha2Tan2Theta)) / 2;
 }
@@ -268,15 +268,15 @@ Vector3f TrowbridgeReitzDistribution::Sample_wh(const Vector3f &wo, const Point2
 
     if (!sampleVisibleArea) {
         Float cosTheta = 0, phi = (2 * Pi) * u[1];
-        if (alphax == alphay) {
-            Float tanTheta2 = alphax * alphax * u[0] / (1.0f - u[0]);
+        if (alphaX == alphaY) {
+            Float tanTheta2 = alphaX * alphaX * u[0] / (1.0f - u[0]);
             cosTheta = 1 / std::sqrt(1 + tanTheta2);
         } else {
-            phi = std::atan(alphay / alphax * std::tan(2 * Pi * u[1] + .5f * Pi));
+            phi = std::atan(alphaY / alphaX * std::tan(2 * Pi * u[1] + .5f * Pi));
             if (u[1] > .5f) phi += Pi;
             Float sinPhi = std::sin(phi), cosPhi = std::cos(phi);
-            const Float alphax2 = alphax * alphax, alphay2 = alphay * alphay;
-            const Float alpha2 = 1 / (cosPhi * cosPhi / alphax2 + sinPhi * sinPhi / alphay2);
+            const Float alphaX2 = alphaX * alphaX, alphaY2 = alphaY * alphaY;
+            const Float alpha2 = 1 / (cosPhi * cosPhi / alphaX2 + sinPhi * sinPhi / alphaY2);
             Float tanTheta2 = alpha2 * u[0] / (1 - u[0]);
             cosTheta = 1 / std::sqrt(1 + tanTheta2);
         }
@@ -285,7 +285,7 @@ Vector3f TrowbridgeReitzDistribution::Sample_wh(const Vector3f &wo, const Point2
         if (!SameHemisphere(wo, wh)) wh = -wh;
     } else {
         bool flip = wo.z < 0;
-        wh = TrowbridgeReitzSample(flip ? -wo : wo, alphax, alphay, u[0], u[1]);
+        wh = TrowbridgeReitzSample(flip ? -wo : wo, alphaX, alphaY, u[0], u[1]);
         if (flip) wh = -wh;
     }
 

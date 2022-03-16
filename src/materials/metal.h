@@ -5,10 +5,17 @@
 #include "core/material.h"
 #include "core/spectrum.h"
 
+// MetalMaterial describes scattering from metals, where the index of refraction (eta)
+// and the absorption coefficient (k) describe metals' reflectance spectra. These and 
+// a roughness parameter, which adjusts the microfacet distributions roughness, describe
+// the overall material. 
 class MetalMaterial : public Material {
 private:
+    // Index of refraction.
     std::shared_ptr<Texture<Spectrum>> eta;
+    // Absorption coefficient.
     std::shared_ptr<Texture<Spectrum>> k;
+    // Adjusts the microfacet distributions roughness.
     std::shared_ptr<Texture<Float>> roughness;
     std::shared_ptr<Texture<Float>> uRoughness;
     std::shared_ptr<Texture<Float>> vRoughness;
