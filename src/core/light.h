@@ -120,7 +120,6 @@ public:
     // ignoring participating media that may have an effect on the ray's radiance.
     bool Unoccluded(const Scene &scene) const;
 
-    // TODO: implement when implementing volume scattering.
     Spectrum Tr(const Scene &scene, Sampler &sampler) const;
 };
 

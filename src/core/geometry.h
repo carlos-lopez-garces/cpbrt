@@ -1299,8 +1299,26 @@ template <typename T> inline bool Bounds3<T>::IntersectP(
     const Vector3f &reciprocalDir, 
     const int dirIsNeg[3]
 ) const {
-    // TODO: implement.
-    return false;
+    const Bounds3f& bounds = *this;
+    Float tMin = (bounds[dirIsNeg[0]].x - ray.o.x) * reciprocalDir.x;
+    Float tMax = (bounds[1 - dirIsNeg[0]].x - ray.o.x) * reciprocalDir.x;
+    Float tyMin = (bounds[dirIsNeg[1]].y - ray.o.y) * reciprocalDir.y;
+    Float tyMax = (bounds[1 - dirIsNeg[1]].y - ray.o.y) * reciprocalDir.y;
+
+    tMax *= 1 + 2 * gamma(3);
+    tyMax *= 1 + 2 * gamma(3);
+    if (tMin > tyMax || tyMin > tMax) return false;
+    if (tyMin > tMin) tMin = tyMin;
+    if (tyMax < tMax) tMax = tyMax;
+
+    Float tzMin = (bounds[dirIsNeg[2]].z - ray.o.z) * reciprocalDir.z;
+    Float tzMax = (bounds[1 - dirIsNeg[2]].z - ray.o.z) * reciprocalDir.z;
+
+    tzMax *= 1 + 2 * gamma(3);
+    if (tMin > tzMax || tzMin > tMax) return false;
+    if (tzMin > tMin) tMin = tzMin;
+    if (tzMax < tMax) tMax = tzMax;
+    return (tMin < ray.tMax) && (tMax > 0);
 }
 
 // Construct a new extended box that contains point p.
