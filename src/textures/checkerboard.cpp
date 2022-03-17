@@ -1,4 +1,4 @@
-#include "checkerboard.h"
+#include "textures/checkerboard.h"
 
 Texture<Spectrum> *CreateCheckerboardSpectrumTexture(
     const Transform &tex2world, const TextureParams &tp

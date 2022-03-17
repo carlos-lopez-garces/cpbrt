@@ -34,7 +34,7 @@ private:
     const Float dv;
 
 public:
-    UVMapping2D(Float su, Float sv, Float du, Float dv) : su(su), sv(sv), du(du), dv(dv) {}
+    UVMapping2D(Float su = 1, Float sv = 1, Float du = 0, Float dv = 0);
 
     Point2f Map(const SurfaceInteraction &si, Vector2f *dstdx, Vector2f *dstdy) const; 
 };

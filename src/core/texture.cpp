@@ -1,6 +1,8 @@
 #include "texture.h"
 #include "shape.h"
 
+UVMapping2D::UVMapping2D(Float su, Float sv, Float du, Float dv) : su(su), sv(sv), du(du), dv(dv) {}
+
 Point2f UVMapping2D::Map(const SurfaceInteraction &si, Vector2f *dstdx, Vector2f *dstdy) const {
     // Let T be the mapping (u,v) -> (s,t) as defined by the returned value of this Map function.
     // Its derivative is then:

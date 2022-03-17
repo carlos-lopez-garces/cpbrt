@@ -33,7 +33,7 @@ public:
         const std::shared_ptr<Texture<T>> &tex1,
         const std::shared_ptr<Texture<T>> &tex2,
         AAMethod aaMethod
-    ) : mappping(mapping), tex1(tex1), tex2(tex2), aaMethod(aaMethod) {}
+    ) : mapping(std::move(mapping)), tex1(tex1), tex2(tex2), aaMethod(aaMethod) {}
 
     T Evaluate(const SurfaceInteraction &si) const {
         // Partial-s-partial-x and partial-t-partial-x.
