@@ -28,6 +28,7 @@
 #include "samplers/stratified.h"
 #include "shapes/sphere.h"
 #include "shapes/triangle.h"
+#include "textures/checkerboard.h"
 #include "textures/constant.h"
 
 // Initialization options stored for global access.
@@ -393,10 +394,14 @@ std::shared_ptr<Texture<Spectrum>> MakeSpectrumTexture(
     Texture<Spectrum> *tex = nullptr;
 
     // TODO: add other types.
-    if (name == "constant")
+    if (name == "constant") {
         tex = CreateConstantSpectrumTexture(tex2world, tp);
-    else
+    } else if (name == "checkerboard") {
+        tex = CreateCheckerboardSpectrumTexture(tex2world, tp); 
+    }
+    else {
         Warning("Spectrum texture \"%s\" unknown.", name.c_str());
+    }
     tp.ReportUnused();
 
     return std::shared_ptr<Texture<Spectrum>>(tex);
@@ -638,7 +643,7 @@ Camera *RenderOptions::MakeCamera() const {
 // GraphicsState function definitions.
 
 MediumInterface GraphicsState::CreateMediumInterface() {
-MediumInterface m;
+    MediumInterface m;
     if (currentInsideMedium != "") {
         if (renderOptions->namedMedia.find(currentInsideMedium) 
             != renderOptions->namedMedia.end()
