@@ -6,7 +6,7 @@
 #include "cpbrt.h"
 #include "geometry.h"
 
-// TODO: implement.
+// Supported formats: .pfm.
 std::unique_ptr<RGBSpectrum[]> ReadImage(const std::string &name, Point2i *resolution);
 
 void WriteImage(
