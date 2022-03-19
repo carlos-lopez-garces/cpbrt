@@ -389,6 +389,12 @@ inline Float ErfInv(Float x) {
     return p * x;
 }
 
+template <typename T> inline bool IsPowerOf2(T v) {
+    // A power of 2 in binary notation is a single 1 followed by 0s.
+    // Let v = 4 = 100b. Then v-1 = 011b and v & (v-1) = 100b & 011b = 0.
+    return v && !(v & (v-1));
+}
+
 extern Options CpbrtOptions;
 
 #endif // CPBRT_CORE_PBRT_H
