@@ -208,6 +208,13 @@ inline T Clamp(T val, U low, V high) {
     return val;
 }
 
+// Modulo: a (mod b).
+template <typename T>
+inline T Mod(T a, T b) {
+    T result = a - (a/b) * b;
+    return (T)((result < 0) ? result + b : result);
+}
+
 inline Float Lerp(Float t, Float v1, Float v2) {
     return (1-t)*v1 + t*v2;
 }
