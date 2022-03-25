@@ -36,3 +36,14 @@ Point2f UVMapping2D::Map(const SurfaceInteraction &si, Vector2f *dstdx, Vector2f
     // Scale and shift the (u,v) coordinate.
     return Point2f(su * si.uv[0] + du, sv * si.uv[1] + dv);
 }
+
+Filter LanczosFilter(Float coordinate, Float tau) {
+    Float x = coordinate;
+    x = std::abs(x);
+    if (x < 1e-5f) return 1;
+    if (x > 1.f) return 0;
+    x *= Pi;
+    Float s = std::sin(x * tau) / (x * tau);
+    Float lanczos = std::sin(x) / x;
+    return s * lanczos;
+}

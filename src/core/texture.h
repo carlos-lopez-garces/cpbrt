@@ -45,4 +45,8 @@ public:
     virtual T Evaluate(const SurfaceInteraction &si) const = 0;
 };
 
+// The Lanczos windowed sinc function limits the extent of the sinc function to a
+// number of cycles controlled by the tau parameter.
+Float LanczosFilter(Float coordinate, Float tau = 2);
+
 #endif // CPBRT_CORE_TEXTURE_H
