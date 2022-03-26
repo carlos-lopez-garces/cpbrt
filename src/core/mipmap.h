@@ -54,14 +54,100 @@ public:
             // then resample the result in the t direction to obtain the final image of
             // resolution (s^2, t^2). 
 
-            // Resample (magnify) in the s direction. The resulting image will have a
+            // s-pass: Resample (magnify) in the s direction. The resulting image will have a
             // resolution of (resolutionPow2[0], resolution[1]).
             std::unique_ptr<ResampleWeight[]> sWeights = resampleWeights(resolution.x, resolutionPow2.x);
             // Allocate space for the final image of resolution (resolutionPow2[0], resolutionPow2[1]),
             // not just for this pass in the s direction.
             resampledImage.reset(new T[resolutionPow2.x * resolutionPow2.y]);
+            ParallelFor(
+                // Each t is one row of texels of the original image.
+                [&](int t) {
+                    // Each s is a texel in this row.
+                    for (int s = 0; i < resolutionPow2.x; ++s) {
+                        // 0 corresponds to ImageWrap::Black. It'll be overwritten if wrapMode is
+                        // actually Repeat or Clamp.
+                        resampledImage[t * resolutionPow2.x + s] = 0.f;
+                        // Each texel of the resampled, higher-resolution image takes
+                        // contributions from 4 texels of the original image, the ones that
+                        // surround the resampled sample point in the original image (the center
+                        // of the reconstruction filter).
+                        for (int j = 0; j < 4; ++j) {
+                            int originalS = sWeights[s].firstTexel + j;
 
-            // Resample (magnify) in the t direction.
+                            if (wrapMode == ImageWrap::Repeat) {
+                                originalS = Mod(originalS, resolution.x);
+                            } else if (wrapMode == ImageWrap::Clamp) {
+                                originalS = Clamp(originalS, 0, resolution.x-1);
+                            }
+
+                            if (originalS >= 0 && originalS < (int) resolution.x) {
+                                // New texel in the resampled, higher-resolution image is the weighted
+                                // average of 4 original texels that surround the image look up point. 
+                                resampledImage[t * resolutionPow2.x + s] += sWeights[s].weight[j] * image[t * resolution.x + originalS];
+                            }
+                        }
+                    }
+                },
+                // Each thread processes 16 of the texels in the given row.
+                resolution.y,
+                16
+            );
+
+            // t-pass: Resample (magnify) in the t direction.
+            std::unique_ptr<ResampleWeight[]> tWeights = resampleWeights(resolution.y, resolutionPow2.y);
+            std::vector<T *> resampleBuffers;
+            int nThreads = MaxThreadIndex();
+            // Give each thread a column of the resized image to work on.
+            for (int i = 0; i < nThreads; ++i) {
+                resampleBuffers.push_back(new T[resolutionPow2.y]);
+            }
+            ParallelFor(
+                // Each s is one column of texels of the original image.
+                [&](int s) {
+                    T *workData = resampleBuffers[ThreadIndex];
+
+                    // Each t is a texel in this column.
+                    for (int t = 0; t < resolutionPow2.y; ++t) {
+                        // 0 corresponds to ImageWrap::Black. It'll be overwritten if wrapMode is
+                        // actually Repeat or Clamp.
+                        workData[t] = 0.f;
+                        // Each texel of the resampled, higher-resolution image takes
+                        // contributions from 4 texels of the original image, the ones that
+                        // surround the resampled sample point in the original image (the center
+                        // of the reconstruction filter).
+                        for (int j = 0; j < 4; ++j) {
+                            int offset = tWeights[t].firstTexel + j;
+
+                            if (wrapMode == ImageWrap::Repeat) {
+                                offset = Mod(offset, resolution.y);
+                            } else if (wrapMode == ImageWrap::Clamp) {
+                                offset = Clamp(offset, 0, (int) resolution.y-1);
+                            }
+
+                            if (offset >= 0 && offset < (int) resolution.y) {
+                                // New texel in the resampled, higher-resolution image is the weighted
+                                // average of 4 original texels that surround the image look up point.
+                                // The weight influences the value of the new texel that was set in the
+                                // s-pass.
+                                workData[t] += tWeights[t].weight[j] * resampledImage[offset * resolutionPow2.x + s];
+                            }
+                        }
+                    }
+
+                    // Set the final texel values.
+                    for (int t = 0; t < resolutionPow2.y; ++t) {
+                        resampledImage[t * resolutionPow2.x + s] = Clamp(workData[t], 0.f, Infinity);
+                    }
+                },
+                // Each thread processes 32 of the texels in the given column.
+                resolutionPow2.x,
+                32
+            );
+
+            for (auto buffer : resampleBuffers) delete[] buffer;
+
+            resolution = resolutionPow2;
         }
     }
 
