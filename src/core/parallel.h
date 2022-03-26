@@ -71,4 +71,7 @@ void ParallelCleanup();
 
 int NumSystemCores();
 
+// Either the number of threads that CPBRT was initialized with or the number of cores.
+int MaxThreadIndex();
+
 #endif // CPBRT_CORE_PARALLEL_H

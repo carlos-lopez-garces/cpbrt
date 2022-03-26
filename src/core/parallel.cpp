@@ -315,3 +315,7 @@ void ParallelCleanup() {
 int NumSystemCores() {
     return std::max(1u, std::thread::hardware_concurrency());
 }
+
+int MaxThreadIndex() {
+    return CpbrtOptions.nThreads == 0 ? NumSystemCores() : CpbrtOptions.nThreads;
+}
