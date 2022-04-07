@@ -106,4 +106,52 @@ public:
     }
 };
 
+template <typename T, int logBlockSize> class BlockedArray {
+private:
+    T *data;
+    const int uRes;
+    const int vRes;
+    const int uBlocks;
+
+public:
+    BlockedArray(int uRes, int vRes, const T *d = nullptr)
+      : uRes(uRes), vRes(vRes), uBlocks(RoundUp(uRes) >> logBlocksize) {
+
+        int nAlloc = RoundUp(uRes) * RoundUp(vRes);
+        data = AllocAligned<T>(nAlloc);
+
+        for (int i = 0; i < nAlloc; ++i) {
+            // "Placement" syntax: specify the location where the object of type T
+            // will be initialized.
+            new (&data[i]) T(); 
+        }
+
+        if (d) {
+            for (int v = 0; v < vRes; ++v) {
+                for (int u = 0; u < uRes; ++u) {
+                    // Copy from the source data into the corresponding block.
+                    (*this)(u, v) = d[v * uRes + u];
+                }
+            }
+        }
+    }
+
+    constexpr int BlockSize() const {
+        // 2^logBlockSize.
+        return 1 << logBlockSize;
+    }
+
+    int RoundUp(int x) const {
+        return (x + BlockSize() - 1) & ~(BlockSize() - 1);
+    }
+
+    int uSize() const {
+        return uRes;
+    }
+
+    int vSize() const {
+        return vRes;
+    }
+};
+
 #endif // CPBRT_CORE_MEMORY_H
