@@ -106,6 +106,11 @@ public:
     }
 };
 
+// Blocked arrays subdivide the data into square blocks of a small fixed power-of-2 size.
+// Entries are identified with a (u,v) coordinate. Each u coordinate maps to a block and
+// then an offset into that block; the v coordinate too: (b_u, b_v) is the block number 
+// of a given (u,v) coordinate and (o_u, o_v) is the offset into it. These block numbers
+// and offsets are used to compute the index of the (u,v) into the linear data array.
 template <typename T, int logBlockSize> class BlockedArray {
 private:
     T *data;
@@ -114,6 +119,8 @@ private:
     const int uBlocks;
 
 public:
+    // Entries in the 
+    // logBlockSize is the exponent of the power of 2 that is the size of each block.
     BlockedArray(int uRes, int vRes, const T *d = nullptr)
       : uRes(uRes), vRes(vRes), uBlocks(RoundUp(uRes) >> logBlocksize) {
 
@@ -151,6 +158,27 @@ public:
 
     int vSize() const {
         return vRes;
+    }
+
+    // (u,v) entries are indexed by block first and then offset.
+    int Block(int a) const {
+        return a >> logBlockSize;
+    }
+
+    int Offset(int a) const {
+        return (a & (BlockSize() - 1));
+    }
+
+    // Retrieves the entry at the (u,v) coordinate from the linear array.
+    T &operator()(int u, int v) {
+        // Compute block number.
+        int bu = Block(u), bv = Block(v);
+        // Compute offset into block.
+        int ou = Offset(u), ov = Offset(v);
+        // Compute offset into linear array.
+        int offset = BlockSize() * BlockSize() * (uBlocks * bv + bu);
+        offset += BlockSize() * ov + ou;
+        return data[offset];
     }
 };
 
