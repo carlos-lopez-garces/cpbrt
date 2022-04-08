@@ -23,14 +23,19 @@ struct ResampleWeight {
     Float weight[4];
 };
 
+// The structure of the MIPMap is a pyramid where each level, from the base up, has
+// increasingly lower resolution. Each texel of each level is the result of filtering
+// 4 texels of the lower, higher-resolution level. The base level is the original image
+// (or the resampled one if its resolution wasn't a power of 2).
 template <typename T> class MIPMap {
 private:
     const bool doTrilinearFiltering;
     const Float maxAnisotropy;
     const ImageWrap wrapMode;
+    std::vector<std::unique_ptr<BlockedArray<T>>> pyramid;
 
 public:
-    template <typename T> MIPMap<T>::MIPMap(
+    template <typename T> MIPMap(
         const Point2i &resolution,
         const T *image,
         bool doTrilinearFiltering,
@@ -149,7 +154,50 @@ public:
 
             resolution = resolutionPow2;
         }
+        
+        // Initialize mip map levels from image.
+        int nLevels = 1 + Log2Int(std::max(resolution.x, resolution.y));
+        pyramid.resize(nLevels);
+
+        // Initialize the most detailed level of the MIPMap (the base), that is, the original
+        // image or the resampled one if its resolution wasn't a power of 2.
+        pyramid[0].reset(new BlockedArray<T>(resolution.x, resolution.y, resampledImage ? resampledImage.get() : image));
+
+        // Initialize the rest of the levels.
+        for (int i = 1; i < nLevels; ++i) {
+            int sRes = std::max(1, pyramid[i-1]->uSize() / 2);
+            int tRes = std::max(1, pyramid[i-1]->vSize() / 2);
+            pyramid[i].reset(new BlockedArray<T>(sRes, tRes));
+            // Filter 4 texels from the previous, higher-resolution level to give each texel
+            // of this level its value.
+            ParallelFor(
+                [&](int t) {
+                    for (int s = 0; s < sRes; ++s) {
+                        (*pyramid[i])(s, t) = .25f * (Texel(i-1, 2*s, 2*t)   + Texel(i-1, 2*s+1, 2*t) + Texel(i-1, 2*s, 2*t+1) + Texel(i-1, 2*s+1, 2*t+1));
+                    }
+                }, 
+                tRes, 
+                16
+            );
+        }
+
+        // TODO: initialize EWA filter weights if needed.
     }
+
+    int Width() const {
+        return resolution.x;
+    }
+
+    int Height() const {
+        return resolution.y;
+    }
+
+    int Levels() const {
+        return pyramid.size();
+    }
+
+    // Returns the value of the texel at (s,t). The ImageWrap choice applies.
+    template <typename T> const T &Texel(int level, int s, int t) const;
 
 private:
     // resampleWeights returns one ResampleWeight object per original texel in column or row
