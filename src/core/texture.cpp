@@ -37,7 +37,7 @@ Point2f UVMapping2D::Map(const SurfaceInteraction &si, Vector2f *dstdx, Vector2f
     return Point2f(su * si.uv[0] + du, sv * si.uv[1] + dv);
 }
 
-Filter LanczosFilter(Float coordinate, Float tau) {
+Float LanczosFilter(Float coordinate, Float tau) {
     Float x = coordinate;
     x = std::abs(x);
     if (x < 1e-5f) return 1;
