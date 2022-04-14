@@ -122,7 +122,7 @@ public:
     // Entries in the 
     // logBlockSize is the exponent of the power of 2 that is the size of each block.
     BlockedArray(int uRes, int vRes, const T *d = nullptr)
-      : uRes(uRes), vRes(vRes), uBlocks(RoundUp(uRes) >> logBlocksize) {
+      : uRes(uRes), vRes(vRes), uBlocks(RoundUp(uRes) >> logBlockSize) {
 
         int nAlloc = RoundUp(uRes) * RoundUp(vRes);
         data = AllocAligned<T>(nAlloc);

@@ -29,6 +29,7 @@ struct ResampleWeight {
 // (or the resampled one if its resolution wasn't a power of 2).
 template <typename T> class MIPMap {
 private:
+    Point2i resolution;
     const bool doTrilinearFiltering;
     const Float maxAnisotropy;
     const ImageWrap wrapMode;
@@ -36,15 +37,15 @@ private:
 
 public:
     template <typename T> MIPMap(
-        const Point2i &resolution,
+        const Point2i &imageResolution,
         const T *image,
-        bool doTrilinearFiltering,
-        Float maxAnisotropy,
-        ImageWrap wrapMode
+        bool doTrilinearFiltering = false,
+        Float maxAnisotropy = 8.f,
+        ImageWrap wrapMode = ImageWrap::Repeat
     ) : doTrilinearFiltering(doTrilinearFiltering),
         maxAnisotropy(maxAnisotropy),
         wrapMode(wrapMode),
-        resolution(resolution) {
+        resolution(imageResolution) {
 
         std::unique_ptr<T[]> resampledImage = nullptr;
         if (!IsPowerOf2(resolution.x) || !IsPowerOf2(resolution.y)) {
@@ -69,7 +70,7 @@ public:
                 // Each t is one row of texels of the original image.
                 [&](int t) {
                     // Each s is a texel in this row.
-                    for (int s = 0; i < resolutionPow2.x; ++s) {
+                    for (int s = 0; s < resolutionPow2.x; ++s) {
                         // 0 corresponds to ImageWrap::Black. It'll be overwritten if wrapMode is
                         // actually Repeat or Clamp.
                         resampledImage[t * resolutionPow2.x + s] = 0.f;
@@ -142,7 +143,7 @@ public:
 
                     // Set the final texel values.
                     for (int t = 0; t < resolutionPow2.y; ++t) {
-                        resampledImage[t * resolutionPow2.x + s] = Clamp(workData[t], 0.f, Infinity);
+                        resampledImage[t * resolutionPow2.x + s] = clamp(workData[t]);
                     }
                 },
                 // Each thread processes 32 of the texels in the given column.
@@ -197,14 +198,14 @@ public:
     }
 
     // Returns the value of the texel at (s,t). The ImageWrap choice applies.
-    template <typename T> const T &Texel(int level, int s, int t) const;
+    const T &Texel(int level, int s, int t) const;
 
 private:
     // resampleWeights returns one ResampleWeight object per original texel in column or row
     // of the original image. The information returned, which is for one column or one row,
     // applies to the rest of the columns or rows of the image.
     std::unique_ptr<ResampleWeight[]> resampleWeights(int oldResolution, int newResolution) {
-        std::unique_ptr<ResampleWeight> weight(new ResampleWeight[newResolution]);
+        std::unique_ptr<ResampleWeight[]> weight(new ResampleWeight[newResolution]);
         // 2 original texels. 4 texels end up contributing to each new texel in the resampled,
         // higher resolution image: 2 in the s and 2 in the t direction.
         Float filterWidth = 2.f;
@@ -229,6 +230,21 @@ private:
             }
         }
         return weight;
+    }
+
+    // T may be a Float, RGBSpectrum, or SampledSpectrum. We let template instantiation
+    // invoke the right clamp() overload.
+
+    Float clamp(Float v) {
+        return Clamp(v, 0.f, Infinity);
+    }
+    
+    RGBSpectrum clamp(const RGBSpectrum &v) {
+         return v.Clamp(0.f, Infinity); 
+    }
+
+    SampledSpectrum clamp(const SampledSpectrum &v) {
+        return v.Clamp(0.f, Infinity);
     }
 };
 
