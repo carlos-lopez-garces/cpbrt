@@ -3,12 +3,15 @@
 
 #include "core/light.h"
 #include "core/mipmap.h"
+#include "core/scene.h"
 #include "core/spectrum.h"
 #include "core/transform.h"
 
 class InfiniteAreaLight : public Light {
 private:
     std::unique_ptr<MIPMap<RGBSpectrum>> LMap;
+    Point3f worldCenter;
+    Float worldRadius;
 
 public:
     // If the light is backed by a texture, each texel's value gets multiplied
@@ -19,6 +22,10 @@ public:
         int nSamples,
         const std::string &textureFilepath
     );
+
+    void Preprocess(const Scene &scene) {
+        scene.WorldBound().BoundingSphere(&worldCenter, &worldRadius);
+    }
 };
 
 #endif // CPBRT_LIGHTS_INFINITE_H
