@@ -26,6 +26,9 @@ public:
     void Preprocess(const Scene &scene) {
         scene.WorldBound().BoundingSphere(&worldCenter, &worldRadius);
     }
+
+    // Computes total power emitted.
+    Spectrum Power() const;
 };
 
 #endif // CPBRT_LIGHTS_INFINITE_H

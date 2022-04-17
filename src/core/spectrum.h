@@ -326,6 +326,10 @@ public:
 
     RGBSpectrum(const CoefficientSpectrum<3> &v) : CoefficientSpectrum<3>(v) {}
 
+    RGBSpectrum(const RGBSpectrum &s, SpectrumType type = SpectrumType::Reflectance) {
+        *this = s;
+    }
+
     static RGBSpectrum FromRGB(const Float rgb[3], SpectrumType = SpectrumType::Reflectance) {
         RGBSpectrum rsp;
         rsp.c[0] = rgb[0];

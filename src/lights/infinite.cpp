@@ -35,3 +35,7 @@ InfiniteAreaLight::InfiniteAreaLight(
     // Create a mip map for the texture.
     LMap.reset(new MIPMap<RGBSpectrum>(resolution, texels.get()));
 }
+
+Spectrum InfiniteAreaLight::Power() const {
+    return Pi * worldRadius * worldRadius * Spectrum(LMap->Lookup(Point2f(.5f, .5f), .5f), SpectrumType::Illuminant);
+}
