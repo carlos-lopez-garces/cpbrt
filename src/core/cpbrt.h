@@ -441,6 +441,12 @@ inline int Log2Int(int64_t v) {
     return Log2Int((uint64_t) v);
 }
 
+// Computes the base 2 logarithm of x.
+inline Float Log2(Float x) {
+    const Float invLog2 = 1.442695040888963387004650940071;
+    return std::log(x) * invLog2;
+}
+
 extern Options CpbrtOptions;
 
 #endif // CPBRT_CORE_PBRT_H
