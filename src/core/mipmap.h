@@ -200,6 +200,11 @@ public:
     // Returns the value of the texel at (s,t). The ImageWrap choice applies.
     const T &Texel(int level, int s, int t) const;
 
+    // Samples the mipmap at (s,t) using a filter of the given width. The mipmap level
+    // to sample corresponds to the one whose resolution is such that the filter width
+    // covers 4 texels around the sample point.
+    T Lookup(const Point2f &st, Float width) const;
+
 private:
     // resampleWeights returns one ResampleWeight object per original texel in column or row
     // of the original image. The information returned, which is for one column or one row,
