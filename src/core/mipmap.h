@@ -251,6 +251,10 @@ private:
     SampledSpectrum clamp(const SampledSpectrum &v) {
         return v.Clamp(0.f, Infinity);
     }
+
+    // Filters the 4 texels around the sample point (s,t) at the given mipmap level using
+    // a triangle filter.
+    T MIPMap<T>::triangle(int level, const Point2f &st) const;
 };
 
 #endif // CPBRT_CORE_MIPMAP_H

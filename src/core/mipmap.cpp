@@ -42,3 +42,16 @@ template <typename T> T MIPMap<T>::Lookup(const Point2f &st, Float width) const 
         return Lerp(delta, triangle(iLevel, st), triangle(iLevel + 1, st));
     }
 }
+
+template <typename T> T MIPMap<T>::triangle(int level, const Point2f &st) const {
+    level = Clamp(level, 0, Levels() - 1);
+    Float s = st[0] * pyramid[level]->uSize() - 0.5f;
+    Float t = st[1] * pyramid[level]->vSize() - 0.5f;
+    int s0 = std::floor(s), t0 = std::floor(t);
+    Float ds = s - s0, dt = t - t0;
+
+    return (1 - ds) * (1 - dt) * Texel(level, s0,   t0) +
+           (1 - ds) * dt       * Texel(level, s0,   t0+1) +
+           ds       * (1 - dt) * Texel(level, s0+1, t0) +
+           ds       * dt       * Texel(level, s0+1, t0+1);
+}
