@@ -39,3 +39,11 @@ InfiniteAreaLight::InfiniteAreaLight(
 Spectrum InfiniteAreaLight::Power() const {
     return Pi * worldRadius * worldRadius * Spectrum(LMap->Lookup(Point2f(.5f, .5f), .5f), SpectrumType::Illuminant);
 }
+
+Spectrum InfiniteAreaLight::Le(const RayDifferential &rd) const {
+    Vector3f w = Normalize(WorldToLight(rd.d));
+    // Texture sample point. Convert ray direction (a rectangular 3D coordinate)
+    // to spherical coordinate.
+    Point2f st(SphericalPhi(w) * Inv2Pi, SphericalTheta(w) * InvPi);
+    return Spectrum(LMap->Lookup(st), SpectrumType::Illuminant);
+}

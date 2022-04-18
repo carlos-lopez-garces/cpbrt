@@ -7,6 +7,9 @@
 #include "core/spectrum.h"
 #include "core/transform.h"
 
+// An infinite area light has the shape of a sphere, whose interior surface emits
+// light in the direction of the scene. Radiance along a given direction is 
+// determined by the texel of a texture, if any.
 class InfiniteAreaLight : public Light {
 private:
     std::unique_ptr<MIPMap<RGBSpectrum>> LMap;
@@ -29,6 +32,10 @@ public:
 
     // Computes total power emitted.
     Spectrum Power() const;
+
+    // To be called for rays that escape the bounds of the scene without hitting any
+    // geometry. The ray is used to sample the associated texture, if any.
+    Spectrum Le(const RayDifferential &rd) const;
 };
 
 #endif // CPBRT_LIGHTS_INFINITE_H
