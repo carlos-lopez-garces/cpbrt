@@ -100,6 +100,7 @@ inline Float CosineHemispherePdf(Float cosTheta) {
     return cosTheta * InvPi;
 }
 
+// A piecewise-constant 1D distribution.
 struct Distribution1D {
     // The n images of a piecewise-constant function.
     std::vector<Float> f;
@@ -238,6 +239,57 @@ struct Distribution1D {
 
     int Count() const {
         return f.size();
+    }
+};
+
+// A piecewise-constant 2D distribution.
+class Distribution2D {
+private:
+    // Conditional density function p(u|v) of u given v for every value of v.
+    std::vector<std::unique_ptr<Distribution1D>> pConditionalV;
+
+    // Marginal density function p(v) for every value of v.
+    std::unique_ptr<Distribution1D> pMarginal;
+
+public:
+    // The given array is a discretized 2D function, f(u,v).
+    Distribution2D(const Float *f, int nu, int nv) {
+        for (int v = 0; v < nv; ++v) {
+            // Compute conditional sampling distribution for v. Note that the conditional
+            // density function of u given v is based on the vth row.
+            pConditionalV.emplace_back(new Distribution1D(&f[v * nu], nu));
+        }
+
+        // Compute marginal sampling distribution for v.
+        std::vector<Float> marginalFunctions;
+        for (int v = 0; v < nv; ++v) {
+            marginalFunctions.push_back(pConditionalV[v]->definiteIntegral);
+        }
+        pMarginal.reset(new Distribution1D(&marginalFunctions[0], nv));
+    }
+
+    // Samples the 2D (u,v) distribution using a 2D uniformly distributed random variable, u.
+    Point2f SampleContinuous(const Point2f &u, Float *pdf) const {
+        Float pdfs[2];
+        int v;
+
+        // The 2nd component of the uniform bivariate sample is used to obtain a value of v
+        // uniformly at random, as well as its marginal density p(v).
+        Float d1 = pMarginal->SampleContinuous(u[1], &pdfs[1], &v);
+
+        // The 1st component of the uniform bivariate sample is used to sample the conditional
+        // distribution of u given v. 
+        Float d0 = pConditionalV[v]->SampleContinuous(u[0], &pdfs[0]);
+
+        *pdf = pdfs[0] * pdfs[1];
+        return Point2f(d0, d1);
+    }
+
+    // PDF of the distribution. Gives the probability of sampling p (as sampled with SampleContinuous).
+    Float Pdf(const Point2f &p) const {
+        int uIndex = Clamp(int(p[0] * pConditionalV[0]->Count()), 0, pConditionalV[0]->Count() - 1);
+        int vIndex = Clamp(int(p[1] * pMarginal->Count()), 0, pMarginal->Count() - 1);
+        return pConditionalV[vIndex]->f[uIndex] / pMarginal->definiteIntegral;
     }
 };
 
