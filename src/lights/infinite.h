@@ -39,7 +39,8 @@ public:
     // geometry. The ray is used to sample the associated texture, if any.
     Spectrum Le(const RayDifferential &rd) const;
 
-    // Computes incident radiance at the point of Interaction.
+    // Computes incident radiance at the point of Interaction coming from a sampled
+    // point on the environment map.
     Spectrum Sample_Li(
         // A point on a surface possibly lit by this light.
         const Interaction &it,
@@ -51,6 +52,8 @@ public:
         Float *pdf,
         VisibilityTester *vis
     );
+
+    Float Pdf_Li(const Interaction &it, const Vector3f &w) const;
 };
 
 #endif // CPBRT_LIGHTS_INFINITE_H

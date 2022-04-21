@@ -131,3 +131,22 @@ Spectrum InfiniteAreaLight::Sample_Li(
     *vis = VisibilityTester(it, Interaction(it.p + *wi * (2 * worldRadius), it.time, mediumInterface));
     return Spectrum(LMap->Lookup(uv), SpectrumType::Illuminant);
 }
+
+Float InfiniteAreaLight::Pdf_Li(const Interaction &it, const Vector3f &w) const {
+    Vector3f wi = WorldToLight(w);
+    Float theta = SphericalTheta(wi);
+    Float phi = SphericalPhi(wi);
+    Float sinTheta = std::sin(theta);
+    if (sinTheta == 0) {
+        return 0;
+    }
+
+    // Apply the inverse of the mapping g: (theta, phi) -> (vPi, 2uPi) to recover the (u,v) coordinate
+    // sampled by Sample_Li from the environment map and that corresponds to the input, world-space
+    // direction w:
+    // g^-1: (u,v) -> (phi/2Pi, theta/Pi)
+    //
+    // Then, scale p(u,v) using the Jacobian determinants of g and the latitude-longitude mapping
+    // h: (theta, phi) -> (x,y,z).  
+    return distribution->Pdf(Point2f(phi * Inv2Pi, theta * InvPi)) / (2 * Pi * Pi * sinTheta);
+}
