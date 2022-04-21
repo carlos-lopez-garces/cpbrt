@@ -3,6 +3,7 @@
 
 #include "core/light.h"
 #include "core/mipmap.h"
+#include "core/sampling.h"
 #include "core/scene.h"
 #include "core/spectrum.h"
 #include "core/transform.h"
@@ -15,6 +16,7 @@ private:
     std::unique_ptr<MIPMap<RGBSpectrum>> LMap;
     Point3f worldCenter;
     Float worldRadius;
+    std::unique_ptr<Distribution2D> distribution;
 
 public:
     // If the light is backed by a texture, each texel's value gets multiplied
@@ -36,6 +38,19 @@ public:
     // To be called for rays that escape the bounds of the scene without hitting any
     // geometry. The ray is used to sample the associated texture, if any.
     Spectrum Le(const RayDifferential &rd) const;
+
+    // Computes incident radiance at the point of Interaction.
+    Spectrum Sample_Li(
+        // A point on a surface possibly lit by this light.
+        const Interaction &it,
+        // Uniformy distributed 2D sample.
+        const Point2f &u,
+        // Sampled incident direction.
+        Vector3f *wi,
+        // Probability of sampling the returned wi.
+        Float *pdf,
+        VisibilityTester *vis
+    );
 };
 
 #endif // CPBRT_LIGHTS_INFINITE_H

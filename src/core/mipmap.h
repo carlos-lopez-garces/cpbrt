@@ -203,7 +203,7 @@ public:
     // Samples the mipmap at (s,t) using a filter of the given width. The mipmap level
     // to sample corresponds to the one whose resolution is such that the filter width
     // covers 4 texels around the sample point.
-    T Lookup(const Point2f &st, Float width) const;
+    T Lookup(const Point2f &st, Float width = 0.f) const;
 
 private:
     // resampleWeights returns one ResampleWeight object per original texel in column or row
