@@ -170,7 +170,7 @@ public:
     }
 
     // Retrieves the entry at the (u,v) coordinate from the linear array.
-    T &operator()(int u, int v) {
+    T &operator()(int u, int v) const {
         // Compute block number.
         int bu = Block(u), bv = Block(v);
         // Compute offset into block.

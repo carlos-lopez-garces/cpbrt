@@ -51,9 +51,13 @@ public:
         // Probability of sampling the returned wi.
         Float *pdf,
         VisibilityTester *vis
-    );
+    ) const;
 
     Float Pdf_Li(const Interaction &it, const Vector3f &w) const;
 };
+
+std::shared_ptr<InfiniteAreaLight> CreateInfiniteLight(
+    const Transform &light2world, const ParamSet &paramSet
+);
 
 #endif // CPBRT_LIGHTS_INFINITE_H

@@ -2,6 +2,7 @@
 #include "core/geometry.h"
 #include "core/imageio.h"
 #include "core/medium.h"
+#include "core/paramset.h"
 
 InfiniteAreaLight::InfiniteAreaLight(
     const Transform &lightToWorld,
@@ -89,7 +90,7 @@ Spectrum InfiniteAreaLight::Sample_Li(
     // Probability of sampling the returned wi.
     Float *pdf,
     VisibilityTester *vis
-) {
+) const {
     // Find (u,v) sample coordinates in environment map.
     Float mapPdf;
     Point2f uv = distribution->SampleContinuous(u, &mapPdf);
@@ -149,4 +150,15 @@ Float InfiniteAreaLight::Pdf_Li(const Interaction &it, const Vector3f &w) const 
     // Then, scale p(u,v) using the Jacobian determinants of g and the latitude-longitude mapping
     // h: (theta, phi) -> (x,y,z).  
     return distribution->Pdf(Point2f(phi * Inv2Pi, theta * InvPi)) / (2 * Pi * Pi * sinTheta);
+}
+
+std::shared_ptr<InfiniteAreaLight> CreateInfiniteLight(
+    const Transform &light2world, const ParamSet &paramSet
+) {
+    Spectrum L = paramSet.FindOneSpectrum("L", Spectrum(1.0));
+    Spectrum sc = paramSet.FindOneSpectrum("scale", Spectrum(1.0));
+    std::string textureMap = paramSet.FindOneFilename("mapname", "");
+    int nSamples = paramSet.FindOneInt("samples", paramSet.FindOneInt("nsamples", 1));
+    if (CpbrtOptions.quickRender) nSamples = std::max(1, nSamples / 4);
+    return std::make_shared<InfiniteAreaLight>(light2world, L * sc, nSamples, textureMap);
 }
