@@ -18,6 +18,7 @@
 #include "integrators/path.h"
 #include "integrators/volpath.h"
 #include "lights/diffuse.h"
+#include "lights/infinite.h"
 #include "lights/point.h"
 #include "materials/matte.h"
 #include "materials/metal.h"
@@ -498,8 +499,9 @@ std::shared_ptr<Light> MakeLight(
 
     // TODO: add other types.
     if (name == "point") {
-        light =
-            CreatePointLight(light2world, mediumInterface.outside, paramSet);
+        light = CreatePointLight(light2world, mediumInterface.outside, paramSet);
+    } else if (name == "infinite") {
+        light = CreateInfiniteLight(light2world, paramSet);
     } else {
         Warning("Light \"%s\" unknown.", name.c_str()); 
     }
