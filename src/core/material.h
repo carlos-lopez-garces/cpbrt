@@ -5,6 +5,7 @@
 #include "memory.h"
 
 // TODO: describe.
+// Did the ray start at the camera or at a light source?
 enum class TransportMode {
   Radiance,
   Importance

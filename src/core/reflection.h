@@ -96,6 +96,28 @@ inline Vector3f Reflect(const Vector3f &wo, const Vector3f &n) {
     return -wo + 2*Dot(wo, n)* n;
 }
 
+inline bool Refract(const Vector3f &wi, const Normal3f &n, Float eta, Vector3f *wt) {
+    // ThetaI is the angle of incidence, measured with respect to the normal in reflection
+    // space.
+    Float cosThetaI = Dot(n, wi);
+    Float sin2ThetaI = std::max((Float) 0.f, 1.f - cosThetaI * cosThetaI);
+    
+    // ThetaT is the refraction/transmission angle determined by Snell's law.
+    Float sin2ThetaT = eta * eta * sin2ThetaI;
+
+    if (sin2ThetaT >= 1) {
+        // Total internal reflection. When light travels from a medium to another with
+        // lower refraction index and it does so past a critical angle, tending to
+        // graze the boundary, Snell's law doesn't have a solution and refraction can't
+        // occur, so light gets reflected instead back into the incident medium.
+        return false;
+    }
+    Float cosThetaT = std::sqrt(1 - sin2ThetaT);
+
+    *wt = eta * -wi + (eta * cosThetaI - cosThetaT) * Vector3f(n);
+    return true;
+}
+
 // Evaluates the Fresnel reflectance equation between 2 dielectric media, assuming that light is
 // unpolarized. cosThetaI is the angle of incidence measured from the normal; etaI is the refraction
 // index of the medium that light is traveling through before reaching the interface with the
@@ -345,6 +367,49 @@ public:
     Float Pdf(const Vector3f &wo, const Vector3f &wi) {
         return 0;
     }
+};
+
+class SpecularTransmission : public BxDF {
+private:
+    const Spectrum T;
+    const Float etaA;
+    const Float etaB;
+    const FresnelDielectric fresnel;
+    const TransportMode mode;
+
+public:
+    SpecularTransmission(
+        // Transmission scale factor.
+        const Spectrum &T,
+        // Incoming medium's refraction index.
+        Float etaA,
+        // Transmission medium's refraction index.
+        Float etaB,
+        // Did the ray intersecting the point where this BTDF is computed start at the camera
+        // or at a light source?
+        TransportMode mode
+    ) : BxDF(BxDFType(BSDF_TRANSMISSION | BSDF_SPECULAR)),
+        T(T),
+        etaA(etaA),
+        etaB(etaB),
+        fresnel(etaA, etaB),
+        mode(mode)
+    {}
+
+    // BTDF. Computes the spectral distribution of a radiometric quantity over wavelength for an
+    // arbitrary pair of transmission and incident directions. Since there's no chance that an
+    // arbitrary pair will satisfy the perfect transmission relation, the returned reflectance
+    // is 0. A Dirac delta distribution indeed.
+    Spectrum f(const Vector3f &wo, const Vector3f &wi) const {
+        return Spectrum(0.f); 
+    }
+
+    // Samples the BTDF. The only possible incident direction wi for the input transmission wo
+    // is governed by Snell's law of refraction. The normal vector doesn't need to be known
+    // because it corresponds to the vertical axis in the reflection coordinate system.
+    Spectrum Sample_f(
+        const Vector3f &wo, Vector3f *wi, const Point2f &sample, Float *pdf, BxDFType *sampledType
+    ) const;
 };
 
 // Oren-Nayar models diffuse reflection of rough surfaces (which appear brighter as the viewing

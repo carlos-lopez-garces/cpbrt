@@ -198,6 +198,45 @@ Spectrum SpecularReflection::Sample_f(
     return fresnel->Evaluate(CosTheta(*wi)) * R / AbsCosTheta(*wi);
 }
 
+Spectrum SpecularTransmission::Sample_f(
+    const Vector3f &wo, Vector3f *wi, const Point2f &sample, Float *pdf, BxDFType *sampledType
+) const {
+    // Is the ray entering or exiting the medium? cos(theta) is computed in reflection space;
+    // theta is measured from the transmission boundary's normal; in reflection space, cos(theta)
+    // corresponds to the z coordinate of wo.
+    bool entering = CosTheta(wo) > 0;
+    Float etaI = entering ? etaA : etaB;
+    Float etaT = entering ? etaB : etaA;
+
+    // Compute ray direction for specular transmission.
+    if (!Refract(wo, Faceforward(Normal3f(0, 0, 1), wo), etaI / etaT, wi)) {
+        return 0;
+    }
+
+    // The distribution of transmission directions is a Dirac delta. For a given transmission
+    // direction, a unique incident direction is determined by Snell's law deterministically.
+    // This direction is "sampled" with probability 1.
+    *pdf = 1;
+
+    // T * (1 - Fr), where T is a scaling factor. The 1 - Fr is larger for incidence directions
+    // near the normal. Transmisison is thus stronger when the ray enters the medium orthogonally
+    // than when it does at a grazing angle. The stronger transmission, the more visible the
+    // transmission medium becomes (or what's on the other side of the boundary); the weaker
+    // transmission is, the stronger reflection becomes.
+    Spectrum ft = T * (Spectrum(1.) - fresnel.Evaluate(CosTheta(*wi)));
+
+    // Account for non-symmetry with transmission to different medium.
+    // TODO: explain after reading section 16.1.3.
+    if (mode == TransportMode::Radiance) {
+        ft *= (etaI * etaI) / (etaT * etaT);
+    }
+
+    // The 1/|cos(wi)| factor is meant to cancel out the |cos(wi)| factor of the integrand of
+    // the scattering equation, the one that places the area differential on the plane of the
+    // transmission medium's boundary.
+    return ft / AbsCosTheta(*wi);
+}
+
 Spectrum OrenNayarReflection::f(const Vector3f &wo, const Vector3f &wi) const {
     // ThetaI (ThetaO) is the colatitude angle of the spherical coordinate of wi (wo) in the
     // shading coordinate system. See reflection.h.
