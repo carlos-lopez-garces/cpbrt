@@ -237,6 +237,62 @@ Spectrum SpecularTransmission::Sample_f(
     return ft / AbsCosTheta(*wi);
 }
 
+Spectrum FresnelSpecularReflectionTransmission::Sample_f(
+    const Vector3f &wo, Vector3f *wi, const Point2f &u, Float *pdf, BxDFType *sampledType
+) const {
+    // Evaluate the Fresnel reflectance equation between 2 dielectric media. This Fresnel term
+    // is used to "modulate" the contributions of the BRDF and the BTDF; in reality, F is
+    // interpreted as a probability of sampling the BRDF vs the BTDF in a given call. For example,
+    // at glancing angles, where reflection is strong, the BRDF has a larger contribution, so it
+    // has a larger probability of being sampled.
+    Float F = FrDielectric(CosTheta(wo), etaA, etaB);
+    // u is a sample from a uniform distribution that is used as a probability threshold to choose
+    // between sampling the BRDF (< u) and the BTDF(> u).
+    if (u[0] < F) {
+        // Evaluate the BRDF.
+
+        // Perfect specular reflection direction.
+        *wi = Vector3f(-wo.x, -wo.y, wo.z);
+        if (sampledType) {
+            *sampledType = BxDFType(BSDF_SPECULAR | BSDF_REFLECTION);
+        }
+
+        *pdf = F;
+
+        // Same as SpecularReflection::Sample_f.
+        return F * R / AbsCosTheta(*wi);
+    } else {
+        // Evaluate the BTDF. 
+        // Is the ray entering or exiting the medium? cos(theta) is computed in reflection space;
+        // theta is measured from the transmission boundary's normal; in reflection space, cos(theta)
+        // corresponds to the z coordinate of wo.
+        bool entering = CosTheta(wo) > 0;
+        Float etaI = entering ? etaA : etaB;
+        Float etaT = entering ? etaB : etaA;
+
+        // Perfect specular transmission direction.
+        if (!Refract(wo, Faceforward(Normal3f(0, 0, 1), wo), etaI / etaT, wi)) {
+            return 0;
+        }
+
+        // T * (1 - Fr), where T is a scaling factor. The 1 - Fr is larger for incidence directions
+        // near the normal. Transmisison is thus stronger when the ray enters the medium orthogonally
+        // than when it does at a grazing angle. The stronger transmission, the more visible the
+        // transmission medium becomes (or what's on the other side of the boundary); the weaker
+        // transmission is, the stronger reflection becomes.
+        Spectrum ft = T * (1 - F);
+
+        if (sampledType) {
+            *sampledType = BxDFType(BSDF_SPECULAR | BSDF_TRANSMISSION);
+        }
+
+        *pdf = 1 - F;
+
+        // Same as SpecularTransmission::Sample_f.
+        return ft / AbsCosTheta(*wi);
+    }
+}
+
 Spectrum OrenNayarReflection::f(const Vector3f &wo, const Vector3f &wi) const {
     // ThetaI (ThetaO) is the colatitude angle of the spherical coordinate of wi (wo) in the
     // shading coordinate system. See reflection.h.

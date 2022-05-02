@@ -371,23 +371,26 @@ public:
 
 class SpecularTransmission : public BxDF {
 private:
+    // Transmission scale factor.
+    // TODO: ?
     const Spectrum T;
+
+    // Incoming medium's refraction index.
     const Float etaA;
+
+    // Transmission medium's refraction index.
     const Float etaB;
+
+    // Fresnel equations.
     const FresnelDielectric fresnel;
+
+    // Did the ray intersecting the point where this BTDF is computed start at the camera
+    // or at a light source?
     const TransportMode mode;
 
 public:
     SpecularTransmission(
-        // Transmission scale factor.
-        const Spectrum &T,
-        // Incoming medium's refraction index.
-        Float etaA,
-        // Transmission medium's refraction index.
-        Float etaB,
-        // Did the ray intersecting the point where this BTDF is computed start at the camera
-        // or at a light source?
-        TransportMode mode
+        const Spectrum &T, Float etaA, Float etaB, TransportMode mode
     ) : BxDF(BxDFType(BSDF_TRANSMISSION | BSDF_SPECULAR)),
         T(T),
         etaA(etaA),
@@ -409,6 +412,46 @@ public:
     // because it corresponds to the vertical axis in the reflection coordinate system.
     Spectrum Sample_f(
         const Vector3f &wo, Vector3f *wi, const Point2f &sample, Float *pdf, BxDFType *sampledType
+    ) const;
+};
+
+// Called just FresnelSpecular in PBRT.
+class FresnelSpecularReflectionTransmission : public BxDF {
+private:
+    // TODO: ?
+    const Spectrum R;
+
+    // Transmission scale factor.
+    const Spectrum T;
+
+    // Incoming medium's refraction index.
+    Float etaA;
+    // Transmission medium's refraction index.
+    Float etaB;
+
+    // Fresnel equations.
+    const FresnelDielectric fresnel;
+
+    // Did the ray intersecting the point where this BTDF is computed start at the camera
+    // or at a light source?
+    const TransportMode mode;
+
+public:
+    FresnelSpecularReflectionTransmission(
+        const Spectrum &R, const Spectrum &T, Float etaA, Float etaB, TransportMode mode
+    ) : BxDF(BxDFType(BSDF_REFLECTION | BSDF_TRANSMISSION | BSDF_SPECULAR)),
+        R(R), T(T), etaA(etaA), etaB(etaB), fresnel(etaA, etaB), mode(mode)
+    { }
+
+    // BSDF. See SpecularReflection::f and SpecularTransmission::f.
+    Spectrum f(const Vector3f &wo, const Vector3f &wi) const { 
+        return Spectrum(0.f);
+    }
+
+    // Samples the BSDF, which has a Dirac delta distribution. u is a sample from a uniform distribution
+    // that is used as a probability threshold to choose between sampling the BRDF (< u) and the BTDF(> u).
+    Spectrum Sample_f(
+        const Vector3f &wo, Vector3f *wi, const Point2f &u, Float *pdf, BxDFType *sampledType
     ) const;
 };
 
