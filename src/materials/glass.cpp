@@ -30,7 +30,7 @@ void GlassMaterial::ComputeScatteringFunctions(
     bool isSpecular = uRough == 0. && vRough == 0.;
     if (isSpecular && allowMultipleLobes) {
         // PathIntegrator and VolPathIntegrator pass allowMultipleLobes=true.
-        si->bsdf->Add(arena, FresnelSpecularReflectionTransmission)(R, T, 1., eta, mode);
+        si->bsdf->Add(ARENA_ALLOC(arena, FresnelSpecularReflectionTransmission)(R, T, 1., eta, mode));
     } else {
         // DirectLightingIntegrator passes allowMultipleLobes=false.
 
@@ -53,4 +53,19 @@ void GlassMaterial::ComputeScatteringFunctions(
             } 
         }
     }
+}
+
+GlassMaterial *CreateGlassMaterial(const TextureParams &mp) {
+    // Reflectance.
+    std::shared_ptr<Texture<Spectrum>> Kr = mp.GetSpectrumTexture("Kr", Spectrum(1.f));
+    // Transmittance.
+    std::shared_ptr<Texture<Spectrum>> Kt = mp.GetSpectrumTexture("Kt", Spectrum(1.f));
+    // Index of refraction IOR of the inside of the object.
+    std::shared_ptr<Texture<Float>> eta = mp.GetFloatTextureOrNull("eta");
+    if (!eta) eta = mp.GetFloatTexture("index", 1.5f);
+    std::shared_ptr<Texture<Float>> roughu = mp.GetFloatTexture("uroughness", 0.f);
+    std::shared_ptr<Texture<Float>> roughv = mp.GetFloatTexture("vroughness", 0.f);
+    std::shared_ptr<Texture<Float>> bumpMap = mp.GetFloatTextureOrNull("bumpmap");
+    bool remapRoughness = mp.FindBool("remaproughness", true);
+    return new GlassMaterial(Kr, Kt, roughu, roughv, eta, bumpMap, remapRoughness);
 }

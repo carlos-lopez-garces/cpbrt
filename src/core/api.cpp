@@ -20,6 +20,7 @@
 #include "lights/diffuse.h"
 #include "lights/infinite.h"
 #include "lights/point.h"
+#include "materials/glass.h"
 #include "materials/matte.h"
 #include "materials/metal.h"
 #include "materials/mirror.h"
@@ -421,7 +422,9 @@ std::shared_ptr<Material> MakeMaterial(const std::string &name, const TexturePar
     } else if (name == "plastic") {
         material = CreatePlasticMaterial(mp);
     } else if (name == "metal") {
-        material = CreateMetalMaterial(mp); 
+        material = CreateMetalMaterial(mp);
+    } else if (name == "glass") {
+        material = CreateGlassMaterial(mp); 
     } else {
         Warning("Material \"%s\" unknown. Using \"matte\".", name.c_str());
         material = CreateMatteMaterial(mp);

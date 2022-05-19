@@ -3,6 +3,7 @@
 
 #include "core/cpbrt.h"
 #include "core/material.h"
+#include "core/paramset.h"
 
 class GlassMaterial : public Material {
 private:
@@ -26,7 +27,7 @@ public:
         const std::shared_ptr<Texture<Spectrum>> &Kt,
         const std::shared_ptr<Texture<Float>> &uRoughness,
         const std::shared_ptr<Texture<Float>> &vRoughness,
-        const std::shared_ptr<Texture<Float>> &index,
+        const std::shared_ptr<Texture<Float>> &etas,
         // TODO: implement bump mapping.
         const std::shared_ptr<Texture<Float>> &bumpMap,
         bool remapRoughness
@@ -34,7 +35,7 @@ public:
         Kt(Kt),
         uRoughness(uRoughness),
         vRoughness(vRoughness),
-        index(index),
+        etas(etas),
         bumpMap(bumpMap),
         remapRoughness(remapRoughness)
     {}
@@ -45,5 +46,7 @@ public:
         SurfaceInteraction *si, MemoryArena &arena, TransportMode mode, bool allowMultipleLobes
     ) const;
 };
+
+GlassMaterial *CreateGlassMaterial(const TextureParams &mp);
 
 #endif // CPBRT_MATERIALS_GLASS_H
