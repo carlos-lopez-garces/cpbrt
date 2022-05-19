@@ -48,5 +48,6 @@ Texture<Spectrum> *CreateCheckerboardSpectrumTexture(
         return new Checkerboard2DTexture<Spectrum>(std::move(map), tex1, tex2, aaMethod);
     } else {
         // TODO: add Checkerboard3DTexture.
+      return nullptr;
     }
 }

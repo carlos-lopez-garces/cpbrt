@@ -3,7 +3,7 @@ CMAKE_MINIMUM_REQUIRED ( VERSION 3.1.0 )
 # For sanitizers
 SET (CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake" ${CMAKE_MODULE_PATH})
 
-PROJECT ( CPBRT-V3 )
+PROJECT ( CPBRT )
 
 OPTION(CPBRT_FLOAT_AS_DOUBLE "Use 64-bit floats" OFF)
 
@@ -425,7 +425,7 @@ SET ( CPBRT_CORE_HEADERS
   src/core/medium.h
   src/core/memory.h
   src/core/microfacet.h
-  # src/core/mipmap.h
+  src/core/mipmap.h
   src/core/parallel.h
   src/core/paramset.h
   src/core/parser.h
@@ -512,10 +512,10 @@ ENDIF()
 SET(ALL_CPBRT_LIBS
   cpbrt
   ${CMAKE_THREAD_LIBS_INIT}
-  ${OPENEXR_LIBS}
+  # ${OPENEXR_LIBS}
   # glog
   # Ptex_static
-  ${ZLIB_LIBRARY}
+  # ${ZLIB_LIBRARY}
 )
 
 # Main renderer
