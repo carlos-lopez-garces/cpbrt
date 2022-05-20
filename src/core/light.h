@@ -24,6 +24,10 @@ inline bool IsDeltaLight(int flags) {
            || flags & (int) LightFlags::DeltaDirection;
 }
 
+inline bool IsInfiniteLight(int flags) {
+    return flags & (int) LightFlags::Infinite;
+}
+
 class Light {
 public:
     // Flags that characterize the light source.

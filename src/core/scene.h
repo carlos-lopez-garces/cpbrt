@@ -17,7 +17,7 @@ private:
 
 public:
     std::vector<std::shared_ptr<Light>> lights;
-    // TODO: implement infinite lights.
+
     std::vector<std::shared_ptr<Light>> infiniteLights;
 
     Scene(
@@ -29,6 +29,10 @@ public:
     
         for (const auto &light : lights) {
             light->Preprocess(*this);
+
+            if (IsInfiniteLight(light->flags)) {
+                infiniteLights.push_back(light);
+            }
         }
     }
 
