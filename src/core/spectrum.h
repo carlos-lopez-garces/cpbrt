@@ -402,7 +402,7 @@ public:
         xyz[1] *= 1.f / CIE_Y_integral;
         xyz[2] *= 1.f / CIE_Y_integral;
 
-        FromXYZ(xyz);
+        return FromXYZ(xyz);
     }
 };
 
