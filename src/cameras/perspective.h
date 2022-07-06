@@ -26,7 +26,7 @@ public:
     );
 
     Transform Perspective(Float fov, Float zNear, Float zFar) {
-        // Set up the canonical perpsective matrix.
+        // Set up the canonical perspective matrix.
         //
         // The x and y coordinates are mapped to x/z and y/z to create the 
         // foreshortening effect: the farther the point is, the larger its
