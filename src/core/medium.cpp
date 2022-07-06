@@ -22,6 +22,21 @@ static MeasuredSS SubsurfaceParameterTable[] = {
     },
     {
         "Espresso", {0.72378, 0.84557, 1.0247}, {4.7984, 6.5751, 8.8493}
+    },
+    {
+        "White Zinfandel", {1.7501e-05, 1.9069e-05, 1.288e-05}, {0.012072, 0.016184, 0.019843}
+    },
+    {
+        "Merlot", {2.1129e-05, 0, 0}, {0.11632, 0.25191, 0.29434}
+    },
+    {
+        "Budweiser Beer", {2.4356e-05, 2.4079e-05, 1.0564e-05}, {0.011492, 0.024911, 0.057786}
+    },
+    {
+        "Coors Light Beer", {5.0922e-05, 4.301e-05, 0}, {0.006164, 0.013984, 0.034983}
+    },
+    {
+        "Clorox", {0.0024035, 0.0031373, 0.003991}, {0.0033542, 0.014892, 0.026297}
     }
 };
 
@@ -43,7 +58,7 @@ Float HenyeyGreensteinPhaseFunction::p(const Vector3f &wo, const Vector3f &wi) c
 }
 
 Float HenyeyGreensteinPhaseFunction::Sample_p(const Vector3f &wo, Vector3f *wi, const Point2f &u) const {
-    // Compute  for Henyey–Greenstein sample. 
+    // Compute  for Henyey-Greenstein sample. 
     Float cosTheta;
     if (std::abs(g) < 1e-3) {
         cosTheta = 1 - 2 * u[0];
