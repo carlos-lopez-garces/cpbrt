@@ -269,6 +269,38 @@ private:
     Spectrum scale;
 };
 
+template <typename TopBxDF, typename BottomBxDF, bool twoSided>
+class LayeredBxDF {
+public:
+    LayeredBxDF() = default;
+
+    LayeredBxDF(
+        TopBxDF top,
+        BottomBxDF bottom,
+        Float thickness,
+        const SampledSpectrum &albedo,
+        Float g,
+        int maxDepth,
+        int nSamples
+    ) : top(top),
+        bottom(bottom),
+        thickness(std::max(thickness, std::numeric_limits<Float>::min())),
+        albedo(albedo),
+        g(g),
+        maxDepth(maxDepth),
+        nSamples(nSamples)
+    {}
+
+private:
+    TopBxDF top;
+    BottomBxDF bottom;
+    Float thickness;
+    Float g;
+    SampledSpectrum albedo;
+    int maxDepth;
+    int nSamples;
+};
+
 // The Lambertian reflection model models a perfect diffuse surface that reflects incident
 // light equally in all directions.
 class LambertianReflection : public BxDF {
