@@ -270,7 +270,7 @@ private:
 };
 
 template <typename TopBxDF, typename BottomBxDF, bool twoSided>
-class LayeredBxDF {
+class LayeredBxDF : public BxDF {
 public:
     LayeredBxDF() = default;
 
@@ -318,6 +318,8 @@ public:
         return type;
     }
 
+    Spectrum f(const Vector3f &wo, const Vector3f &wi) const;
+
 private:
     TopBxDF top;
     BottomBxDF bottom;
@@ -326,6 +328,48 @@ private:
     SampledSpectrum albedo;
     int maxDepth;
     int nSamples;
+};
+
+template <typename TopBxDF, typename BottomBxDF>
+class TopOrBottomBxDF : public BxDF {
+public:
+    TopOrBottomBxDF() = default;
+
+    TopOrBottomBxDF &operator=(const TopBxDF *t) {
+        top = t;
+        bottom = nullptr;
+        type = t->type;
+        return *this;
+    }
+
+    TopOrBottomBxDF &operator=(const BottomBxDF *b) {
+        bottom = b;
+        top = nullptr;
+        type = b->type;
+        return *this;
+    }
+
+    Spectrum f(const Vector3f &wo, const Vector3f &wi) const {
+        return top ? top->f(wo, wi) : bottom->f(wo, wi);
+    }
+
+    Spectrum Sample_f(
+        const Vector3f &wo,
+        Vector3f *wi,
+        const Point2f &sample,
+        Float *pdf,
+        BxDFType *sampledType = nullptr
+    ) const {
+        return top ? top->Sample_f(wo, wi, sample, pdf, sampledType) : bottom->Sample_f(wo, wi, sample, pdf, sampledType);
+    }
+
+    Float Pdf(const Vector3f &wo, const Vector3f &wi) const {
+        return top ? top->Pdf(wo, wi) : bottom->Pdf(wo, wi);
+    }
+
+private:
+    const TopBxDF *top = nullptr;
+    const BottomBxDF *bottom = nullptr;
 };
 
 // The Lambertian reflection model models a perfect diffuse surface that reflects incident
