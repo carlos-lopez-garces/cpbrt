@@ -282,7 +282,8 @@ public:
         Float g,
         int maxDepth,
         int nSamples
-    ) : top(top),
+    ) : BxDF(LayeredBxDF<TopBxDF, BottomBxDF>::DetermineType(top, bottom, albedo)),
+        top(top),
         bottom(bottom),
         thickness(std::max(thickness, std::numeric_limits<Float>::min())),
         albedo(albedo),
@@ -290,6 +291,32 @@ public:
         maxDepth(maxDepth),
         nSamples(nSamples)
     {}
+
+    // Determines the type (flags) of the layered BxDF from the types of the top and bottom BxDFs.
+    static BxDFType DetermineType(TopBxDF top, BottomBxDF bottom, bool hasAlbedo) {
+        BxDFType topType = top.type;
+        BxDFType bottomType = bottom.type;
+
+        BxDFType type = BxDFType::BSDF_REFLECTION;
+
+        if(topType & BxDFType::BSDF_SPECULAR) {
+            type |= BxDFType::BSDF_SPECULAR;
+        }
+
+        // Either one can be diffuse (or glossy) for the layered one to be diffuse (glossy).
+        if (hasAlbedo || topType & BxDFType::BSDF_DIFFUSE || bottomType & BxDFType::BSDF_DIFFUSE) {
+            type |= BxDFType::BSDF_DIFFUSE;
+        } else if (topType & BxDFType::BSDF_GLOSSY || bottomType & BxDFType::BSDF_GLOSSY) {
+            type |= BxDFType::BSDF_GLOSSY;
+        }
+
+        // Both need to be transmissive for the layered one to be transmissive.
+        if (topType & BxDFType::BSDF_TRANSMISSION && bottomType & BxDFType::BSDF_TRANSMISSION) {
+            type |= BxDFType::BSDF_TRANSMISSION;
+        }
+
+        return type;
+    }
 
 private:
     TopBxDF top;
