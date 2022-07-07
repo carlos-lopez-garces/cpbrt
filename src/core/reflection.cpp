@@ -177,6 +177,72 @@ Spectrum ScaledBxDF::rho(int nSamples, const Point2f *samples1, const Point2f *s
     return scale * bxdf->rho(nSamples, samples1, samples2);
 }
 
+template <typename TopBxDF, typename BottomBxDF, bool twoSided>
+Spectrum LayeredBxDF<TopBxDF, BottomBxDF, twoSided>::f(const Vector3f &wo, const Vector3f &wi) const {
+    SampledSpectrum f(0.f);
+
+    if(twoSided && wo.z < 0) {
+        // If the surface is twoSided, the TopBxDF is always the top, regardless of the side of
+        // incidence. In the shading or reflection coordinate system, both wo and wi point outward and away
+        // from the surface. When wo.z < 0, we reverse the vectors so that the side of incidence of the
+        // surface becomes the top layer.
+        wo = -wo;
+        wi = -wi;
+    }
+
+    // Determine entry and exit layers.
+
+    TopOrBottomBxDF<TopBxDF, BottomBxDF> enterInterface;
+    bool enteredTop = twoSided || wo.z > 0;
+    if (enteredTop) {
+        enterInterface = &top;
+    } else {
+        enterInterface = &bottom;
+    }
+
+    TopOrBottomBxDF<TopBxDF, BottomBxDF> exitInterface, nonExitInterface;
+    // If the incident and outgoing vectors lie on the same hemisphere, the ray is being reflected.
+    // If the ray is being reflected after arriving first at the bottom layer (e.g. a transmitted ray that
+    // gets reflected at the exit interface, like in the total internal reflection case), then the 
+    // bottom layer is both the entry and exit interfaces (and the top layer is none of them).
+    // [First conditional branch executes.]
+    //
+    // If the ray is being reflected after arriving first at the top layer, then the top layer is both
+    // the entry and exit interfaces (and the bottom layer is none of them).
+    // [Second conditional branch executes.]
+    //
+    // If the incident and outgoing vectors don't lie on the same hemisphere, the ray is being transmitted.
+    // If the ray is being transmitted after arriving first at the top layer, then the top layer is the
+    // entry interface and the bottom layer is the exit interface.
+    // [First conditional branch executes.]
+    //
+    // If the ray is being transmitted after arriving first at the bottom layer, then ... what?
+    if (SameHemisphere(wo, wi) ^ enteredTop) {
+        exitInterface = &bottom;
+        nonExitInterface = &top;
+    } else {
+        exitInterface = &top;
+        nonExitInterface = &bottom;
+    }
+
+    // The thickness of the interface of a layered material is not negligible and we must account
+    // for the transmission of the ray through this "coat".
+    //
+    // If the ray is either being reflected or it's being transmitted after entering through the
+    // top layer [not sure about the latter], but not both, the traveled distance through the coat
+    // is actually 0; otherwise, the traveled distance is measured by the thickness of the layer.
+    Float exitZ = (SameHemisphere(wo, wi) ^ enteredTop) ? 0 : thickness;
+
+    if (SameHemisphere(wo, wi)) {
+        // The ray is being reflected. Sample the top layer's BRDF.
+        f = nSamples * enterInterface.f(wo, wi);
+    }
+
+    ..
+
+    return f;
+}
+
 Spectrum SpecularReflection::Sample_f(
     const Vector3f &wo,
     Vector3f *wi,
