@@ -267,6 +267,14 @@ public:
         return ret;
     }
 
+    inline friend CoefficientSpectrum FastExp(const CoefficientSpectrum &sp) {
+        CoefficientSpectrum ret;
+        for (int i = 0; i < nSpectrumSamples; ++i) {
+            ret[i] = FastExp(s[i]);
+        }
+        return ret;
+    }
+
     CoefficientSpectrum Clamp(Float low = 0, Float high = Infinity) const {
         CoefficientSpectrum ret;
         for (int i = 0; i < nSpectrumSamples; ++i) {
