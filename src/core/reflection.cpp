@@ -1,4 +1,5 @@
 #include "cpbrt.h"
+#include "medium.h"
 #include "reflection.h"
 #include "spectrum.h"
 #include "sampler.h"
@@ -238,7 +239,115 @@ Spectrum LayeredBxDF<TopBxDF, BottomBxDF, twoSided>::f(const Vector3f &wo, const
         f = nSamples * enterInterface.f(wo, wi);
     }
 
-    ..
+    // TODO: might need to enhance the initialization of RNG.
+    RNG rng;
+
+    for (int s = 0; s < nSamples; ++s) {
+        // Sample the entry layer's BTDF. Note that we sample it using wo.
+        Vector3f sampledWi;
+        Float woPdf = 0.f;
+        Spectrum fWo = enterInterface.Sample_f(
+            wo, &sampledWi, Point2f(rng.UniformFloat(), rng.UniformFloat()), &woPdf, BxDFType::BSDF_TRANSMISSION
+        );
+        if (fWo.IsBlack() || woPdf == 0.f || sampledWi.z == 0) {
+            // TODO: when would the sampled incident directon wis's z coordinate be 0?
+            continue;
+        }
+
+        // Sample the exit layer's BTDF. Note that we sample it using wi.
+        Vector3f sampledWo;
+        Float wiPdf = 0.f;
+        Spectrum fWi = exitInterface.Sample_f(
+            wi, &sampledWo, Point2f(rng.UniformFloat(), rng.UniformFloat()), &wiPdf, BxDFType::BSDF_TRANSMISSION
+        );
+        if (fWi.IsBlack() || wiPdf == 0.f || sampledWo.z == 0) {
+            // TODO: when would the z coordinate be 0?
+            continue;
+        }
+
+        Spectrum beta = fWo * AbsCosTheta(sampledWi) / woPdf;
+        Float z = enteredTop ? thickness : 0;
+        Vector3f w = sampledWi;
+        HenyeyGreensteinPhaseFunction phase(g);
+
+        // Random walk.
+        for (int depth = 0; depth < maxDepth; ++depth) {
+            if (depth > 3 && beta.MaxComponentValue() < 0.25f) {
+                Float q = std::max<Float>(0, 1 - beta.MaxComponentValue());
+
+                if (rng.UniformFloat() < q) {
+                    // Terminate random walk using Russian roulette.
+                    break;
+                }
+
+                beta /= 1 - q;
+            }
+
+            // Transmission through the medium between the layers.
+            if (!albedo) {
+                // No absorption means that the radiance carried by the ray through the exit layer's
+                // interface will be the same it carried when it entered the entry layer's interface.
+                //
+                // Advance z to the next layer's interface.
+                z = (z == thickness) ? 0 : thickness;
+                beta *= Tr(thickness, w);
+            } else {
+                // Sample a potential scattering event.
+
+                Float sigma_t = 1;
+
+                // Sample a exponential random variable with parameter lambda = sigma_t / |w.z|. 
+                Float dz = SampleExponential(rng.UniformFloat(), sigma_t / std::abs(w.z));
+
+                Float zp = w.z > 0 ? (z + dz) : (z - dz);
+                if (zp == z) {
+                    return Spectrum(0);
+                }
+
+                if (0 < zp && zp < thickness) {
+                    // Process scattering event.
+                    Float wt = 1;
+                    if (!(exitInterface.type & BxDFType::BSDF_SPECULAR)) {
+                        wt = PowerHeuristic(1, wiPdf, 1, phase.Pdf(-w, -sampledWo));
+                    }
+
+                    f += beta * albedo * phase.p(-w, -sampledWo) * wt * Tr(zp - exitZ, sampledWo) * fWi / wiPdf;
+
+                    // Sample phase function.
+                    Vector3f phaseWi;
+                    Float phaseSample = phase.Sample_p(-w, &phaseWi, Point2f(rng.UniformFloat(), rng.UniformFloat()));
+                    if (phaseWi.z == 0) {
+                        continue;
+                    }
+                    beta *= albedo * phaseSample / phase.Pdf(-w, phaseWi);
+                    w = phaseWi;
+                    z = zp;
+
+                    // Process scattering through exit interface.
+                    if (((z < exitZ && w.z > 0) || (z > exitZ && w.z < 0)) && !(exitInterface.type & BxDFType::BSDF_SPECULAR)) {
+                        Spectrum fExit = exitInterface.f(-w, wi);
+                        if (fExit) {
+                            Float exitPDF = exitInterface.Pdf(-w, wi);
+                            Float wt = PowerHeuristic(1, phase.p(-w, -sampledWo), 1, exitPDF);
+                            f += beta * Tr(zp - exitZ, phaseWi) * fExit * wt;
+                        }
+                    }
+
+                    continue;
+                }
+
+                z = Clamp(zp, 0, thickness);
+            }
+
+            if (z == exitZ) {
+                // TODO: finish.
+            } else {
+                
+            }
+
+            // TODO: finish.
+        }
+    }
 
     return f;
 }

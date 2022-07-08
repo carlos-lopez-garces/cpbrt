@@ -323,10 +323,17 @@ public:
 private:
     TopBxDF top;
     BottomBxDF bottom;
+
     Float thickness;
+
     Float g;
+
+    // Absorption of the medium. Important for modeling transmission through a possible medium
+    // found between the layers.
     SampledSpectrum albedo;
+
     int maxDepth;
+    
     int nSamples;
 
     // Computes beam transmittance of the medium between layers, if present.
