@@ -100,6 +100,19 @@ inline Float CosineHemispherePdf(Float cosTheta) {
     return cosTheta * InvPi;
 }
 
+// Samples the exponential distribution with parameter lambda using the Inverse Transform Method.
+// Given a sample u ~ Unif(0,1), the random variable T = F^-1(u) has an exponential distribution,
+// where the inverse of the exponential CDF
+//
+// F^-1(p) = -ln(1-p)/lambda
+//
+// is the quantile function of the exponential distribution, which gives the value of the exponential
+// random variable such that the probability of the variable being less than or equal to that value
+// equals the given probability p.
+inline Float SampleExponential(Float u, Float lambda) {
+    return -std::log(1 - u) / lambda;
+}
+
 // A piecewise-constant 1D distribution.
 struct Distribution1D {
     // The n images of a piecewise-constant function.
