@@ -76,3 +76,7 @@ Float HenyeyGreensteinPhaseFunction::Sample_p(const Vector3f &wo, Vector3f *wi, 
 
     return PhaseHG(cosTheta, g);
 }
+
+Float HenyeyGreensteinPhaseFunction::Pdf(Vector3f wo, Vector3f wi) const {
+    return p(wo, wi);
+}

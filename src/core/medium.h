@@ -64,6 +64,8 @@ public:
 
     // Sample the phase function, choosing wi probabilistically.
     virtual Float Sample_p(const Vector3f &wo, Vector3f *wi, const Point2f &u) const = 0;
+
+    virtual Float Pdf(Vector3f wo, Vector3f wi) const = 0;
 };
 
 // Henyey-Greenstein phase function, designed to be easy to fit to measured scattering
@@ -89,6 +91,8 @@ public:
 
     // Sample the phase function, choosing wi probabilistically.
     virtual Float Sample_p(const Vector3f &wo, Vector3f *wi, const Point2f &u) const;
+
+    virtual Float Pdf(Vector3f wo, Vector3f wi) const;
 };
 
 #endif // CPBRT_CORE_MEDIUM_H
