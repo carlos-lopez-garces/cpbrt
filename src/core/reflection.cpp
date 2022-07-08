@@ -340,16 +340,59 @@ Spectrum LayeredBxDF<TopBxDF, BottomBxDF, twoSided>::f(const Vector3f &wo, const
             }
 
             if (z == exitZ) {
-                // TODO: finish.
-            } else {
-                
-            }
+                // Process scattering at exit interface.
+                Vector3f sampledExitWi;
+                Float exitPdf = 0.f;
+                Spectrum fExit = exitInterface.Sample_f(
+                    -w, &sampledExitWi, Point2f(rng.UniformFloat(), rng.UniformFloat()), &exitPdf, BxDFType::BSDF_REFLECTION
+                );
+                if (fExit.IsBlack() || exitPdf == 0.f || sampledExitWi.z == 0) {
+                    break;
+                }
 
-            // TODO: finish.
+                beta *= fExit * AbsCosTheta(sampledExitWi) / exitPdf;
+                w = sampledExitWi;
+            } else {
+                // Process scattering at nonexit interface.
+                if (!(nonExitInterface.type & BxDFType::BSDF_SPECULAR)) {
+                    Float wt = 1;
+                    if (!(exitInterface.type & BxDFType::BSDF_SPECULAR)) {
+                        wt = PowerHeuristic(1, wiPdf, 1, nonExitInterface.Pdf(-w, -sampledWo));
+                    }
+
+                    f += beta * nonExitInterface.f(-w, -sampledWo) * AbsCosTheta(sampledWo) * wt * Tr(thickness, sampledWo) * fWi / wiPdf;
+                }
+
+                // Sample new direction using BSDF at nonexit interface.
+                Vector3f sampledNonExitWo;
+                Float nonExitPdf = 0.f;
+                Spectrum fNonExit = exitInterface.Sample_f(
+                    -w, &sampledNonExitWo, Point2f(rng.UniformFloat(), rng.UniformFloat()), &nonExitPdf, BxDFType::BSDF_REFLECTION
+                );
+                if (fNonExit.IsBlack() || nonExitPdf == 0.f || sampledNonExitWo.z == 0) {
+                    break;
+                }
+
+                beta *= fNonExit * AbsCosTheta(sampledNonExitWo) / nonExitPdf;
+                w = sampledNonExitWo;
+
+                if (!(exitInterface.type & BxDFType::BSDF_SPECULAR)) {
+                    Spectrum fExit = exitInterface.f(-w, wi);
+                    if (!fExit.IsBlack()) {
+                        Float wt = 1;
+                        if (!(nonExitInterface.type & BxDFType::BSDF_SPECULAR)) {
+                            Float exitPdf = exitInterface.Pdf(-w, wi);
+                            wt = PowerHeuristic(1, nonExitPdf, 1, exitPdf);
+                        }
+
+                        f += beta * Tr(thickness, sampledNonExitWo) * fExit * wt;
+                    }
+                }
+            }
         }
     }
 
-    return f;
+    return f / nSamples;
 }
 
 Spectrum SpecularReflection::Sample_f(
