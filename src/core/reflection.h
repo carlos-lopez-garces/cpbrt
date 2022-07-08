@@ -328,6 +328,14 @@ private:
     SampledSpectrum albedo;
     int maxDepth;
     int nSamples;
+
+    // Computes beam transmittance of the medium between layers, if present.
+    static Float Tr(Float dz, Vector3f w) {
+        if (std::abs(dz) <= std::numeric_limits<Float>::min()) {
+            return 1;
+        }
+        return FastExp(-std::abs(dz / w.z));
+    }
 };
 
 template <typename TopBxDF, typename BottomBxDF>
