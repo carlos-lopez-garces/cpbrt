@@ -409,6 +409,142 @@ Spectrum LayeredBxDF<TopBxDF, BottomBxDF, twoSided>::Sample_f(
     Float uc,
     TransportMode mode
 ) const {
+    bool flipWi = false;
+    if(twoSided && wo.z < 0) {
+        // If the surface is twoSided, the TopBxDF is always the top, regardless of the side of
+        // incidence. In the shading or reflection coordinate system, both wo and wi point outward and away
+        // from the surface. When wo.z < 0, we reverse the vectors so that the side of incidence of the
+        // surface becomes the top layer.
+        wo = -wo;
+        flipWi = true;
+    }
+
+    bool enteredTop = twoSided || wo.z > 0;
+    Vector3f sampledWi;
+    Float entryPdf = 0.f;
+    BxDFType entrySampledType;
+    Spectrum entryF = enteredTop 
+        ? top.Sample_f(wo, &sampledWi, Point2f(rng.UniformFloat(), rng.UniformFloat()), &entryPdf, &entrySampledType, uc, mode)
+        : bottom.Sample_f(wo, &sampledWi, Point2f(rng.UniformFloat(), rng.UniformFloat()), &entryPdf, &entrySampledType, uc, mode);
+    if (entryF.IsBlack() || entryPdf == 0.f || sampledWi.z == 0) {
+        return Spectrum(0.f);
+    }
+    if (entrySampledType & BSDF_REFLECTION) {
+        if (flipWi) {
+            sampledWi = -sampledWi;
+        }
+        *wi = sampledWi;
+        if (sampledType) {
+            *sampledType = entrySampledType;
+        }
+        return entryF;
+    }
+
+    // TODO: might need to enhance the initialization of RNG.
+    RNG rng;
+
+    Vector3f retW = sampledWi;
+    bool specularPath = entrySampledType & BSDF_SPECULAR;
+    Spectrum retF = entryF * AbsCosTheta(sampledWi);
+    Float retPdf = entryPdf;
+    Float z = enteredTop ? thickness : 0;
+    HenyeyGreensteinPhaseFunction phase(g);
+
+    // Random walk.
+    for (int depth = 0; depth < maxDepth; ++depth) {
+        Float rrBeta = retF.MaxComponentValue() / retPdf;
+        if (depth > 3 && rrBeta < 0.25f) {
+            Float q = std::max<Float>(0, 1 - rrBeta);
+
+            if (rng.UniformFloat() < q) {
+                // Terminate random walk using Russian roulette.
+                return Spectrum(0.f);
+            }
+
+            retPdf *= 1 - q;
+        }
+
+        if (retW.z == 0) {
+            return Spectrum(0.f);
+        }
+
+        // Transmission through the medium between the layers.
+        if (!albedo) {
+            // No absorption means that the radiance carried by the ray through the exit layer's
+            // interface will be the same it carried when it entered the entry layer's interface.
+            //
+            // Advance z to the next layer's interface.
+            z = (z == thickness) ? 0 : thickness;
+            retF *= Tr(thickness, retW);
+        } else {
+            // Sample a potential scattering event.
+
+            Float sigma_t = 1;
+
+            // Sample a exponential random variable with parameter lambda = sigma_t / |w.z|. 
+            Float dz = SampleExponential(rng.UniformFloat(), sigma_t / AbsCosTheta(retW));
+
+            Float zp = retW.z > 0 ? (z + dz) : (z - dz);
+            if (zp == z) {
+                return Spectrum(0);
+            }
+
+            if (0 < zp && zp < thickness) {
+                // Process scattering event.
+                
+                // Sample phase function.
+                Vector3f phaseWi;
+                Float phaseSample = phase.Sample_p(-retW, &phaseWi, Point2f(rng.UniformFloat(), rng.UniformFloat()));
+                Float phasePdf = phase.Pdf(-retW, phaseWi);
+                if (phasePdf == 0.f || phaseWi.z == 0) {
+                    return Spectrum(0.f);
+                }
+                retF *= albedo * phaseSample;
+                retPdf *= phasePdf;
+                specularPath = false;
+                retW = phaseWi;
+                z = zp;
+
+                continue;
+            }
+
+            z = Clamp(zp, 0, thickness);
+        }
+
+        TopOrBottomBxDF<TopBxDF, BottomBxDF> interface;
+        if (z == 0) {
+            interface = &bottom;
+        } else {
+            interface = &top;
+        }
+
+        Vector3f interfaceSampledWi;
+        Float interfacePdf = 0.f;
+        BxDFType interfaceSampledType;
+        Spectrum interfaceF = interface.Sample_f(-retW, &interfaceSampledWi, Point2f(rng.UniformFloat(), rng.UniformFloat()), &interfacePdf, &interfaceSampledType, uc, mode);
+        if (interfaceF.IsBlack() || interfacePdf == 0.f || interfaceSampledWi.z == 0) {
+            return Spectrum(0.f);
+        }
+        retF *= interfaceF;
+        retPdf *= interfacePdf;
+        specularPath &= interfaceSampledType & BSDF_SPECULAR;
+        retW = interfaceSampledWi;
+
+        if (interfaceSampledType & BSDF_TRANSMISSION) {
+            BxDFType type = SameHemisphere(wo, retW) ? BSDF_REFLECTION : BSDF_TRANSMISSION;
+            type |= specularPath ? BSDF_SPECULAR : BSDF_GLOSSY;
+            if (flipWi) {
+                retW = -retW;
+            }
+            *wi = retW;
+            *pdf = retPdf;
+            *sampledType = interfaceSampledType; 
+            return retF;
+        }
+
+        retF *= AbsCosTheta(interfaceSampledWi);
+    }
+
     return Spectrum(0.f);
 }
 
