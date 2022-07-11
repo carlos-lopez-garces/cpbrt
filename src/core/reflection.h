@@ -215,7 +215,10 @@ public:
         Vector3f *wi,
         const Point2f &sample,
         Float *pdf,
-        BxDFType *sampledType = nullptr
+        BxDFType *sampledType = nullptr,
+        // PBRT v4 parameters follow.
+        Float uc = 0.f,
+        TransportMode mode = TransportMode::Radiance
     ) const;
 
     // Computes the hemispherical-directional reflectance of the surface in the given outgoing
@@ -255,7 +258,10 @@ public:
         Vector3f *wi,
         const Point2f &sample,
         Float *pdf,
-        BxDFType *sampledType = nullptr
+        BxDFType *sampledType = nullptr,
+        // PBRT v4 parameters follow.
+        Float uc = 0.f,
+        TransportMode mode = TransportMode::Radiance
     ) const;
 
     // Scales the hemispherical-directional reflectance of the wrapped BxDF by scale.
@@ -320,6 +326,17 @@ public:
 
     Spectrum f(const Vector3f &wo, const Vector3f &wi) const;
 
+    Spectrum Sample_f(
+        const Vector3f &wo,
+        Vector3f *wi,
+        const Point2f &sample,
+        Float *pdf,
+        BxDFType *sampledType = nullptr,
+        // PBRT v4 parameters follow.
+        Float uc = 0.f,
+        TransportMode mode = TransportMode::Radiance
+    ) const;
+
 private:
     TopBxDF top;
     BottomBxDF bottom;
@@ -373,7 +390,10 @@ public:
         Vector3f *wi,
         const Point2f &sample,
         Float *pdf,
-        BxDFType *sampledType = nullptr
+        BxDFType *sampledType = nullptr,
+        // PBRT v4 parameters follow.
+        Float uc = 0.f,
+        TransportMode mode = TransportMode::Radiance
     ) const {
         return top ? top->Sample_f(wo, wi, sample, pdf, sampledType) : bottom->Sample_f(wo, wi, sample, pdf, sampledType);
     }
@@ -476,7 +496,10 @@ public:
         Vector3f *wi,
         const Point2f &sample,
         Float *pdf,
-        BxDFType *sampledType
+        BxDFType *sampledType,
+        // PBRT v4 parameters follow.
+        Float uc = 0.f,
+        TransportMode mode = TransportMode::Radiance
     ) const;
 
     // Evaluates the probability that incident direction wi gets sampled for the given outgoing
@@ -529,7 +552,14 @@ public:
     // is governed by Snell's law of refraction. The normal vector doesn't need to be known
     // because it corresponds to the vertical axis in the reflection coordinate system.
     Spectrum Sample_f(
-        const Vector3f &wo, Vector3f *wi, const Point2f &sample, Float *pdf, BxDFType *sampledType
+        const Vector3f &wo,
+        Vector3f *wi,
+        const Point2f &sample,
+        Float *pdf,
+        BxDFType *sampledType,
+        // PBRT v4 parameters follow.
+        Float uc = 0.f,
+        TransportMode mode = TransportMode::Radiance
     ) const;
 };
 
@@ -569,7 +599,14 @@ public:
     // Samples the BSDF, which has a Dirac delta distribution. u is a sample from a uniform distribution
     // that is used as a probability threshold to choose between sampling the BRDF (< u) and the BTDF(> u).
     Spectrum Sample_f(
-        const Vector3f &wo, Vector3f *wi, const Point2f &u, Float *pdf, BxDFType *sampledType
+        const Vector3f &wo,
+        Vector3f *wi,
+        const Point2f &u,
+        Float *pdf,
+        BxDFType *sampledType,
+        // PBRT v4 parameters follow.
+        Float uc = 0.f,
+        TransportMode mode = TransportMode::Radiance
     ) const;
 };
 
@@ -643,7 +680,16 @@ public:
     Spectrum f(const Vector3f &wo, const Vector3f &wi) const;
 
     // TODO.
-    Spectrum Sample_f(const Vector3f &wo, Vector3f *wi, const Point2f &u, Float *pdf, BxDFType *sampledType) const;
+    Spectrum Sample_f(
+        const Vector3f &wo,
+        Vector3f *wi,
+        const Point2f &u,
+        Float *pdf,
+        BxDFType *sampledType,
+        // PBRT v4 parameters follow.
+        Float uc = 0.f,
+        TransportMode mode = TransportMode::Radiance
+    ) const;
     
     // TODO.
     Float Pdf(const Vector3f &wo, const Vector3f &wi) const;

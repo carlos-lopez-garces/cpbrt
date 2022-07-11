@@ -120,7 +120,9 @@ Spectrum BxDF::Sample_f(
     Vector3f *wi,
     const Point2f &u,
     Float *pdf,
-    BxDFType *sampledType
+    BxDFType *sampledType,
+    Float uc,
+    TransportMode mode
 ) const {
     // The incident direction wi corresponding to the outgoing direction wo may be any
     // one on the hemisphere centered at the point u and on the side of the surface where
@@ -162,7 +164,9 @@ Spectrum ScaledBxDF::Sample_f(
     Vector3f *wi,
     const Point2f &sample,
     Float *pdf,
-    BxDFType *sampledType
+    BxDFType *sampledType,
+    Float uc,
+    TransportMode mode
 ) const {
     // The product of 2 spectrums is sample-wise.
     return scale * bxdf->Sample_f(wo, wi, sample, pdf, sampledType);
@@ -395,12 +399,27 @@ Spectrum LayeredBxDF<TopBxDF, BottomBxDF, twoSided>::f(const Vector3f &wo, const
     return f / nSamples;
 }
 
+template <typename TopBxDF, typename BottomBxDF, bool twoSided>
+Spectrum LayeredBxDF<TopBxDF, BottomBxDF, twoSided>::Sample_f(
+    const Vector3f &wo,
+    Vector3f *wi,
+    const Point2f &sample,
+    Float *pdf,
+    BxDFType *sampledType,
+    Float uc,
+    TransportMode mode
+) const {
+    return Spectrum(0.f);
+}
+
 Spectrum SpecularReflection::Sample_f(
     const Vector3f &wo,
     Vector3f *wi,
     const Point2f &sample,
     Float *pdf,
-    BxDFType *sampledType
+    BxDFType *sampledType,
+    Float uc,
+    TransportMode mode
 ) const {
     // Compute perfect specular reflection direction about the normal. The normal vector doesn't
     // need to be known because it corresponds to the vertical axis in the reflection coordinate
@@ -417,7 +436,13 @@ Spectrum SpecularReflection::Sample_f(
 }
 
 Spectrum SpecularTransmission::Sample_f(
-    const Vector3f &wo, Vector3f *wi, const Point2f &sample, Float *pdf, BxDFType *sampledType
+    const Vector3f &wo,
+    Vector3f *wi,
+    const Point2f &sample,
+    Float *pdf,
+    BxDFType *sampledType,
+    Float uc,
+    TransportMode mode
 ) const {
     // Is the ray entering or exiting the medium? cos(theta) is computed in reflection space;
     // theta is measured from the transmission boundary's normal; in reflection space, cos(theta)
@@ -456,7 +481,13 @@ Spectrum SpecularTransmission::Sample_f(
 }
 
 Spectrum FresnelSpecularReflectionTransmission::Sample_f(
-    const Vector3f &wo, Vector3f *wi, const Point2f &u, Float *pdf, BxDFType *sampledType
+    const Vector3f &wo,
+    Vector3f *wi,
+    const Point2f &u,
+    Float *pdf,
+    BxDFType *sampledType,
+    Float uc,
+    TransportMode mode
 ) const {
     // Evaluate the Fresnel reflectance equation between 2 dielectric media. This Fresnel term
     // is used to "modulate" the contributions of the BRDF and the BTDF; in reality, F is
@@ -573,9 +604,15 @@ Spectrum TorranceSparrowMicrofacetReflection::f(const Vector3f &wo, const Vector
 }
 
 // TODO.
-Spectrum TorranceSparrowMicrofacetReflection::Sample_f(const Vector3f &wo, Vector3f *wi,
-                                        const Point2f &u, Float *pdf,
-                                        BxDFType *sampledType) const {
+Spectrum TorranceSparrowMicrofacetReflection::Sample_f(
+    const Vector3f &wo,
+    Vector3f *wi,
+    const Point2f &u,
+    Float *pdf,
+    BxDFType *sampledType,
+    Float uc,
+    TransportMode mode
+) const {
     // Sample microfacet orientation $\wh$ and reflected direction $\wi$
     if (wo.z == 0) return 0.;
     Vector3f wh = distribution->Sample_wh(wo, u);
