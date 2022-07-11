@@ -192,6 +192,50 @@ enum BxDFType {
     BSDF_ALL          = BSDF_REFLECTION | BSDF_TRANSMISSION | BSDF_DIFFUSE | BSDF_GLOSSY | BSDF_SPECULAR
 };
 
+// A sample from a BxDF.
+struct BxDFSample {
+    SampledSpectrum f;
+
+    Vector3f wi;
+
+    Float pdf = 0;
+
+    BxDFType type;
+
+    // Refraction index.
+    Float eta = 1;
+
+    bool pdfIsProportional = false;
+
+    BxDFSample() = default;
+    
+    BxDFSample(SampledSpectrum f, Vector3f wi, Float pdf, BxDFType type, Float eta = 1, bool pdfIsProportional = false)
+        : f(f), wi(wi), pdf(pdf), type(type), eta(eta), pdfIsProportional(pdfIsProportional)
+    {}
+
+    bool IsReflection() const {
+        return type & BxDFType::BSDF_REFLECTION;
+    }
+
+    bool IsTransmission() const {
+        return type & BxDFType::BSDF_TRANSMISSION;
+    }
+
+    bool IsDiffuse() const {
+        return type & BxDFType::BSDF_DIFFUSE;
+    }
+
+    bool IsGlossy() const {
+        return type & BxDFType::BSDF_GLOSSY;
+    }
+
+    bool IsSpecular() const {
+        return type & BxDFType::BSDF_SPECULAR;
+    }
+
+    std::string ToString() const;
+};
+
 // Interface for BRDF and BTDF.
 class BxDF {
 public:
