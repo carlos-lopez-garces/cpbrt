@@ -548,6 +548,108 @@ Spectrum LayeredBxDF<TopBxDF, BottomBxDF, twoSided>::Sample_f(
     return Spectrum(0.f);
 }
 
+template <typename TopBxDF, typename BottomBxDF, bool twoSided>
+Float LayeredBxDF<TopBxDF, BottomBxDF, twoSided>::Pdf(const Vector3f &wo, const Vector3f &wi) const {
+    if (twoSided && wo.z < 0) {
+        wo = -wo;
+        wi = -wi;
+    }
+
+    RNG rng;
+
+    bool enteredTop = twoSided || wo.z > 0;
+    Float pdfSum = 0.f;
+    if (SameHemisphere(wo, wi)) {
+        pdfSum += enteredTop ? nSamples * top.Pdf(wo, wi) : nSamples * bottom.Pdf(wo, wi);
+    }
+
+    for (int s = 0; s < nSamples; ++s) {
+        if (SameHemisphere(wo, wi)) {
+            TopOrBottomBxDF<TopBxDF, BottomBxDF> rInterface;
+            TopOrBottomBxDF<TopBxDF, BottomBxDF> tInterface;
+
+            if (enteredTop) {
+                rInterface = &bottom;
+                tInterface = &top;
+            } else {
+                rInterface = &top;
+                tInterface = &bottom;
+            }
+
+            BxDFType trans = BSDF_TRANSMISSION;
+
+            Vector3f sampledWi;
+            Float pdfWo;
+            Spectrum fWo = tInterface.Sample_f(wo, &sampledWi, Point2f(rng.UniformFloat(), rng.UniformFloat()), &pdfWo);
+
+            Vector3f sampledWo;
+            Float pdfWi;
+            Spectrum fWi = tInterface.Sample_f(wi, &sampledWo, Point2f(rng.UniformFloat(), rng.UniformFloat()), &pdfWi);
+
+            if (!fWo.IsBlack() && pdfWo > 0 && !fWi.IsBlack() && pdfWi > 0) {
+                // If nonspecular.
+                if (tInterface.type & (BSDF_DIFFUSE | BSDF_GLOSSY)) {
+                    pdfSum += rInterface.Pdf(-sampledWi, -sampledWo);
+                } else {
+                    // MIS for product.
+                    Vector3f rsSampledWi;
+                    Float pdfRS;
+                    Spectrum fRS = rInterface.Sample_f(-sampledWi, &rsSampledWi, Point2f(rng.UniformFloat(), rng.UniformFloat()), &pdfRS);
+                    if (!fRS.IsBlack() && pdfRS > 0) {
+                        if (!(rInterface.type & (BSDF_DIFFUSE | BSDF_GLOSSY))) {
+                            pdfSum += tInterface.Pdf(-rsSampledWi, wi);
+                        } else {
+                            Float rPdf = rInterface.Pdf(-sampledWi, -sampledWo);
+                            Float wt = PowerHeuristic(1, pdfWi, 1, rPdf);
+                            pdfSum += wt * rPdf;
+
+                            Float tPdf = tInterface.Pdf(-rsSampledWi, wi);
+                            wt = PowerHeuristic(1, pdfRS, 1, tPdf);
+                            pdfSum += wt * tPdf;
+                        }
+                    }
+                }
+            }
+        } else {
+            TopOrBottomBxDF<TopBxDF, BottomBxDF> toInterface;
+            TopOrBottomBxDF<TopBxDF, BottomBxDF> tiInterface;
+            if (enteredTop) {
+                toInterface = &top;
+                tiInterface = &bottom;
+            } else {
+                toInterface = &bottom;
+                tiInterface = &top;
+            }
+
+            Vector3f toSampledWi;
+            Float toPdf;
+            BxDFType toSampledType;
+            Spectrum fTo = toInterface.Sample_f(wo, &toSampledWi, Point2f(rng.UniformFloat(), rng.UniformFloat()), &toPdf, &toSampledType, rng.UniformFloat());
+            if (fTo.IsBlack() || toPdf == 0 || toSampledWi.z == 0 || toSampledType & BSDF_REFLECTION) {
+                continue;
+            }
+
+            Vector3f tiSampledWi;
+            Float tiPdf;
+            BxDFType tiSampledType;
+            Spectrum fTi = tiInterface.Sample_f(wi, &tiSampledWi, Point2f(rng.UniformFloat(), rng.UniformFloat()), &tiPdf, &tiSampledType, rng.UniformFloat());
+            if (fTi.IsBlack() || tiPdf == 0 || tiSampledWi.z == 0 || tiSampledType & BSDF_REFLECTION) {
+                continue;
+            }
+
+            if (toInterface.type & BSDF_SPECULAR) {
+                pdfSum += tiInterface.Pdf(-toSampledWi, wi);
+            } else if (tiInterface.type & BSDF_SPECULAR) {
+                pdfSum += toInterface.Pdf(wo, -tiSampledWi);
+            } else {
+                pdfSum += (toInterface.Pdf(wo, -tiSampledWi) + tiInterface.Pdf(-toSampledWi, wi)) / 2;
+            }
+        }
+    }
+
+    return Lerp(0.9f, 1 / (4 * Pi), pdfSum / nSamples);
+}
+
 Spectrum SpecularReflection::Sample_f(
     const Vector3f &wo,
     Vector3f *wi,

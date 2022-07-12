@@ -381,6 +381,8 @@ public:
         TransportMode mode = TransportMode::Radiance
     ) const;
 
+    Float Pdf(const Vector3f &wo, const Vector3f &wi) const;
+
 private:
     TopBxDF top;
     BottomBxDF bottom;
