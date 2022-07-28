@@ -36,6 +36,8 @@ public:
 // result of the influence of the characteristics of the surface boundary at pi; and Sp(po,pi)
 // is a spatial distribution that tells how far light travels within the surface.
 //
+// This approximation effectively decouples the spatial and directional arguments of S.
+//
 // The separable approximation simplifies the subsurface scattering equation Lo(po,wo) (an
 // integral equation) by allowing us to integrate solely with respect to incident direction
 // first and then with respect to area only. 
@@ -95,6 +97,23 @@ public:
 
         return (1 - FrDielectric(CosTheta(wi), 1, eta)) / (c * Pi);
     }
+
+    // Gives the spatial distribution characterizing how far light travels after entering the
+    // surface. PBRT doesn't give the actual expression of Sp and instead gives and implements
+    // an approximation. This approximation is based on 2 assumptions:
+    // 
+	//  - The surface is locally planar.
+    //
+    // - It isn't the location of the 2 points but the distance between them that affects the
+    //   value of S.
+    //
+    // An auxiliary function Sr that is given the distance between po and pi gives the approximation
+    // and is implemented by subclasses.
+    Spectrum Sp(const SurfaceInteraction &pi) const {
+        return Sr(Distance(po.p, pi.p));
+    }
+
+    virtual Spectrum Sr(Float d) const = 0;
 };
 
 #endif // CPBRT_CORE_BSSRDF_H
