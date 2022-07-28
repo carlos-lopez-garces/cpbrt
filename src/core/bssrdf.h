@@ -85,6 +85,16 @@ public:
         // This is the separable approximation to the BSSRDF.
         return Ft * Sp(pi) * Sw(wi);
     }
+
+    // Accounts for the influence of the boundary on the directional distribution of light
+    // entering the surface from direction wi.
+    Spectrum Sw(const Vector3f &wi) const {
+        // c is a normalization that causes Sw(wi)*cos(Theta) to integrate to 1 over the
+        // cosine-weighted hemisphere.
+        Float c = 1 - 2 * FresnelMoment1(1 / eta);
+
+        return (1 - FrDielectric(CosTheta(wi), 1, eta)) / (c * Pi);
+    }
 };
 
 #endif // CPBRT_CORE_BSSRDF_H
