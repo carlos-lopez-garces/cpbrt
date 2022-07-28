@@ -5,6 +5,12 @@
 #include "interaction.h"
 #include "reflection.h"
 
+// Computes the 1st moment of the Fresnel reflectance function Fr.
+Float FresnelMoment1(Float reciprocalEta);
+
+// Computes the 2nd moment of the Fresnel reflectance function Fr.
+Float FresnelMoment2(Float reciprocalEta);
+
 class BSSRDF {
 protected:
     const SurfaceInteraction &po;
