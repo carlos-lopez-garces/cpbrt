@@ -3,6 +3,7 @@
 
 #include "geometry.h"
 #include "interaction.h"
+#include "reflection.h"
 
 class BSSRDF {
 protected:
@@ -19,7 +20,7 @@ public:
     virtual Spectrum S(const SurfaceInteraction &pi, const Vector3f &wi) = 0;
 };
 
-// A separable BSSRDF approximates a BSSRDF with a product of 3 functions:
+// A separable BSSRDF approximates a BSSRDF as a product of 3 functions:
 //
 // S(po, wo, pi, wi) ~= (1 - Fr(cos(Theta_o)))Sp(po,pi)Sw(wi)
 //
@@ -28,6 +29,10 @@ public:
 // the fraction of incident radiance coming from wi and that makes it from pi to po as a 
 // result of the influence of the characteristics of the surface boundary at pi; and Sp(po,pi)
 // is a spatial distribution that tells how far light travels within the surface.
+//
+// The separable approximation simplifies the subsurface scattering equation Lo(po,wo) (an
+// integral equation) by allowing us to integrate solely with respect to incident direction
+// first and then with respect to area only. 
 class SeparableBSSRDF : public BSSRDF {
 private:
     // Local coordinate frame with origin at po, which corresponds to the shading
@@ -52,6 +57,28 @@ public:
         material(material),
         mode(mode)
     {}
+
+    // Computes an approximation to the ratio of differential exitant radiance at po in
+    // the direction SurfaceInteraction:wo to the incident differential flux at pi from
+    // direction wi.
+    Spectrum S(const SurfaceInteraction &pi, const Vector3f &wi) {
+        // TODO: this explanation doesn't make sense; I would have expected the indices
+        // of refraction to be switched, so that the ray is exiting from within the surface
+        // and into the outside.
+        //
+        // FrDielectric evaluates the Fresnel reflectance equation between 2 dielectric
+        // media; the 1st argument is cosThetaI, the cosine of the angle of incidence
+        // relative to the normal. 1 is the index of refraction of the medium the ray
+        // is traveling in (1 corresponds to a vaccum) and eta is the index of refraction
+        // of the medium within the surface that this BSSRDF represents.
+        //
+        // Ft is then the fraction that is transmitted into direction po.wo after exiting
+        // the material.
+        Float Ft = 1 - FrDielectric(Dot(po.wo, po.shading.n), 1, eta);
+
+        // This is the separable approximation to the BSSRDF.
+        return Ft * Sp(pi) * Sw(wi);
+    }
 };
 
 #endif // CPBRT_CORE_BSSRDF_H
