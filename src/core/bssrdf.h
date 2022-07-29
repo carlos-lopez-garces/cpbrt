@@ -102,7 +102,7 @@ public:
     // surface. PBRT doesn't give the actual expression of Sp and instead gives and implements
     // an approximation. This approximation is based on 2 assumptions:
     // 
-	//  - The surface is locally planar.
+	// - The surface is locally planar.
     //
     // - It isn't the location of the 2 points but the distance between them that affects the
     //   value of S.
@@ -114,6 +114,40 @@ public:
     }
 
     virtual Spectrum Sr(Float d) const = 0;
+};
+
+struct BSSRDFTable {
+
+};
+
+class TabulatedBSSRDF : public SeparableBSSRDF {
+private:
+    // A 2-dimensional, unitless table.
+    const BSSRDFTable &table;
+
+    // Extinction coefficient that gives the rate of scattering or absorption per unit distance.
+    Spectrum sigma_t;
+
+    // Albedo.
+    Spectrum rho;
+
+public:
+    TabulatedBSSRDF(
+        const SurfaceInteraction &po,
+        const Material *material,
+        TransportMode mode,
+        // Index of refraction.
+        Float eta,
+        const Spectrum &sigma_a,
+        const Spectrum &sigma_s,
+        const BSSRDFTable &table
+    ) : SeparableBSSRDF(po, eta, material, mode), table(table) {
+        sigma_t = sigma_a + sigma_s;
+        for (int c = 0; c < Spectrum::nSamples; ++c) {
+            rho[c] = sigma_t[c] != 0 ? (sigma_s[c] / sigma_t[c]) : 0;
+        }
+    }
+
 };
 
 #endif // CPBRT_CORE_BSSRDF_H
