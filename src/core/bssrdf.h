@@ -116,8 +116,41 @@ public:
     virtual Spectrum Sr(Float d) const = 0;
 };
 
+// A tabulated BSSRDF is 5-dimensional (index of refraction eta, scattering anisotropy g, albedo rho,
+// extinction coefficient sigma_t, and radius), but fixing sigma_t=1 and using optical radius 
+// r_optical = r * sigma_t reduces the dimension. A Jacobian determinant factor is then needed to
+// account for the radius-to-optical-radius change of variable.
 struct BSSRDFTable {
+    // The table's dimension is nRhoSamples * mOpticalRadiusSamples.
 
+    // Number of recorded albedo samples.
+    const int nRhoSamples;
+
+    // Number of recorded optical radii samples. Optical radii r_optical = r * sigma_t is a unitless
+    // transformation of the radius r = |po - pi|.
+    const int mOpticalRadiusSamples;
+
+    std::unique_ptr<Float[]> rhoSamples;
+    std::unique_ptr<Float[]> opticalRadiusSamples;
+    std::unique_ptr<Float[]> profile;
+    std::unique_ptr<Float[]> rhoEff;
+    std::unique_ptr<Float[]> profileCDF;
+
+    BSSRDFTable(
+        int nRhoSamples, 
+        int mOpticalRadiusSamples
+    ) : nRhoSamples(nRhoSamples),
+        mOpticalRadiusSamples(mOpticalRadiusSamples),
+        rhoSamples(new Float[nRhoSamples]),
+        opticalRadiusSamples(new Float[mOpticalRadiusSamples]),
+        profile(new Float[nRadiusSamples * nRhoSamples]),
+        rhoEff(new Float[nRhoSamples]),
+        profileCDF(new Float[nRadiusSamples * nRhoSamples])
+    {}
+
+    inline Float EvalProfile(int rhoIndex, int radiusIndex) const {
+        return profile[rhoIndex * mOpticalRadiusSamples + radiusIndex];
+    }
 };
 
 class TabulatedBSSRDF : public SeparableBSSRDF {
