@@ -415,10 +415,11 @@ SET ( CPBRT_CORE_HEADERS
   src/core/filter.h
   src/core/floatfile.h
   src/core/geometry.h
+  src/core/hash.h
   src/core/imageio.h
   src/core/integrator.h
   src/core/interaction.h
-  # src/core/interpolation.h
+  src/core/interpolation.h
   src/core/light.h
   # src/core/lowdiscrepancy.h
   src/core/material.h
