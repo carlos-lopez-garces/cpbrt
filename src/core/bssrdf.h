@@ -132,8 +132,16 @@ struct BSSRDFTable {
 
     std::unique_ptr<Float[]> rhoSamples;
     std::unique_ptr<Float[]> opticalRadiusSamples;
+
+    // Effective albedo, which is different from the single-scattering-event albedo stored in
+    // TabulatedBSSRDF::rho. Effective albedo integrates the radial profile Sr over all radii r and
+    // all polar directions, i.e. over an infinitely large disk? A nonlinear and strictly monotonically
+    // increasing function of the single scattering albedo TabulatedBSSRDF::rho
+    std::unique_ptr<Float[]> effectiveRho;
+
+    // Stores a sample BSSRDF sample value for each of the
+    // nRhoSamples * mOpticalRadiusSamples pairs (rho, r_optical).
     std::unique_ptr<Float[]> profile;
-    std::unique_ptr<Float[]> rhoEff;
     std::unique_ptr<Float[]> profileCDF;
 
     BSSRDFTable(
@@ -161,7 +169,7 @@ private:
     // Extinction coefficient that gives the rate of scattering or absorption per unit distance.
     Spectrum sigma_t;
 
-    // Albedo.
+    // Albedo that gives the reduction in energy after a single scattering event.
     Spectrum rho;
 
 public:
@@ -181,6 +189,9 @@ public:
         }
     }
 
+    // Computes the radial profile of BSSRDF using spline-based interpolation of the tabulated
+    // samples of r and rho.
+    Spectrum Sr(Float r) const;
 };
 
 #endif // CPBRT_CORE_BSSRDF_H

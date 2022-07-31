@@ -29,3 +29,69 @@ Float FresnelMoment2(Float reciprocalEta) {
     Float r_eta = 1 / eta, r_eta2 = r_eta * r_eta, r_eta3 = r_eta2 * r_eta;
     return -547.033f + 45.3087f * r_eta3 - 218.725f * r_eta2 + 458.843f * r_eta + 404.557f * eta - 189.519f * eta2 + 54.9327f * eta3 - 9.00603f * eta4 + 0.63942f * eta5;
 }
+
+// Computes the radial profile of BSSRDF using spline-based interpolation of the tabulated
+// samples of r and rho.
+Spectrum TabulatedBSSRDF::Sr(Float r) const {
+    Spectrum Sr(0.f);
+
+    // Do spline-based interpolation for each of the channels of the spectrum.
+    for (int ch = 0; ch < Spectrum::nSamples; ++ch) {
+        // Reduce the dimensionality of Sr(eta, g, rho, sigma_t, r) by fixing sigma_t=1 and
+        // bundling sigma_t and r into a unitless optical radius r_optical = sigma_t * r. 
+        // This is effectively a change of variable that requires a scaling factor (a Jacobian
+        // determinant): Sr(eta, g, rho, sigma_t, r) = sigma_t^2 * Sr(eta, g, rho, 1, r_optical).
+        Float rOptical = r * sigma_t[ch];
+
+        // Compute spline weights to interpolate BSSRDF on channel ch. The weights are the
+        // coefficients of a polynomial interpolator of a function f (the Sr table in this case):
+        //
+        // p(x) = w0*f(x_-1) + w1*f(x_0) + w2*f(x_1) + w3*f(x_2).
+        //
+        // An interpolator is obtained for rho and another for optical radius.
+
+        // An offset is the index (into the row) that corresponds to the start endpoint of the
+        // subinterval (a pair of samples or r or rho) that contains the lookup value (input r
+        // and TabulatedBSSRDF::rho).  
+        int rhoOffset;
+        int radiusOffset;
+        // Interpolator weights for rho and optical radius.
+        Float rhoWeights[4];
+        Float radiusWeights[4];
+        if (
+            !CatmullRomWeights(table.nRhoSamples, table.rhoSamples.get(), rho[ch], &rhoOffset, rhoWeights)
+            || !CatmullRomWeights(table.mOpticalRadiusSamples, table.opticalRadiusSamples.get(), rOptical, &radiusOffset, radiusWeights)
+        ) {
+            // rho or r are not in the domain of the tabulated radial profile Sr.
+            continue;
+        }
+
+        // Set BSSRDF value Sr[ch] using tensor spline interpolation.
+        Float sr = 0;
+        // 4 weights.
+        for (int i = 0; i < 4; ++i) {
+            for (int j = 0; j < 4; ++j) {
+                Float weight = rhoWeights[i] * radiusWeights[j];
+                if (weight != 0) {
+                    sr += weight * table.EvalProfile(rhoOffset + i, radiusOffset + j);
+                }
+            }
+        }
+
+        // Cancel marginal PDF factor of 2*Pi*r_optical from tabulatd BSSRDF profile. It
+        // was introduced when evaluating the tabulated profile and is there for facilitating
+        // importance sampling, but it's not part of the definition of Sr.
+        if (rOptical != 0) {
+            sr /= 2 * Pi * rOptical;
+        }
+
+        Sr[ch] = sr;
+    }
+
+    // Transform unitless value into world space units. The Sr value thus far computed is unitless
+    // as a result of a change of variable r_optical = sigma_t * r that reduces the dimensionality
+    // of Sr (see above).
+    Sr *= sigma_t * sigma_t;
+
+    return Sr.Clamp();
+}
