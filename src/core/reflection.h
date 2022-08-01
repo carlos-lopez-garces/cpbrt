@@ -698,7 +698,7 @@ public:
 
 // Torrance-Sparrow microfacet model. V-shaped cavities of symmetric microfacets with perfectly
 // specular reflection. Only the microfacets with a normal equal to the half-angle of a pair of
-// directions wo and wi reflect light.
+// directions wo and wi reflect light. (Corresponds to MicrofacetReflection in PBRT.)
 class TorranceSparrowMicrofacetReflection : public BxDF {
 private:
     // Single microfacet reflectance.
