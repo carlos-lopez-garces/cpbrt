@@ -6,10 +6,10 @@
 #include "reflection.h"
 
 // Computes the 1st moment of the Fresnel reflectance function Fr.
-Float FresnelMoment1(Float reciprocalEta);
+Float FresnelMoment1(Float eta);
 
 // Computes the 2nd moment of the Fresnel reflectance function Fr.
-Float FresnelMoment2(Float reciprocalEta);
+Float FresnelMoment2(Float eta);
 
 class BSSRDF {
 protected:
@@ -151,9 +151,9 @@ struct BSSRDFTable {
         mOpticalRadiusSamples(mOpticalRadiusSamples),
         rhoSamples(new Float[nRhoSamples]),
         opticalRadiusSamples(new Float[mOpticalRadiusSamples]),
-        profile(new Float[nRadiusSamples * nRhoSamples]),
-        rhoEff(new Float[nRhoSamples]),
-        profileCDF(new Float[nRadiusSamples * nRhoSamples])
+        profile(new Float[mOpticalRadiusSamples * nRhoSamples]),
+        effectiveRho(new Float[nRhoSamples]),
+        profileCDF(new Float[mOpticalRadiusSamples * nRhoSamples])
     {}
 
     inline Float EvalProfile(int rhoIndex, int radiusIndex) const {

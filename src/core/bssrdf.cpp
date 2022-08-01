@@ -1,9 +1,10 @@
 #include "bssrdf.h"
+#include "interpolation.h"
 
 // Computes the 1st moment of the Fresnel reflectance function Fr. The ith Fresnel moment
 // is an integral involving the Fresnel reflectance function Fr over the hemisphere of 
 // directions. It is approximated here using a polynomial of degree 5 (a Taylor polynomial?).
-Float FresnelMoment1(Float reciprocalEta) {
+Float FresnelMoment1(Float eta) {
     Float eta2 = eta * eta;
     Float eta3 = eta2 * eta;
     Float eta4 = eta3 * eta;
@@ -16,7 +17,7 @@ Float FresnelMoment1(Float reciprocalEta) {
 }
 
 // Computes the 2nd moment of the Fresnel reflectance function Fr.
-Float FresnelMoment2(Float reciprocalEta) {
+Float FresnelMoment2(Float eta) {
     Float eta2 = eta * eta;
     Float eta3 = eta2 * eta;
     Float eta4 = eta3 * eta;
