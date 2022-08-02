@@ -870,6 +870,45 @@ Float TorranceSparrowMicrofacetReflection::Pdf(const Vector3f &wo, const Vector3
     return distribution->Pdf(wo, wh) / (4 * Dot(wo, wh));
 }
 
+// The Torrance-Sparrow BTDF.
+Spectrum TorranceSparrowMicrofacetTransmission::f(const Vector3f &wo, const Vector3f &wi) const {
+    if (SameHemisphere(wo, wi)) {
+        return Spectrum(0);
+    }
+
+    Float cosThetaO = CosTheta(wo);
+    Float cosThetaI = CosTheta(wi);
+    // Theta in the spherical coordinate (Theta, Phi, r) is measured from the normal of the surface
+    // at the shaded point (in shading space) to vector wo or vector wi. These vectors are normalized.
+    // cos(Theta) is the scalar component of wo or wi in the direction of the normal and corresponds
+    // to wo.z or wi.z because they are normalized.
+    if (cosThetaO == 0 || cosThetaI == 0) {
+        // wo or wi is tangential to the surface. No transmission.
+        return Spectrum(0);
+    }
+
+    Float eta = CosTheta(wo) > 0 ? (etaB / etaA) : (etaA / etaB);
+
+    // Half vector.
+    Vector3f wh = Normalize(wo + wi * eta);
+    if (wh.z < 0) {
+        wh = -wh;
+    }
+
+    if (Dot(wo, wh)*Dot(wi, wh) > 0) {
+        // wo, wi, and wh are all on the same side hemisphere. This can't be because wo and wi
+        // are on different hemispheres during transmission.
+        return Spectrum(0);
+    }
+
+    Spectrum F = fresnel.Evaluate(Dot(wo, wh));
+    Float sqrtDenom = Dot(wo, wh) + eta * Dot(wi, wh);
+    Float factor = (mode == TransportMode::Radiance) ? (1 / eta) : 1;
+
+    // BTDF.
+    return (Spectrum(1.f) - F) * T * std::abs(distribution->D(wh) * distribution->G(wo, wi) * eta * eta * AbsDot(wi, wh) * AbsDot(wo, wh) * factor * factor / (cosThetaI * cosThetaO * sqrtDenom * sqrtDenom));
+}
+
 Spectrum BSDF::f(const Vector3f &woW, const Vector3f &wiW, BxDFType flags) const {
     Vector3f wi = WorldToLocal(wiW);
     Vector3f wo = WorldToLocal(woW);
