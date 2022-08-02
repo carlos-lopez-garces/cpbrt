@@ -741,6 +741,48 @@ public:
     Float Pdf(const Vector3f &wo, const Vector3f &wi) const;
 };
 
+// (Corresponds to MicrofacetTransmission in PBRT.)
+class TorranceSparrowMicrofacetTransmission : public BxDF {
+private:
+    // Single microfacet transmittance.
+    const Spectrum T;
+
+    // Distribution of slope and orientation of V-shaped microfacets. The distribution function
+    // gives the normalized differential area of microfacets with a given normal wh (half angle, wo+wi).
+    // Gives also the geometric attenuation factor, GAF, that accounts for masking and shadowing. 
+    const MicrofacetDistribution *distribution;
+
+    // Fresnel dielectric transmittance. Evaluates the Fresnel reflectance equations that determine the 
+    // fraction of light that is transmitted and absorbed (the rest is reflected).
+    const FresnelDielectric fresnel;
+
+    // Indices of refraction. We don't give either the distinction of corresponding to the outside or
+    // inside medium, because either could be.
+    Float etaA;
+    Float etaB;
+
+    TransportMode mode;
+
+public:
+    TorranceSparrowMicrofacetTransmission(
+        const Spectrum &T,
+        MicrofacetDistribution *distribution,
+        Float etaA,
+        Float etaB,
+        TransportMode mode
+    ) : BxDF(BxDFType(BSDF_TRANSMISSION | BSDF_GLOSSY)), 
+        T(T),
+        distribution(distribution),
+        etaA(etaA),
+        etaB(etaB),
+        fresnel(etaA, etaB),
+        mode(mode)
+    {}
+
+    // The Torrance-Sparrow BTDF. PBRT doesn't describe it much.
+    Spectrum f(const Vector3f &wo, const Vector3f &wi) const;
+};
+
 class BSDF {
 private:
     // Geometric normal.
