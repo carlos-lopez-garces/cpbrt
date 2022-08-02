@@ -2,6 +2,7 @@
 #define CPBRT_MATERIALS_SUBSURFACE_H
 
 #include "core/cpbrt.h"
+#include "core/bssrdf.h"
 #include "core/material.h"
 
 class SubsurfaceMaterial : public Material {
@@ -55,8 +56,7 @@ public:
         remapRoughness(remapRoughness),
         table(100, 64)
     {
-        // TODO: implement.
-        ComputeBeamDiffusionBSSRDF(g, eta, &table);
+        // TODO: implement and call ComputeBeamDiffusionBSSRDF.
     }
 
     // Adds BxDFs and BSSRDF to intersection point si.

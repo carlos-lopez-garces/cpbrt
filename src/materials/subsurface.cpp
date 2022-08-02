@@ -40,7 +40,7 @@ void SubsurfaceMaterial::ComputeScatteringFunctions(
 
         MicrofacetDistribution *distribution = nullptr;
         if (!isSpecular) {
-            microfacetDistribution = ARENA_ALLOC(arena, TrowbridgeReitzDistribution)(uRough, vRough);
+          distribution = ARENA_ALLOC(arena, TrowbridgeReitzDistribution)(uRough, vRough);
         }
         // Reflection.
         if (!R.IsBlack()) {
