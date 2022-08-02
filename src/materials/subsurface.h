@@ -8,15 +8,27 @@ class SubsurfaceMaterial : public Material {
 private:
     // Scales the absorption and scattering coefficients to facilitate change of units.
     const Float scale;
+
+    // Reflectance.
     std::shared_ptr<Texture<Spectrum>> Kr;
+
+    // (Beam) Transmittance.
     std::shared_ptr<Texture<Spectrum>> Kt;
+
     std::shared_ptr<Texture<Spectrum>> sigma_a;
     std::shared_ptr<Texture<Spectrum>> sigma_s;
+
+    // AlphaX parameter of the Trowbridge-Reitz microfacet distribution (TrowbridgeReitzDistribution).
     std::shared_ptr<Texture<Float>> uRoughness;
+    // AlphaY parameter of the Trowbridge-Reitz microfacet distribution (TrowbridgeReitzDistribution).
     std::shared_ptr<Texture<Float>> vRoughness;
-    std::shared_ptr<Texture<Float>> bumpMap;
-    const Float eta;
     const bool remapRoughness;
+
+    std::shared_ptr<Texture<Float>> bumpMap;
+
+    // Index of refraction of the transmission medium.
+    const Float eta;
+    
     BSSRDFTable table;
 
 public:
@@ -43,8 +55,14 @@ public:
         remapRoughness(remapRoughness),
         table(100, 64)
     {
+        // TODO: implement.
         ComputeBeamDiffusionBSSRDF(g, eta, &table);
     }
+
+    // Adds BxDFs and BSSRDF to intersection point si.
+    void ComputeScatteringFunctions(
+        SurfaceInteraction *si, MemoryArena &arena, TransportMode mode, bool allowMultipleLobes
+    ) const;
 };
 
 #endif // CPBRT_MATERIALS_SUBSURFACE_H
