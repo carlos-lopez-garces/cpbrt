@@ -930,6 +930,22 @@ Spectrum TorranceSparrowMicrofacetTransmission::Sample_f(
     return f(wo, *wi);
 }
 
+Float TorranceSparrowMicrofacetTransmission::Pdf(const Vector3f &wo, const Vector3f &wi) const {
+    if (SameHemisphere(wo, wi)) {
+        return 0;
+    }
+    Float eta = CosTheta(wo) > 0 ? (etaB / etaA) : (etaA / etaB);
+    Vector3f wh = Normalize(wo + wi * eta);
+
+    if (Dot(wo, wh) * Dot(wi, wh) > 0) {
+        return 0;
+    }
+
+    Float sqrtDenom = Dot(wo, wh) + eta * Dot(wi, wh);
+    Float dwh_dwi = std::abs((eta * eta * Dot(wi, wh)) / (sqrtDenom * sqrtDenom));
+    return distribution->Pdf(wo, wh) * dwh_dwi;
+}
+
 Spectrum BSDF::f(const Vector3f &woW, const Vector3f &wiW, BxDFType flags) const {
     Vector3f wi = WorldToLocal(wiW);
     Vector3f wo = WorldToLocal(woW);
