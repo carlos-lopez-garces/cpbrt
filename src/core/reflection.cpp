@@ -909,6 +909,27 @@ Spectrum TorranceSparrowMicrofacetTransmission::f(const Vector3f &wo, const Vect
     return (Spectrum(1.f) - F) * T * std::abs(distribution->D(wh) * distribution->G(wo, wi) * eta * eta * AbsDot(wi, wh) * AbsDot(wo, wh) * factor * factor / (cosThetaI * cosThetaO * sqrtDenom * sqrtDenom));
 }
 
+Spectrum TorranceSparrowMicrofacetTransmission::Sample_f(
+    const Vector3f &wo, Vector3f *wi, const Point2f &u, Float *pdf, BxDFType *sampledType
+) const {
+    if (wo.z == 0) {
+        return 0.;
+    }
+
+    Vector3f wh = distribution->Sample_wh(wo, u);
+    if (Dot(wo, wh) < 0) {
+        return 0.;
+    }
+
+    Float eta = CosTheta(wo) > 0 ? (etaA / etaB) : (etaB / etaA);
+    if (!Refract(wo, (Normal3f)wh, eta, wi)) {
+        return 0;
+    }
+
+    *pdf = Pdf(wo, *wi);
+    return f(wo, *wi);
+}
+
 Spectrum BSDF::f(const Vector3f &woW, const Vector3f &wiW, BxDFType flags) const {
     Vector3f wi = WorldToLocal(wiW);
     Vector3f wo = WorldToLocal(woW);
