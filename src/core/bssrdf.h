@@ -243,6 +243,8 @@ public:
         const BSSRDFTable &table
     ) : SeparableBSSRDF(po, eta, material, mode), table(table) {
         sigma_t = sigma_a + sigma_s;
+        // Albedo varies with wavelength. Different wavelengths get absorbed at different
+        // rates as the ray traverses the scattering medium underneath the surface.
         for (int c = 0; c < Spectrum::nSamples; ++c) {
             rho[c] = sigma_t[c] != 0 ? (sigma_s[c] / sigma_t[c]) : 0;
         }
@@ -251,6 +253,13 @@ public:
     // Computes the radial profile of BSSRDF using spline-based interpolation of the tabulated
     // samples of r and rho.
     Spectrum Sr(Float r) const;
+
+    // Samples the radial scattering profile for a given spectral channel (wavelength), returning
+    // a radius that Sp uses to sample a point of incidence pi.
+    //
+    // Sr is an approximation of Sp that assumes the local surface to be planar and that only the
+    // distance between p0 and p1 matter and not their location.
+    Float Sample_Sr(int ch, Float u) const;
 };
 
 #endif // CPBRT_CORE_BSSRDF_H

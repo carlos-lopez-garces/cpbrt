@@ -262,3 +262,25 @@ Spectrum TabulatedBSSRDF::Sr(Float r) const {
 
     return Sr.Clamp();
 }
+
+Float TabulatedBSSRDF::Sample_Sr(int ch, Float u) const {
+    if (sigma_t[ch] == 0) {
+        // Radiance is instantly attenuated or extinguished at wavelength ch. No radius to return.
+        return -1;
+    }
+
+    // TODO: implement SampleCatmullRom2D. 
+    Float rOptical = SampleCatmullRom2D(
+        table.nRhoSamples,
+        table.mOpticalRadiusSamples,
+        table.rhoSamples.get(),
+        table.opticalRadiusSamples.get(),
+        table.profile.get(),
+        table.profileCDF.get(),
+        rho[ch],
+        u
+    );
+
+    // Radius is optical radius divided by extinction coefficient, r = r_optical / sigma_t.
+    return rOptical / sigma_t[ch];
+}
