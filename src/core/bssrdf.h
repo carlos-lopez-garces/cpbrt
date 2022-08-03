@@ -142,7 +142,14 @@ public:
     // to be planar and that only the distance between p0 and p1 matter and not their location.
     virtual Float Sample_Sr(int ch, Float u) const = 0;
 
-    // PDF that gives the probability of sampling Sr using the given spectral channel and radius.
+    // PDF that gives the probability of choosing the given incidence point pi when sampling the spatial
+    // profile Sp.
+    Float Pdf_Sp(const SurfaceInteraction &pi) const;
+
+    // PDF that gives the probability of sampling Sr using the given spectral channel and radius. This
+    // PDF accounts for all sampling dimensions: all the spectral channels (Spectrum::nSamples) (different
+    // wavelengths travel farther than others within the medium) and all the 3 projection axes that may be
+    // chosen to cast a probe ray along.
     virtual Float Pdf_Sr(int ch, Float r) const = 0;
 };
 

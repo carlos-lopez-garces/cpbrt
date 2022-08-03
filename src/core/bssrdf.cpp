@@ -172,6 +172,31 @@ Spectrum SeparableBSSRDF::Sample_Sp(
     return Sp(*pi);
 }
 
+Float SeparableBSSRDF::Pdf_Sp(const SurfaceInteraction &pi) const {
+    // Express po-pi and ni (normal at pi) with respect to local coordinates at po.
+    Vector3f piToPo = po.p - pi.p;
+    Vector3f piToPoLocal(Dot(ss, piToPo), Dot(ts, piToPo), Dot(ns, piToPo));
+    Normal3f niLocal(Dot(ss, pi.n), Dot(ts, pi.n), Dot(ns, pi.n));
+
+    // Compute BSSRDF profile radius under projection along each axis.
+    Float rProj[3] = { 
+        std::sqrt(piToPoLocal.y * piToPoLocal.y + piToPoLocal.z * piToPoLocal.z),
+        std::sqrt(piToPoLocal.z * piToPoLocal.z + piToPoLocal.x * piToPoLocal.x),
+        std::sqrt(piToPoLocal.x * piToPoLocal.x + piToPoLocal.y * piToPoLocal.y)
+    };
+
+    // Return combined probability from all BSSRDF sampling strategies.
+    Float pdf = 0, axisProb[3] = { .25f, .25f, .5f };
+    Float chProb = 1/ (Float)Spectrum::nSamples;
+    for (int axis = 0; axis < 3; ++axis) {
+        for (int ch = 0; ch < Spectrum::nSamples; ++ch) {
+            pdf += Pdf_Sr(ch, rProj[axis]) * std::abs(niLocal[axis]) * chProb * axisProb[axis];
+        }
+    }
+    
+    return pdf;
+}
+
 // Computes the radial profile of BSSRDF using spline-based interpolation of the tabulated
 // samples of r and rho.
 Spectrum TabulatedBSSRDF::Sr(Float r) const {
