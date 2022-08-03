@@ -24,6 +24,11 @@ public:
     // Computes the ratio of differential exitant radiance at po in the direction 
     // SurfaceInteraction:wo to the incident differential flux at pi from direction wi.
     virtual Spectrum S(const SurfaceInteraction &pi, const Vector3f &wi) = 0;
+
+    // Samples the BSSRDF at the SurfaceInteration.
+    virtual Spectrum Sample_S(
+        const Scene &scene, Float u1, const Point2f &u2, MemoryArena &arena, SurfaceInteraction *si, Float *pdf
+    ) const = 0;
 };
 
 // A separable BSSRDF approximates a BSSRDF as a product of 3 functions:
@@ -114,6 +119,52 @@ public:
     }
 
     virtual Spectrum Sr(Float d) const = 0;
+
+    // Samples the separable approximation of the BSSRDF S:
+    //
+    // S(po, wo, pi, wi) ~= (1 - Fr(cos(Theta_o)))Sp(po,pi)Sw(wi)
+    //
+    // where Sp and Sw can be sampled independently (being able to sample them separately is one
+    // of the properties of a separable BSSRDF). The sampled incidence point is returned in pi.
+    Spectrum Sample_S(
+        const Scene &scene, Float u1, const Point2f &u2, MemoryArena &arena, SurfaceInteraction *pi, Float *pdf
+    ) const;
+
+    // Samples the spatial component of the BSSRDF S using a probe ray that obtains a point of
+    // incidence pi. The random sample u1 is used to choose an axis of projection for the probe ray.
+    // The 2D random sample u2 is used to sample a polar coordinate to sample, in turn, the radial
+    // scattering profile Sr.
+    Spectrum Sample_Sp(
+        const Scene &scene, Float u1, const Point2f &u2, MemoryArena &arena, SurfaceInteraction *pi, Float *pdf
+    ) const;
+
+    // Samples the radial scattering profile, an approximation of Sp that assumes the local surface
+    // to be planar and that only the distance between p0 and p1 matter and not their location.
+    virtual Float Sample_Sr(int ch, Float u) const = 0;
+
+    // PDF that gives the probability of sampling Sr using the given spectral channel and radius.
+    virtual Float Pdf_Sr(int ch, Float r) const = 0;
+};
+
+// Represents the directional component Sw of a BSSRDF S and accounts for the influence of the boundary
+// on the direction distribution of light entering the surface from a given direction wi. The BSDF of
+// SeparableBxDF adapts SeparableBSSRDF::Sw to make it suitable for "adjoint" light transport. (Corresponds
+// to SeparableBSSRDFAdapter in PBRT.)
+class SeparableBxDF : public BxDF {
+private:
+    const SeparableBSSRDF *bssrdf;
+
+public:
+    SeparableBxDF(const SeparableBSSRDF *bssrdf) : BxDF(BxDFType(BSDF_REFLECTION | BSDF_DIFFUSE)), bssrdf(bssrdf) {}
+
+    // Adapts SeparableBSSRDF::Sw to make it suitable for "adjoint" light transport.
+    Spectrum f(const Vector3f &wo, const Vector3f &wi) const {
+        Spectrum f = bssrdf->Sw(wi);
+        // TODO: Update BSSRDF transmission term to account for adjoint light transport.
+        return f;
+    }
+
+    // Uses base class implementation of Sample_f, which is cosine-weighted sampling.
 };
 
 // A tabulated BSSRDF is 5-dimensional (index of refraction eta, scattering anisotropy g, albedo rho,
@@ -161,6 +212,7 @@ struct BSSRDFTable {
     }
 };
 
+// A tabulated representation of the radial profile Sr that allows for importance sampling.
 class TabulatedBSSRDF : public SeparableBSSRDF {
 private:
     // A 2-dimensional, unitless table.

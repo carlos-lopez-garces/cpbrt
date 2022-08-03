@@ -1,5 +1,6 @@
 #include "bssrdf.h"
 #include "interpolation.h"
+#include "scene.h"
 
 // Computes the 1st moment of the Fresnel reflectance function Fr. The ith Fresnel moment
 // is an integral involving the Fresnel reflectance function Fr over the hemisphere of 
@@ -29,6 +30,146 @@ Float FresnelMoment2(Float eta) {
     
     Float r_eta = 1 / eta, r_eta2 = r_eta * r_eta, r_eta3 = r_eta2 * r_eta;
     return -547.033f + 45.3087f * r_eta3 - 218.725f * r_eta2 + 458.843f * r_eta + 404.557f * eta - 189.519f * eta2 + 54.9327f * eta3 - 9.00603f * eta4 + 0.63942f * eta5;
+}
+
+Spectrum SeparableBSSRDF::Sample_S(
+    const Scene &scene, Float u1, const Point2f &u2, MemoryArena &arena, SurfaceInteraction *pi, Float *pdf
+) const {
+    // The spatial component can be sampled separately from the directional component. A point
+    // on the surface/boundary is also sampled and returned in pi.
+    Spectrum Sp = Sample_Sp(scene, u1, u2, arena, pi, pdf);
+    if (!Sp.IsBlack()) {
+        // TODO: Initialize material model at sampled surface interaction.
+    }
+
+    return Sp;
+}
+
+Spectrum SeparableBSSRDF::Sample_Sp(
+    const Scene &scene, Float u1, const Point2f &u2, MemoryArena &arena, SurfaceInteraction *pi, Float *pdf
+) const {
+    // Choose projection axis for probe ray. The projection axis may be any of the basis vectors of
+    // shading space (one of which, the normal n_o, is perpendicular to the assumed planar local surface,
+    // and the other 2 are tangential to p_0 and parrallel to the assumed planar local surface). Since
+    // the perpendicular projection probe ray is sure to intersect the surface, we choose it with 0.5
+    // probability, whereas each of the 2 parallel projection probe rays get 0.25 probability each (they
+    // are more likely to miss the surface, especially if the local surface is indeed planar or
+    // convex).
+    //
+    // vz will be the chosen axis.
+    Vector3f vx, vy, vz;
+    if (u1 < 0.5f) {
+        // Choose the perpendicular projection probe ray with 0.5 probability.
+        vx = ss;
+        vy = ts;
+        vz = Vector3f(ns);
+        u1 *= 2;
+    } else if (u1 < 0.75f) {
+        // Choose one of the parallel projection probe ray with 0.25 probability.
+        vx = ts;
+        vy = Vector3f(ns);
+        vz = ss;
+        u1 = (u1 - .5f) * 4;
+    } else {
+        // Choose the other parallel projection probe ray.
+        vx = Vector3f(ns);
+        vy = ss;
+        vz = ts;
+        u1 = (u1 - .75f) * 4;
+    }
+
+    // Choose spectral channel. Since the mean free path (the average distance that light travels through
+    // this scattering medium before hitting a particle, i.e. before a scattering event occurs) varies
+    // spectrally (i.e. across wavelengths), we choose at random a spectral channel; other Sample_Sp calls
+    // will sample other channels (at random).
+    int ch = Clamp((int) (u1 * Spectrum::nSamples), 0, Spectrum::nSamples - 1);
+    u1 = u1 * Spectrum::nSamples - ch;
+
+    // Sample a polar coordinate (r, phi) to sample, in turn, the radial scattering profile Sr.
+    Float r = Sample_Sr(ch, u2[0]);
+    if (r < 0) {
+        // No scattering from this channel.
+        return Spectrum(0.f);
+    }
+    Float phi = 2 * Pi * u2[1];
+
+    // Cap the length of the sampling radius. This maximum radius length is also obtained from the radial
+    // scattering profile Sr and its value is such that the corresponding sphere contains all the possible
+    // points of incidence pi that are within reach of po before energy falls off completely. In other words,
+    // incident radiance that enters the surface through points pi that are beyond this radius won't come out
+    // through po.
+    Float rMax = Sample_Sr(ch, 0.999f);
+    if (r > rMax) {
+        // The sampled radius places the point of incidence pi beyond reach. Radiance coming in through such
+        // a point won't come out through po.
+        return Spectrum(0.f);
+    }
+
+    // Compute probe ray. The point of intersection of this ray and the surface will be the sample incident
+    // point pi. The origin of this ray lies on the surface of a sphere around po of radius rMax. The ray
+    // has length probeRayLength and exits the sphere at point pTarget. Its direction is the chosen axis
+    // of projection, vz.
+    //
+    // probeRayLength follows from the Pythagorean theorem and corresponds to the length of a chord of the
+    // sphere of radius rMax. The chord joins the origin of the probe ray and the point where the probe
+    // ray exits the sphere. Half of the chord is the opposite leg of the right trangle whose hypotenuse is
+    // rMax and its adjacent leg is the sampled radius r.
+    Float probeRayLength = 2 * std::sqrt(rMax * rMax - r * r);
+    Interaction base;
+    // The sampled polar coordinate (r, phi) and the chosen axis of projection vz are used to construct
+    // the probe ray. The probe ray origin starts at po.
+    base.p = po.p;
+    // Then the origin moves to the sampled polar coordinate point.
+    Vector3f sampledPolarDirection = r*(vx*std::cos(phi) + vy*std::sin(phi));
+    base.p += sampledPolarDirection;
+    // Then the origin moves along the direction of the chosen axis of projection, placing it on the
+    // boundary of the sphere of radius rMax.
+    base.p -= (probeRayLength*0.5) * vz;
+    base.time = po.time;
+    // The probe ray points from a point on the surface of the sphere of radius rMax to another point on
+    // the surface of the sphere in the direction of the chosen axis of projection. Recall that probeRayLength
+    // is the length of the chord connecting these 2 points. 
+    Point3f pTarget = base.p + (probeRayLength * vz);
+
+    // Intersect probe ray against the scene geometry within the sphere of radius rMax but along the chord.
+    // There might be multiple intersections along the probe ray, which we store in an IntersectionChain (a linked list).
+    struct IntersectionChain {
+        SurfaceInteraction si;
+        IntersectionChain *next = nullptr; 
+    };
+    IntersectionChain *chain = ARENA_ALLOC(arena, IntersectionChain)();
+
+    // Accumulate chain of intersections along probe ray.
+    IntersectionChain *ptr = chain;
+    int nFound = 0;
+    while (scene.Intersect(base.SpawnRayTo(pTarget), &ptr->si)) {
+        // ptr->si is the intersection.
+        base = ptr->si;
+        // Is the intersection point on this surface or on other object's surface? Collect only the intersections
+        // on this surface.
+        if (ptr->si.primitive->GetMaterial() == material) {
+            // The intersection is indeed on this surface. Store it in the list and keep going.
+            IntersectionChain *next = ARENA_ALLOC(arena, IntersectionChain)();
+            ptr->next = next;
+            ptr = next;
+            nFound++;
+        }
+    }
+
+    // At this point we may have multiple points of incidence pi. Randomly choose one of the several intersections
+    // as the sampled point of incidence pi.
+    if (nFound == 0) {
+        return Spectrum(0.0f);
+    }
+    int selected = Clamp((int)(u1 * nFound), 0, nFound - 1);
+    while (selected-- > 0) {
+        chain = chain->next;
+    }
+    *pi = chain->si;
+
+    // Compute sample PDF and return the spatial BSSRDF term Sp.
+    *pdf = Pdf_Sp(*pi) / nFound;
+    return Sp(*pi);
 }
 
 // Computes the radial profile of BSSRDF using spline-based interpolation of the tabulated
