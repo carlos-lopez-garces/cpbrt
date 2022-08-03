@@ -767,6 +767,18 @@ public:
         Float inv = (Float) 1 / f;
         return Normal3<T>(x * inv, y * inv, z * inv);
     }
+    
+    T operator[](int i) const {
+        if (i == 0) return x;
+        if (i == 1) return y;
+        return z;
+    }
+
+    T &operator[](int i) {
+        if (i == 0) return x;
+        if (i == 1) return y;
+        return z;
+    }
 
     Float LengthSquared() const {
         return x*x + y*y + z*z;
