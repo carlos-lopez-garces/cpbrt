@@ -17,6 +17,9 @@ Float BeamDiffusionSS(Float sigma_s, Float sigma_a, Float g, Float eta, Float r)
 // TODO: describe.
 Float BeamDiffusionMS(Float sigma_s, Float sigma_a, Float g, Float eta, Float r);
 
+// TODO: describe.
+void ComputeBeamDiffusionBSSRDF(Float g, Float eta, BSSRDFTable *t);
+
 class BSSRDF {
 protected:
     const SurfaceInteraction &po;

@@ -1,5 +1,6 @@
 #include "bssrdf.h"
 #include "interpolation.h"
+#include "parallel.h"
 #include "scene.h"
 
 // Computes the 1st moment of the Fresnel reflectance function Fr. The ith Fresnel moment
@@ -73,6 +74,32 @@ Float BeamDiffusionSS(Float sigma_s, Float sigma_a, Float g, Float eta, Float r)
         Ess += rho * std::exp(-sigma_t * (d + tCrit)) / (d * d) * PhaseHG(cosThetaO, g) * (1 - FrDielectric(-cosThetaO, 1, eta)) * std::abs(cosThetaO);
     }
     return Ess / nSamples;
+}
+
+void ComputeBeamDiffusionBSSRDF(Float g, Float eta, BSSRDFTable *t) {
+    t->opticalRadiusSamples[0] = 0;
+    t->opticalRadiusSamples[1] = 2.5e-3f;
+    for (int i = 2; i < t->mOpticalRadiusSamples; ++i) {
+        t->opticalRadiusSamples[i] = t->opticalRadiusSamples[i - 1] * 1.2f;
+    }
+
+    for (int i = 0; i < t->nRhoSamples; ++i) {
+        t->rhoSamples[i] = (1 - std::exp(-8 * i / (Float)(t->nRhoSamples - 1))) / (1 - std::exp(-8));
+    }
+        
+    ParallelFor([&](int i) {
+        for (int j = 0; j < t->mOpticalRadiusSamples; ++j) {
+            Float rho = t->rhoSamples[i], r = t->opticalRadiusSamples[j];
+            t->profile[i * t->mOpticalRadiusSamples + j] = 2 * Pi * r * (BeamDiffusionSS(rho, 1 - rho, g, eta, r) + BeamDiffusionMS(rho, 1 - rho, g, eta, r));
+        }
+
+        t->effectiveRho[i] = IntegrateCatmullRom(
+            t->mOpticalRadiusSamples,
+            t->opticalRadiusSamples.get(),
+            &t->profile[i * t->mOpticalRadiusSamples],
+            &t->profileCDF[i * t->mOpticalRadiusSamples]
+        );
+    }, t->nRhoSamples);
 }
 
 Spectrum SeparableBSSRDF::Sample_S(
