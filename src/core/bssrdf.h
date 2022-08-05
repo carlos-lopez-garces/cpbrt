@@ -260,6 +260,8 @@ public:
     // Sr is an approximation of Sp that assumes the local surface to be planar and that only the
     // distance between p0 and p1 matter and not their location.
     Float Sample_Sr(int ch, Float u) const;
+
+    Float Pdf_Sr(int ch, Float r) const;
 };
 
 #endif // CPBRT_CORE_BSSRDF_H

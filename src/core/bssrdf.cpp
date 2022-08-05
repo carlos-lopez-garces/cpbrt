@@ -284,3 +284,35 @@ Float TabulatedBSSRDF::Sample_Sr(int ch, Float u) const {
     // Radius is optical radius divided by extinction coefficient, r = r_optical / sigma_t.
     return rOptical / sigma_t[ch];
 }
+
+Float TabulatedBSSRDF::Pdf_Sr(int ch, Float r) const {
+    Float rOptical = r * sigma_t[ch];
+
+    int rhoOffset, radiusOffset;
+    Float rhoWeights[4], radiusWeights[4];
+    if (!CatmullRomWeights(table.nRhoSamples, table.rhoSamples.get(), rho[ch], &rhoOffset, rhoWeights)
+        || !CatmullRomWeights(table.mOpticalRadiusSamples, table.opticalRadiusSamples.get(), rOptical, &radiusOffset, radiusWeights)) {
+        return 0.f;
+    }
+
+    Float sr = 0, rhoEff = 0;
+    for (int i = 0; i < 4; ++i) {
+        if (rhoWeights[i] == 0) {
+            continue;
+        }
+
+        rhoEff += table.effectiveRho[rhoOffset + i] * rhoWeights[i];
+        for (int j = 0; j < 4; ++j) {
+            if (radiusWeights[j] == 0) {
+                continue;
+            }
+
+            sr += table.EvalProfile(rhoOffset + i, radiusOffset + j) * rhoWeights[i] * radiusWeights[j];
+        }
+    }
+
+    if (rOptical != 0) {
+        sr /= 2 * Pi * rOptical;
+    }
+    return std::max((Float)0, sr * sigma_t[ch] * sigma_t[ch] / rhoEff);
+}
