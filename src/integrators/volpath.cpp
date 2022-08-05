@@ -1,8 +1,12 @@
 #include "volpath.h"
+#include "core/bssrdf.h"
 #include "core/error.h"
+#include "core/lightdistribution.h"
 #include "core/paramset.h"
 
-void VolPathIntegrator::Preprocess(const Scene &scene, Sampler &sampler) {}
+void VolPathIntegrator::Preprocess(const Scene &scene, Sampler &sampler) {
+    // lightDistribution = CreateLightSampleDistribution(lightSampleStrategy, scene);
+}
 
 Spectrum VolPathIntegrator::Li(
     const RayDifferential &r,
@@ -71,7 +75,39 @@ Spectrum VolPathIntegrator::Li(
             ray = isect.SpawnRay(wi);
 
             if (isect.bssrdf && (flags & BSDF_TRANSMISSION)) {
-                // TODO: Importance sample the BSSRDF.
+                // Importance sample the BSSRDF S.
+                //
+                // A point of incidence pi around si (the ray intersection point aka the shading point
+                // aka the outgoing point) is sampled as a result.
+                SurfaceInteraction pi;
+                Spectrum S = isect.bssrdf->Sample_S(scene, sampler.Get1D(), sampler.Get2D(), arena, &pi, &pdf);
+                if (S.IsBlack() || pdf == 0) {
+                    // No subsurface scattering?
+                    break;
+                }
+                // Add throughput contribution.
+                beta *= S / pdf;
+
+                // When the material has an associated BSSRDF (like in this case), the Monte Carlo estimator
+                // has 2 terms, S(...)(Ld(...)Li(...))/p_1(pi)p_2(wi), one of which is direct incident radiance
+                // Ld and the other is indirect incident radiance Li. Each of these 2 are compted next.
+                
+                // Add the contribution of direct incident radiance. Account for the direct subsurface
+                // scattering component.
+                L += beta * UniformSampleOneLight(pi, scene, arena, sampler, true);
+
+                // Add the contirnbution of indirect incident radiance. Account for the indirect subsurface
+                // scattering component. This BSDF is a SeparableBxDF. Note 
+                Spectrum f = pi.bsdf->Sample_f(pi.wo, &wi, sampler.Get2D(), &pdf, BSDF_ALL, &flags);
+                if (f.IsBlack() || pdf == 0) {
+                    break;
+                }
+                // Add throughput contribution.
+                beta *= f * AbsDot(wi, pi.shading.n) / pdf;
+                specularBounce = (flags & BSDF_SPECULAR) != 0;
+                // Note that the next vertex will be found by spawning a ray from pi (which is some distance
+                // away from si) instead of si.
+                ray = pi.SpawnRay(wi);
             }
         }
 
