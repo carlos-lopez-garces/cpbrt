@@ -39,7 +39,8 @@ public:
         const std::shared_ptr<Texture<Spectrum>> &Kt,
         const std::shared_ptr<Texture<Spectrum>> &sigma_a,
         const std::shared_ptr<Texture<Spectrum>> &sigma_s,
-        Float g, Float eta,
+        Float g,
+        Float eta,
         const std::shared_ptr<Texture<Float>> &uRoughness,
         const std::shared_ptr<Texture<Float>> &vRoughness,
         const std::shared_ptr<Texture<Float>> &bumpMap,
@@ -56,7 +57,8 @@ public:
         remapRoughness(remapRoughness),
         table(100, 64)
     {
-        // TODO: implement and call ComputeBeamDiffusionBSSRDF.
+        // Populates the BSSRDFTable using the beam diffusion equation.
+        ComputeBeamDiffusionBSSRDF(g, eta, &table);
     }
 
     // Adds BxDFs and BSSRDF to intersection point si.
