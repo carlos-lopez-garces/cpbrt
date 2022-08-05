@@ -109,7 +109,10 @@ Spectrum SeparableBSSRDF::Sample_S(
     // on the surface/boundary is also sampled and returned in pi.
     Spectrum Sp = Sample_Sp(scene, u1, u2, arena, pi, pdf);
     if (!Sp.IsBlack()) {
-        // TODO: Initialize material model at sampled surface interaction.
+        // The BxDF of the material at the sampled point pi is used to sample the directional component of S.
+        pi->bsdf = ARENA_ALLOC(arena, BSDF)(*pi);
+        pi->bsdf->Add(ARENA_ALLOC(arena, SeparableBxDF)(this));
+        pi->wo = Vector3f(pi->shading.n);
     }
 
     return Sp;
