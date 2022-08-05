@@ -12,4 +12,18 @@
 // subintervals.
 bool CatmullRomWeights(int size, const Float *nodes, Float x, int *offset, Float *weights);
 
+// TODO: described.
+Float SampleCatmullRom2D(
+    int size1,
+    int size2,
+    const Float *nodes1,
+    const Float *nodes2,
+    const Float *values,
+    const Float *cdf,
+    Float alpha,
+    Float sample,
+    Float *fval = nullptr,
+    Float *pdf = nullptr
+);
+
 #endif // CPBRT_CORE_INTERPOLATION_H

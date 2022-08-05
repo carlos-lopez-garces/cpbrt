@@ -21,7 +21,7 @@ bool CatmullRomWeights(int size, const Float *nodes, Float x, int *offset, Float
         return nodes[i] <= x;
     });
     // Index of the start endpoint (spline node) of the subinterval (spline segment).
-    *offset - nodeIdx - 1;
+    *offset = nodeIdx - 1;
     Float x0 = nodes[nodeIdx];
     Float x1 = nodes[nodeIdx+1];
 
@@ -60,4 +60,96 @@ bool CatmullRomWeights(int size, const Float *nodes, Float x, int *offset, Float
     }
 
     return true;
+}
+
+Float SampleCatmullRom2D(
+    int size1, int size2,
+    const Float *nodes1,
+    const Float *nodes2,
+    const Float *values,
+    const Float *cdf,
+    Float alpha,
+    Float u,
+    Float *fval,
+    Float *pdf
+) {
+    int offset;
+    Float weights[4];
+    if (!CatmullRomWeights(size1, nodes1, alpha, &offset, weights)) {
+        return 0;
+    }
+
+    auto interpolate = [&](const Float *array, int idx) {
+        Float value = 0;
+        for (int i = 0; i < 4; ++i) {
+            if (weights[i] != 0) {
+                value += array[(offset + i) * size2 + idx] * weights[i];
+            }
+        }
+        return value;
+    };
+
+    Float maximum = interpolate(cdf, size2 - 1);
+    u *= maximum;
+    int idx = FindInterval(size2, [&](int i) { 
+        return interpolate(cdf, i) <= u; 
+    });
+
+    Float f0 = interpolate(values, idx), f1 = interpolate(values, idx + 1);
+    Float x0 = nodes2[idx], x1 = nodes2[idx + 1];
+    Float width = x1 - x0;
+    Float d0, d1;
+
+    u = (u - interpolate(cdf, idx)) / width;
+
+    if (idx > 0) {
+        d0 = width * (f1 - interpolate(values, idx - 1)) / (x1 - nodes2[idx - 1]);
+    } else {
+        d0 = f1 - f0;
+    }
+    if (idx + 2 < size2) {
+        d1 = width * (interpolate(values, idx + 2) - f0) / (nodes2[idx + 2] - x0);
+    } else {
+        d1 = f1 - f0;
+    }
+
+    Float t;
+    if (f0 != f1) {
+        t = (f0 - std::sqrt(std::max((Float)0, f0 * f0 + 2 * u * (f1 - f0)))) / (f0 - f1);
+    } else {
+        t = u / f0;
+    }
+
+    Float a = 0, b = 1, Fhat, fhat;
+    while (true) {
+        if (!(t >= a && t <= b)) {
+            t = 0.5f * (a + b);
+        }
+
+        Fhat = t * (f0 +
+                    t * (.5f * d0 +
+                         t * ((1.f / 3.f) * (-2 * d0 - d1) + f1 - f0 +
+                              t * (.25f * (d0 + d1) + .5f * (f0 - f1)))));
+        fhat = f0 +
+               t * (d0 +
+                    t * (-2 * d0 - d1 + 3 * (f1 - f0) +
+                         t * (d0 + d1 + 2 * (f0 - f1))));
+
+        if (std::abs(Fhat - u) < 1e-6f || b - a < 1e-6f) {
+            break;
+        }
+
+        if (Fhat - u < 0) {
+            a = t;
+        }
+        else {
+            b = t;   
+        }
+
+        t -= (Fhat - u) / fhat;
+    }
+
+    if (fval) *fval = fhat;
+    if (pdf) *pdf = fhat / maximum;
+    return x0 + width * t;
 }
