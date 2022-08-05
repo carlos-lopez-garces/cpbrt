@@ -11,6 +11,12 @@ Float FresnelMoment1(Float eta);
 // Computes the 2nd moment of the Fresnel reflectance function Fr.
 Float FresnelMoment2(Float eta);
 
+// TODO: describe.
+Float BeamDiffusionSS(Float sigma_s, Float sigma_a, Float g, Float eta, Float r);
+
+// TODO: describe.
+Float BeamDiffusionMS(Float sigma_s, Float sigma_a, Float g, Float eta, Float r);
+
 class BSSRDF {
 protected:
     const SurfaceInteraction &po;

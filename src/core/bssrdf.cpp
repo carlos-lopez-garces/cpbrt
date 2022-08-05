@@ -32,6 +32,49 @@ Float FresnelMoment2(Float eta) {
     return -547.033f + 45.3087f * r_eta3 - 218.725f * r_eta2 + 458.843f * r_eta + 404.557f * eta - 189.519f * eta2 + 54.9327f * eta3 - 9.00603f * eta4 + 0.63942f * eta5;
 }
 
+Float BeamDiffusionMS(Float sigma_s, Float sigma_a, Float g, Float eta, Float r) {
+    const int nSamples = 100;
+    Float Ed = 0;
+    Float sigmap_s = sigma_s * (1 - g);
+    Float sigmap_t = sigma_a + sigmap_s;
+    Float rhop = sigmap_s / sigmap_t;
+    Float D_g = (2 * sigma_a + sigmap_s) / (3 * sigmap_t * sigmap_t);
+    Float sigma_tr = std::sqrt(sigma_a / D_g);
+    Float fm1 = FresnelMoment1(eta), fm2 = FresnelMoment2(eta);
+    Float ze = -2 * D_g * (1 + 3 * fm2) / (1 - 2 * fm1);
+
+    Float cPhi = .25f * (1 - 2 * fm1), cE = .5f * (1 - 3 * fm2);
+    for (int i = 0; i < nSamples; ++i) {
+        Float zr = -std::log(1 - (i + .5f) / nSamples) / sigmap_t;
+        Float zv = -zr + 2 * ze;
+        Float dr = std::sqrt(r * r + zr * zr), dv = std::sqrt(r * r + zv * zv);
+        Float phiD = Inv4Pi / D_g * (std::exp(-sigma_tr * dr) / dr - std::exp(-sigma_tr * dv) / dv);
+
+        Float EDn = Inv4Pi * (zr * (1 + sigma_tr * dr) * std::exp(-sigma_tr * dr) / (dr * dr * dr) - zv * (1 + sigma_tr * dv) * std::exp(-sigma_tr * dv) / (dv * dv * dv));
+
+        Float E = phiD * cPhi + EDn * cE;
+        Float kappa = 1 - std::exp(-2 * sigmap_t * (dr + zr));
+        Ed += kappa * rhop * rhop * E;
+    }
+    return Ed / nSamples;
+}
+
+Float BeamDiffusionSS(Float sigma_s, Float sigma_a, Float g, Float eta, Float r) {
+    Float sigma_t = sigma_a + sigma_s, rho = sigma_s / sigma_t;
+    Float tCrit = r * std::sqrt(eta * eta - 1);
+    Float Ess = 0;
+    const int nSamples = 100;
+    for (int i = 0; i < nSamples; ++i) {
+        Float ti = tCrit - std::log(1 - (i + .5f) / nSamples) / sigma_t;
+
+        Float d = std::sqrt(r * r + ti * ti);
+        Float cosThetaO = ti / d;
+
+        Ess += rho * std::exp(-sigma_t * (d + tCrit)) / (d * d) * PhaseHG(cosThetaO, g) * (1 - FrDielectric(-cosThetaO, 1, eta)) * std::abs(cosThetaO);
+    }
+    return Ess / nSamples;
+}
+
 Spectrum SeparableBSSRDF::Sample_S(
     const Scene &scene, Float u1, const Point2f &u2, MemoryArena &arena, SurfaceInteraction *pi, Float *pdf
 ) const {
