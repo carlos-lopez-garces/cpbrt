@@ -20,6 +20,8 @@ Float BeamDiffusionMS(Float sigma_s, Float sigma_a, Float g, Float eta, Float r)
 // TODO: describe.
 void ComputeBeamDiffusionBSSRDF(Float g, Float eta, BSSRDFTable *t);
 
+class SeparableBxDF;
+
 class BSSRDF {
 protected:
     const SurfaceInteraction &po;
@@ -70,6 +72,8 @@ private:
     const TransportMode mode;
 
 public:
+    friend class SeparableBxDF;
+
     SeparableBSSRDF(
         const SurfaceInteraction &po,
         Float eta,
@@ -179,7 +183,11 @@ public:
     // Adapts SeparableBSSRDF::Sw to make it suitable for "adjoint" light transport.
     Spectrum f(const Vector3f &wo, const Vector3f &wi) const {
         Spectrum f = bssrdf->Sw(wi);
-        // TODO: Update BSSRDF transmission term to account for adjoint light transport.
+        // Update BSSRDF transmission term to account for adjoint light transport.
+        // TODO: explain.
+        if (bssrdf->mode == TransportMode::Radiance) {
+            f *= bssrdf->eta * bssrdf->eta;
+        }
         return f;
     }
 
