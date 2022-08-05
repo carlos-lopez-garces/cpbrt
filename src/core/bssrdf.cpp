@@ -343,7 +343,6 @@ Float TabulatedBSSRDF::Sample_Sr(int ch, Float u) const {
         return -1;
     }
 
-    // TODO: implement SampleCatmullRom2D. 
     Float rOptical = SampleCatmullRom2D(
         table.nRhoSamples,
         table.mOpticalRadiusSamples,

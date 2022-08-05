@@ -67,7 +67,6 @@ Spectrum DirectLightingIntegrator::Li(
 
     // If the intersected object is emissive (an area light, for example), it contributes to the
     // radiance carried by the ray.
-    // TODO: implement.
     L += si.Le(wo);
 
     if (scene.lights.size() > 0) {
