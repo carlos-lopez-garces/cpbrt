@@ -110,6 +110,7 @@ Spectrum SeparableBSSRDF::Sample_S(
     Spectrum Sp = Sample_Sp(scene, u1, u2, arena, pi, pdf);
     if (!Sp.IsBlack()) {
         // The BxDF of the material at the sampled point pi is used to sample the directional component of S.
+        // The SeparableBxDF may be an arbitrary BxDF.
         pi->bsdf = ARENA_ALLOC(arena, BSDF)(*pi);
         pi->bsdf->Add(ARENA_ALLOC(arena, SeparableBxDF)(this));
         pi->wo = Vector3f(pi->shading.n);
