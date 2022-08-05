@@ -12,7 +12,7 @@
 // subintervals.
 bool CatmullRomWeights(int size, const Float *nodes, Float x, int *offset, Float *weights);
 
-// TODO: described.
+// TODO: describe.
 Float SampleCatmullRom2D(
     int size1,
     int size2,
@@ -25,5 +25,8 @@ Float SampleCatmullRom2D(
     Float *fval = nullptr,
     Float *pdf = nullptr
 );
+
+// TODO: describe.
+Float IntegrateCatmullRom(int n, const Float *nodes, const Float *values, Float *cdf);
 
 #endif // CPBRT_CORE_INTERPOLATION_H

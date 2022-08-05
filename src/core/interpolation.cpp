@@ -153,3 +153,29 @@ Float SampleCatmullRom2D(
     if (pdf) *pdf = fhat / maximum;
     return x0 + width * t;
 }
+
+Float IntegrateCatmullRom(int n, const Float *x, const Float *values, Float *cdf) {
+    Float sum = 0;
+    cdf[0] = 0;
+    for (int i = 0; i < n - 1; ++i) {
+        Float x0 = x[i], x1 = x[i + 1];
+        Float f0 = values[i], f1 = values[i + 1];
+        Float width = x1 - x0;
+
+        Float d0, d1;
+        if (i > 0) {
+            d0 = width * (f1 - values[i - 1]) / (x1 - x[i - 1]);
+        } else {
+            d0 = f1 - f0;
+        }
+        if (i + 2 < n) {
+            d1 = width * (values[i + 2] - f0) / (x[i + 2] - x0);
+        } else {
+            d1 = f1 - f0;
+        }
+
+        sum += ((d0 - d1) * (1.f / 12.f) + (f0 + f1) * .5f) * width;
+        cdf[i + 1] = sum;
+    }
+    return sum;
+}
