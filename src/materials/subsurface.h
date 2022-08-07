@@ -4,6 +4,7 @@
 #include "core/cpbrt.h"
 #include "core/bssrdf.h"
 #include "core/material.h"
+#include "core/paramset.h"
 
 class SubsurfaceMaterial : public Material {
 private:
@@ -66,5 +67,7 @@ public:
         SurfaceInteraction *si, MemoryArena &arena, TransportMode mode, bool allowMultipleLobes
     ) const;
 };
+
+SubsurfaceMaterial *CreateSubsurfaceMaterial(const TextureParams &mp);
 
 #endif // CPBRT_MATERIALS_SUBSURFACE_H

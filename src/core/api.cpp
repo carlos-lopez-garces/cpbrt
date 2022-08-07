@@ -26,6 +26,7 @@
 #include "materials/metal.h"
 #include "materials/mirror.h"
 #include "materials/plastic.h"
+#include "materials/subsurface.h"
 #include "media/grid.h"
 #include "media/homogeneous.h"
 #include "samplers/stratified.h"
@@ -428,6 +429,8 @@ std::shared_ptr<Material> MakeMaterial(const std::string &name, const TexturePar
         material = CreateGlassMaterial(mp); 
     } else if (name == "coateddiffuse") {
         material = CreateCoatedDiffuseMaterial(mp);
+    } else if (name == "subsurface") {
+        material = CreateSubsurfaceMaterial(mp);
     } else {
         Warning("Material \"%s\" unknown. Using \"matte\".", name.c_str());
         material = CreateMatteMaterial(mp);

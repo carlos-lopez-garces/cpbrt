@@ -71,3 +71,40 @@ void SubsurfaceMaterial::ComputeScatteringFunctions(
     Spectrum sig_s = scale * sigma_s->Evaluate(*si).Clamp();
     si->bssrdf = ARENA_ALLOC(arena, TabulatedBSSRDF)(*si, this, mode, eta, sig_a, sig_s, table);
 }
+
+SubsurfaceMaterial *CreateSubsurfaceMaterial(const TextureParams &mp) {
+    Float sig_a_rgb[3] = { 0.0011f, 0.0024f, 0.014f };
+    Float sig_s_rgb[3] = { 2.55f, 3.21f, 3.77f };
+
+    // Absorption cross-section and scattering coefficient.
+    Spectrum sig_a = Spectrum::FromRGB(sig_a_rgb);
+    Spectrum sig_s = Spectrum::FromRGB(sig_s_rgb);
+
+    std::string name = mp.FindString("name");
+    // See if we have a table of samples of this medium.
+    bool found = GetMediumScatteringProperties(name, &sig_a, &sig_s);
+    Float g = mp.FindFloat("g", 0.0f);
+    if (name != "") {
+        if (!found) {
+            Warning("Named material \"%s\" not found.  Using defaults.", name.c_str());
+        } else {
+            // TODO: explain.
+            g = 0;
+        }
+    }
+
+    Float scale = mp.FindFloat("scale", 1.f);
+    Float eta = mp.FindFloat("eta", 1.33f);
+
+    std::shared_ptr<Texture<Spectrum>> sigma_a, sigma_s;
+    sigma_a = mp.GetSpectrumTexture("sigma_a", sig_a);
+    sigma_s = mp.GetSpectrumTexture("sigma_s", sig_s);
+
+    std::shared_ptr<Texture<Spectrum>> Kr = mp.GetSpectrumTexture("Kr", Spectrum(1.f));
+    std::shared_ptr<Texture<Spectrum>> Kt = mp.GetSpectrumTexture("Kt", Spectrum(1.f));
+    std::shared_ptr<Texture<Float>> uRough = mp.GetFloatTexture("uroughness", 0.f);
+    std::shared_ptr<Texture<Float>> vRough = mp.GetFloatTexture("vroughness", 0.f);
+    std::shared_ptr<Texture<Float>> bumpMap = mp.GetFloatTextureOrNull("bumpmap");
+    bool remapRoughness = mp.FindBool("remaproughness", true);
+    return new SubsurfaceMaterial(scale, Kr, Kt, sigma_a, sigma_s, g, eta, uRough, vRough, bumpMap, remapRoughness);
+}
