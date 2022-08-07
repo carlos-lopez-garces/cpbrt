@@ -50,9 +50,9 @@ Spectrum PathIntegrator::Li(
                 // case we sample radiance at the ith vertex.
                 L += beta * si.Le(-ray.d);
             } else {
-                // The camera ray escaped out into the scene. Add the radiance contributions of
-                // lights in the scene.
-                for (const auto &light : scene.lights) {
+                // The camera ray escaped out into the environment. Add the radiance contributions of
+                // infinite area lights (environment maps).
+                for (const auto &light : scene.infiniteLights) {
                     L += beta * light->Le(ray);
                 }
             }
@@ -67,7 +67,7 @@ Spectrum PathIntegrator::Li(
         // Compute BSDFs and skip over medium boundaries.
         si.ComputeScatteringFunctions(ray, arena, true);
         if (!si.bsdf) {
-            // The boundaries between participating media with equal incides of refraction are
+            // The boundaries between participating media with equal indices of refraction are
             // represented in the scene as surfaces with no BSDFs. Since their indices of refraction
             // are the same, neither the direction of the ray nor the radiance that it carries back
             // get altered. So just prolong the ray.
