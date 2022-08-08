@@ -112,7 +112,7 @@ public:
     // Accounts for the influence of the boundary on the directional distribution of light
     // entering the surface from direction wi.
     Spectrum Sw(const Vector3f &wi) const {
-        // c is a normalization that causes Sw(wi)*cos(Theta) to integrate to 1 over the
+        // c is a normalization factor that causes Sw(wi)*cos(Theta) to integrate to 1 over the
         // cosine-weighted hemisphere.
         Float c = 1 - 2 * FresnelMoment1(1 / eta);
 

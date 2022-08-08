@@ -124,7 +124,7 @@ Spectrum SeparableBSSRDF::Sample_Sp(
 ) const {
     // Choose projection axis for probe ray. The projection axis may be any of the basis vectors of
     // shading space (one of which, the normal n_o, is perpendicular to the assumed planar local surface,
-    // and the other 2 are tangential to p_0 and parrallel to the assumed planar local surface). Since
+    // and the other 2 are tangential to p_0 and parallel to the assumed planar local surface). Since
     // the perpendicular projection probe ray is sure to intersect the surface, we choose it with 0.5
     // probability, whereas each of the 2 parallel projection probe rays get 0.25 probability each (they
     // are more likely to miss the surface, especially if the local surface is indeed planar or
@@ -173,7 +173,7 @@ Spectrum SeparableBSSRDF::Sample_Sp(
     // incident radiance that enters the surface through points pi that are beyond this radius won't come out
     // through po.
     Float rMax = Sample_Sr(ch, 0.999f);
-    if (r > rMax) {
+    if (r >= rMax) {
         // The sampled radius places the point of incidence pi beyond reach. Radiance coming in through such
         // a point won't come out through po.
         return Spectrum(0.f);
@@ -194,7 +194,7 @@ Spectrum SeparableBSSRDF::Sample_Sp(
     // the probe ray. The probe ray origin starts at po.
     base.p = po.p;
     // Then the origin moves to the sampled polar coordinate point.
-    Vector3f sampledPolarDirection = r*(vx*std::cos(phi) + vy*std::sin(phi));
+    Vector3f sampledPolarDirection = r * (vx*std::cos(phi) + vy*std::sin(phi));
     base.p += sampledPolarDirection;
     // Then the origin moves along the direction of the chosen axis of projection, placing it on the
     // boundary of the sphere of radius rMax.
@@ -216,7 +216,15 @@ Spectrum SeparableBSSRDF::Sample_Sp(
     // Accumulate chain of intersections along probe ray.
     IntersectionChain *ptr = chain;
     int nFound = 0;
-    while (scene.Intersect(base.SpawnRayTo(pTarget), &ptr->si)) {
+    while (true) {
+        // Cast probe ray. If it doesn't hit anything or the probe ray points at its base (a bug found in PBRT
+        // here https://github.com/mmp/pbrt-v3/commit/111eb969ad7866fbdb5451eb8faf2cb97f9e8d6d), stop chaining
+        // intersections.
+        Ray probeRay = base.SpawnRayTo(pTarget);
+        if (probeRay.d == Vector3f(0.f, 0.f, 0.f) || !scene.Intersect(probeRay, &ptr->si)) {
+            break;
+        }
+
         // ptr->si is the intersection.
         base = ptr->si;
         // Is the intersection point on this surface or on other object's surface? Collect only the intersections
@@ -260,8 +268,12 @@ Float SeparableBSSRDF::Pdf_Sp(const SurfaceInteraction &pi) const {
     };
 
     // Return combined probability from all BSSRDF sampling strategies.
-    Float pdf = 0, axisProb[3] = { .25f, .25f, .5f };
-    Float chProb = 1/ (Float)Spectrum::nSamples;
+    Float pdf = 0;
+    // Axis sampling strategy: P(choose perpendicular axis)=0.5, P(choose tangential axis)=0.25.
+    Float axisProb[3] = { .25f, .25f, .5f };
+    // Spectral channel sampling strategy: distributed uniformly across all wavelengths.
+    Float chProb = 1 / (Float)Spectrum::nSamples;
+    // For each axis and for each spectral channel.
     for (int axis = 0; axis < 3; ++axis) {
         for (int ch = 0; ch < Spectrum::nSamples; ++ch) {
             pdf += Pdf_Sr(ch, rProj[axis]) * std::abs(niLocal[axis]) * chProb * axisProb[axis];
