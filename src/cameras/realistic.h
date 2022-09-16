@@ -33,6 +33,8 @@ private:
         Normal3f *n
     );
 
+    bool TraceLensesFromScene(const Ray &rCamera, Ray *rayOut) const;
+
 public:
     RealisticCamera(
         const AnimatedTransform &CameraToWorld,

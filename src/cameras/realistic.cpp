@@ -136,3 +136,52 @@ bool RealisticCamera::IntersectSphericalElement(
     *n = Faceforward(Normalize(*n), -ray.d);
     return true;
 }
+
+bool RealisticCamera::TraceLensesFromScene(const Ray &rCamera, Ray *rayOut) const {
+    Float elementZ = -LensFrontZ();
+    static const Transform CameraToLens = Scale(1, 1, -1);
+    Ray rLens = CameraToLens(rCamera);
+
+    for (size_t i = 0; i < elementInterfaces.size(); ++i) {
+        const LensElementInterface &element = elementInterfaces[i];
+
+        Float t;
+
+        Normal3f n;
+        bool isStop = (element.curvatureRadius == 0);
+        if (isStop) {
+            t = (elementZ - rLens.o.z) / rLens.d.z;
+        } else {
+            Float radius = element.curvatureRadius;
+            Float zCenter = elementZ + element.curvatureRadius;
+            if (!IntersectSphericalElement(radius, zCenter, rLens, &t, &n)) {
+                return false;
+            }
+        }
+
+        Point3f pHit = rLens(t);
+        Float r2 = pHit.x * pHit.x + pHit.y * pHit.y;
+        if (r2 > element.apertureRadius * element.apertureRadius) {
+            return false;
+        }
+        rLens.o = pHit;
+
+        if (!isStop) {
+            Vector3f wt;
+            Float etaI = (i == 0 || elementInterfaces[i - 1].eta == 0) ? 1 : elementInterfaces[i - 1].eta;
+            Float etaT = (elementInterfaces[i].eta != 0) ? elementInterfaces[i].eta : 1;
+            if (!Refract(Normalize(-rLens.d), n, etaI / etaT, &wt)) {
+                return false;
+            }
+            rLens.d = wt;
+        }
+        elementZ += element.thickness;
+    }
+
+    if (rayOut != nullptr) {
+        static const Transform LensToCamera = Scale(1, 1, -1);
+        *rayOut = LensToCamera(rLens);
+    }
+
+    return true;
+}
