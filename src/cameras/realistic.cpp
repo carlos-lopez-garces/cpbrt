@@ -185,3 +185,12 @@ bool RealisticCamera::TraceLensesFromScene(const Ray &rCamera, Ray *rayOut) cons
 
     return true;
 }
+
+void RealisticCamera::ComputeCardinalPoints(
+    const Ray &rIn, const Ray &rayOut, Float *pz, Float *fz
+) {
+    Float tf = -rayOut.o.x / rayOut.d.x;
+    *fz = -rayOut(tf).z;
+    Float tp = (rIn.o.x - rayOut.o.x) / rayOut.d.x;
+    *pz = -rayOut(tp).z;
+}

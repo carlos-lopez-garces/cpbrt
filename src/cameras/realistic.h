@@ -25,6 +25,8 @@ private:
 
     bool TraceLensesFromFilm(const Ray &ray, Ray *rayOut) const;
 
+    bool TraceLensesFromScene(const Ray &rCamera, Ray *rayOut) const;
+
     static bool IntersectSphericalElement(
         Float radius,
         Float zCenter,
@@ -33,7 +35,7 @@ private:
         Normal3f *n
     );
 
-    bool TraceLensesFromScene(const Ray &rCamera, Ray *rayOut) const;
+    static void ComputeCardinalPoints(const Ray &rIn, const Ray &rOut, Float *p, Float *f);
 
 public:
     RealisticCamera(
