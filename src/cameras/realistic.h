@@ -17,6 +17,8 @@ private:
 
     std::vector<LensElementInterface> elementInterfaces;
 
+    std::vector<Bounds2f> exitPupilBounds;
+
     Float LensRearZ() const;
 
     Float LensFrontZ() const;
@@ -36,6 +38,8 @@ private:
     Point3f SampleExitPupil(const Point2f &pFilm, const Point2f &lensSample, Float *sampleBoundsArea) const;
 
     Float FocusBinarySearch(Float focusDistance);
+
+    Float FocusDistance(Float filmDist);
 
     static bool IntersectSphericalElement(
         Float radius,

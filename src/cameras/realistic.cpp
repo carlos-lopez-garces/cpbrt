@@ -1,4 +1,7 @@
 #include "cameras/realistic.h"
+#include "core/efloat.h"
+#include "core/paramset.h"
+#include "core/reflection.h"
 
 RealisticCamera::RealisticCamera(
     const Transform &CameraToWorld,
@@ -270,9 +273,6 @@ Point3f RealisticCamera::SampleExitPupil(
 }
 
 Float RealisticCamera::GenerateRay(const CameraSample &sample, Ray *ray) const {
-    ProfilePhase prof(Prof::GenerateCameraRay);
-    ++totalRays;
-
     Point2f s(sample.pFilm.x / film->fullResolution.x, sample.pFilm.y / film->fullResolution.y);
     Point2f pFilm2 = film->GetPhysicalExtent().Lerp(s);
     Point3f pFilm(-pFilm2.x, pFilm2.y, 0);
@@ -355,4 +355,33 @@ Float RealisticCamera::FocusBinarySearch(Float focusDistance) {
     }
 
     return 0.5f * (filmDistanceLower + filmDistanceUpper);
+}
+
+Float RealisticCamera::FocusDistance(Float filmDistance) {
+    Bounds2f bounds = BoundExitPupil(0, .001 * film->diagonal);
+
+    const std::array<Float, 3> scaleFactors = {0.1f, 0.01f, 0.001f};
+    Float lu = 0.0f;
+
+    Ray ray;
+
+    bool foundFocusRay = false;
+    for (Float scale : scaleFactors) {
+        lu = scale * bounds.pMax[0];
+        if (TraceLensesFromFilm(Ray(Point3f(0, 0, LensRearZ() - filmDistance), Vector3f(lu, 0, filmDistance)), &ray)) {
+            foundFocusRay = true;
+            break;
+        }
+    }
+
+    if (!foundFocusRay) {
+        return Infinity;
+    }
+
+    Float tFocus = -ray.o.x / ray.d.x;
+    Float zFocus = ray(tFocus).z;
+    if (zFocus < 0) {
+        zFocus = Infinity;
+    }
+    return zFocus;
 }
