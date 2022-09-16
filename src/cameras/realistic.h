@@ -23,6 +23,7 @@ private:
 
     Float RearElementRadius() const;
 
+    bool TraceLensesFromFilm(const Ray &ray, Ray *rayOut) const;
 
 public:
     RealisticCamera(
