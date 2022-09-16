@@ -27,6 +27,8 @@ private:
 
     bool TraceLensesFromScene(const Ray &rCamera, Ray *rayOut) const;
 
+    void ComputeThickLensApproximation(Float pz[2], Float f[2]) const;
+
     static bool IntersectSphericalElement(
         Float radius,
         Float zCenter,

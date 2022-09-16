@@ -194,3 +194,15 @@ void RealisticCamera::ComputeCardinalPoints(
     Float tp = (rIn.o.x - rayOut.o.x) / rayOut.d.x;
     *pz = -rayOut(tp).z;
 }
+
+void RealisticCamera::ComputeThickLensApproximation(Float pz[2], Float fz[2]) const {
+    Float x = .001 * film->diagonal;
+
+    Ray rScene(Point3f(x, 0, LensFrontZ() + 1), Vector3f(0, 0, -1));
+    Ray rFilm;
+    ComputeCardinalPoints(rScene, rFilm, &pz[0], &fz[0]);
+
+    rFilm = Ray(Point3f(x, 0, LensRearZ() - 1), Vector3f(0, 0, 1));
+
+    ComputeCardinalPoints(rFilm, rScene, &pz[1], &fz[1]);
+}
