@@ -6,6 +6,23 @@
 
 class RealisticCamera : public Camera {
 private:
+    struct LensElementInterface {
+        Float curvatureRadius;
+        Float thickness;
+        Float eta;
+        Float apertureRadius;
+    };
+
+    const bool simpleWeighting;
+
+    std::vector<LensElementInterface> elementInterfaces;
+
+    Float LensRearZ() const;
+
+    Float LensFrontZ() const;
+
+    Float RearElementRadius() const;
+
 
 public:
     RealisticCamera(

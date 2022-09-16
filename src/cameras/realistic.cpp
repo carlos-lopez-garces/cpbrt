@@ -38,3 +38,19 @@ RealisticCamera::RealisticCamera(
         exitPupilBounds[i] = BoundExitPupil(r0, r1);
     }, nSamples);
 }
+
+Float RealisticCamera::LensRearZ() const {
+    return elementInterfaces.back().thickness;
+}
+
+Float RealisticCamera::LensFrontZ() const {
+    Float zSum = 0;
+    for (const LensElementInterface &element : elementInterfaces) {
+        zSum += element.thickness;
+    }
+    return zSum;
+}
+
+Float RealisticCamera::RearElementRadius() const {
+    return elementInterfaces.back().apertureRadius;
+}
