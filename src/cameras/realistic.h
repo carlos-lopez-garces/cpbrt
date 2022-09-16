@@ -33,6 +33,8 @@ private:
 
     Bounds2f BoundExitPupil(Float pFilmX0, Float pFilmX1) const;
 
+    Point3f SampleExitPupil(const Point2f &pFilm, const Point2f &lensSample, Float *sampleBoundsArea) const;
+
     static bool IntersectSphericalElement(
         Float radius,
         Float zCenter,

@@ -248,3 +248,23 @@ Bounds2f RealisticCamera::BoundExitPupil(Float pFilmX0, Float pFilmX1) const {
 
     return pupilBounds;
 }
+
+Point3f RealisticCamera::SampleExitPupil(
+    const Point2f &pFilm,
+    const Point2f &lensSample,
+    Float *sampleBoundsArea
+) const {
+    Float rFilm = std::sqrt(pFilm.x * pFilm.x + pFilm.y * pFilm.y);
+    int rIndex = rFilm / (film->diagonal / 2) * exitPupilBounds.size();
+    rIndex = std::min((int)exitPupilBounds.size() - 1, rIndex);
+    Bounds2f pupilBounds = exitPupilBounds[rIndex];
+    if (sampleBoundsArea) {
+        *sampleBoundsArea = pupilBounds.Area();
+    }
+
+    Point2f pLens = pupilBounds.Lerp(lensSample);
+
+    Float sinTheta = (rFilm != 0) ? pFilm.y / rFilm : 0;
+    Float cosTheta = (rFilm != 0) ? pFilm.x / rFilm : 1;
+    return Point3f(cosTheta * pLens.x - sinTheta * pLens.y, sinTheta * pLens.x + cosTheta * pLens.y, LensRearZ());
+}
