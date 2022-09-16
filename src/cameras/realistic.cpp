@@ -268,3 +268,32 @@ Point3f RealisticCamera::SampleExitPupil(
     Float cosTheta = (rFilm != 0) ? pFilm.x / rFilm : 1;
     return Point3f(cosTheta * pLens.x - sinTheta * pLens.y, sinTheta * pLens.x + cosTheta * pLens.y, LensRearZ());
 }
+
+Float RealisticCamera::GenerateRay(const CameraSample &sample, Ray *ray) const {
+    ProfilePhase prof(Prof::GenerateCameraRay);
+    ++totalRays;
+
+    Point2f s(sample.pFilm.x / film->fullResolution.x, sample.pFilm.y / film->fullResolution.y);
+    Point2f pFilm2 = film->GetPhysicalExtent().Lerp(s);
+    Point3f pFilm(-pFilm2.x, pFilm2.y, 0);
+
+    Float exitPupilBoundsArea;
+    Point3f pRear = SampleExitPupil(Point2f(pFilm.x, pFilm.y), sample.pLens, &exitPupilBoundsArea);
+    Ray rFilm(pFilm, pRear - pFilm, Infinity, Lerp(sample.time, shutterOpen, shutterClose));
+    if (!TraceLensesFromFilm(rFilm, ray)) {
+        ++vignettedRays;
+        return 0;
+    }
+
+    *ray = CameraToWorld(*ray);
+    ray->d = Normalize(ray->d);
+    ray->medium = medium;
+
+    Float cosTheta = Normalize(rFilm.d).z;
+    Float cos4Theta = (cosTheta * cosTheta) * (cosTheta * cosTheta);
+    if (simpleWeighting) {
+        return cos4Theta * exitPupilBoundsArea / exitPupilBounds[0].Area();
+    } else {
+        return (shutterClose - shutterOpen) * (cos4Theta * exitPupilBoundsArea) / (LensRearZ() * LensRearZ());
+    }
+}

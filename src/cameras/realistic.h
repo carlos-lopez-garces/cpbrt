@@ -57,6 +57,8 @@ public:
         Film *film,
         const Medium *medium
     );
+
+    Float GenerateRay(const CameraSample &sample, Ray *) const;
 };
 
 #endif // CPBRT_CAMERAS_REALISTIC_H
