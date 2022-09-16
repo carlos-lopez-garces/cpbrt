@@ -35,6 +35,8 @@ private:
 
     Point3f SampleExitPupil(const Point2f &pFilm, const Point2f &lensSample, Float *sampleBoundsArea) const;
 
+    Float FocusBinarySearch(Float focusDistance);
+
     static bool IntersectSphericalElement(
         Float radius,
         Float zCenter,
@@ -47,7 +49,7 @@ private:
 
 public:
     RealisticCamera(
-        const AnimatedTransform &CameraToWorld,
+        const Transform &CameraToWorld,
         Float shutterOpen,
         Float shutterClose,
         Float apertureDiameter,
@@ -60,5 +62,9 @@ public:
 
     Float GenerateRay(const CameraSample &sample, Ray *) const;
 };
+
+RealisticCamera *CreateRealisticCamera(
+    const ParamSet &params, const Transform &cam2world, Film *film, const Medium *medium
+);
 
 #endif // CPBRT_CAMERAS_REALISTIC_H

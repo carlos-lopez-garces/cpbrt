@@ -1,7 +1,7 @@
 #include "cameras/realistic.h"
 
 RealisticCamera::RealisticCamera(
-    const AnimatedTransform &CameraToWorld,
+    const Transform &CameraToWorld,
     Float shutterOpen,
     Float shutterClose,
     Float apertureDiameter,
@@ -296,4 +296,63 @@ Float RealisticCamera::GenerateRay(const CameraSample &sample, Ray *ray) const {
     } else {
         return (shutterClose - shutterOpen) * (cos4Theta * exitPupilBoundsArea) / (LensRearZ() * LensRearZ());
     }
+}
+
+RealisticCamera *CreateRealisticCamera(
+    const ParamSet &params,
+    const Transform &cam2world,
+    Film *film,
+    const Medium *medium
+) {
+    Float shutteropen = params.FindOneFloat("shutteropen", 0.f);
+    Float shutterclose = params.FindOneFloat("shutterclose", 1.f);
+    if (shutterclose < shutteropen) {
+        std::swap(shutterclose, shutteropen);
+    }
+
+    std::string lensFile = params.FindOneFilename("lensfile", "");
+    Float apertureDiameter = params.FindOneFloat("aperturediameter", 1.0);
+    Float focusDistance = params.FindOneFloat("focusdistance", 10.0);
+    bool simpleWeighting = params.FindOneBool("simpleweighting", true);
+    if (lensFile == "") {
+        return nullptr;
+    }
+
+    std::vector<Float> lensData;
+    if (!ReadFloatFile(lensFile.c_str(), &lensData)) {
+        return nullptr;
+    }
+
+    if (lensData.size() % 4 != 0) {
+        return nullptr;
+    }
+
+    return new RealisticCamera(
+        cam2world, shutteropen, shutterclose, apertureDiameter, focusDistance, simpleWeighting, lensData, film, medium
+    );
+}
+
+Float RealisticCamera::FocusBinarySearch(Float focusDistance) {
+    Float filmDistanceLower;
+    Film filmDistanceUpper;
+
+    filmDistanceLower = filmDistanceUpper = FocusThickLens(focusDistance);
+    while (FocusDistance(filmDistanceLower) > focusDistance) {
+        filmDistanceLower *= 1.005f;
+    }
+    while (FocusDistance(filmDistanceUpper) < focusDistance) {
+        filmDistanceUpper /= 1.005f;
+    }
+
+    for (int i = 0; i < 20; ++i) {
+        Float fmid = 0.5f * (filmDistanceLower + filmDistanceUpper);
+        Float midFocus = FocusDistance(fmid);
+        if (midFocus < focusDistance) {
+            filmDistanceLower = fmid;
+        } else {
+            filmDistanceUpper = fmid;
+        }
+    }
+
+    return 0.5f * (filmDistanceLower + filmDistanceUpper);
 }
