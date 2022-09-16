@@ -206,3 +206,13 @@ void RealisticCamera::ComputeThickLensApproximation(Float pz[2], Float fz[2]) co
 
     ComputeCardinalPoints(rFilm, rScene, &pz[1], &fz[1]);
 }
+
+Float RealisticCamera::FocusThickLens(Float focusDistance) {
+    Float pz[2], fz[2];
+    ComputeThickLensApproximation(pz, fz);
+    Float f = fz[0] - pz[0];
+    Float z = -focusDistance;
+    Float c = (pz[1] - z - pz[0]) * (pz[1] - z - 4 * f - pz[0]);
+    Float delta = 0.5f * (pz[1] - z + pz[0] - std::sqrt(c));
+    return elementInterfaces.back().thickness + delta;
+}

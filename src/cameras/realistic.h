@@ -29,6 +29,8 @@ private:
 
     void ComputeThickLensApproximation(Float pz[2], Float f[2]) const;
 
+    Float FocusThickLens(Float focusDistance);
+
     static bool IntersectSphericalElement(
         Float radius,
         Float zCenter,
