@@ -108,3 +108,31 @@ bool RealisticCamera::TraceLensesFromFilm(const Ray &rCamera, Ray *rayOut) const
 
     return true;
 }
+
+bool RealisticCamera::IntersectSphericalElement(
+    Float radius,
+    Float zCenter,
+    const Ray &ray,
+    Float *t,    
+    Normal3f *n
+) {
+    Point3f o = ray.o - Vector3f(0, 0, zCenter);
+    Float A = ray.d.x * ray.d.x + ray.d.y * ray.d.y + ray.d.z * ray.d.z;
+    Float B = 2 * (ray.d.x * o.x + ray.d.y * o.y + ray.d.z * o.z);
+    Float C = o.x * o.x + o.y * o.y + o.z * o.z - radius * radius;
+    Float t0, t1;
+
+    if (!Quadratic(A, B, C, &t0, &t1)) {
+        return false;
+    }
+
+    bool useCloserT = (ray.d.z > 0) ^ (radius < 0);
+    *t = useCloserT ? std::min(t0, t1) : std::max(t0, t1);
+    if (*t < 0) {
+        return false;
+    }
+
+    *n = Normal3f(Vector3f(o + *t * ray.d));
+    *n = Faceforward(Normalize(*n), -ray.d);
+    return true;
+}

@@ -25,6 +25,14 @@ private:
 
     bool TraceLensesFromFilm(const Ray &ray, Ray *rayOut) const;
 
+    static bool IntersectSphericalElement(
+        Float radius,
+        Float zCenter,
+        const Ray &ray,
+        Float *t,
+        Normal3f *n
+    );
+
 public:
     RealisticCamera(
         const AnimatedTransform &CameraToWorld,
