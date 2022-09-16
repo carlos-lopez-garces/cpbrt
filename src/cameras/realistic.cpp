@@ -216,3 +216,35 @@ Float RealisticCamera::FocusThickLens(Float focusDistance) {
     Float delta = 0.5f * (pz[1] - z + pz[0] - std::sqrt(c));
     return elementInterfaces.back().thickness + delta;
 }
+
+Bounds2f RealisticCamera::BoundExitPupil(Float pFilmX0, Float pFilmX1) const {
+    Bounds2f pupilBounds;
+    const int nSamples = 1024 * 1024;
+    int nExitingRays = 0;
+
+    Float rearRadius = RearElementRadius();
+    Bounds2f projRearBounds(Point2f(-1.5f * rearRadius, -1.5f * rearRadius), Point2f(1.5f * rearRadius, 1.5f * rearRadius));
+
+    for (int i = 0; i < nSamples; ++i) {
+        Point3f pFilm(Lerp((i + 0.5f) / nSamples, pFilmX0, pFilmX1), 0, 0);
+        Float u[2] = {RadicalInverse(0, i), RadicalInverse(1, i)};
+        Point3f pRear(
+            Lerp(u[0], projRearBounds.pMin.x, projRearBounds.pMax.x),
+            Lerp(u[1], projRearBounds.pMin.y, projRearBounds.pMax.y),
+            LensRearZ()
+        );
+
+        if (Inside(Point2f(pRear.x, pRear.y), pupilBounds) || TraceLensesFromFilm(Ray(pFilm, pRear - pFilm), nullptr)) {
+            pupilBounds = Union(pupilBounds, Point2f(pRear.x, pRear.y));
+            ++nExitingRays;
+        }
+    }
+
+    if (nExitingRays == 0) {
+        return projRearBounds;
+    }
+
+    pupilBounds = Expand(pupilBounds, 2 * projRearBounds.Diagonal().Length() / std::sqrt(nSamples));
+
+    return pupilBounds;
+}

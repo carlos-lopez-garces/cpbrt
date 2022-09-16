@@ -31,6 +31,8 @@ private:
 
     Float FocusThickLens(Float focusDistance);
 
+    Bounds2f BoundExitPupil(Float pFilmX0, Float pFilmX1) const;
+
     static bool IntersectSphericalElement(
         Float radius,
         Float zCenter,
