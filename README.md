@@ -1,5 +1,7 @@
 This repository is the result of studying Physically Based Rendering: From Theory to Implementation, by Pharr, Jakob, and Humphreys ([online edition](https://pbrt.org/)).
 
+A more detailed description is found in [my blog](https://carlos-lopez-garces.github.io/projects/cpbrt/).
+
 The 1st objective was to study the sections that led to a minimal path tracer and write the corresponding code. That objective was reached on July 5th, 2021. Some of the earliest renders include these of the dragon triangle mesh by Christian Schüller:
 
 <p align="center">
@@ -84,8 +86,8 @@ The sections I've covered are marked next. Each covered section is accompanied b
 6 Camera Models ([notes/6 Camera Models](notes/6_Camera_Models.pdf))
 - [x] 6.1 Camera Model
 - [x] 6.2 Projective Camera Models
-- [ ] 6.3 Environment Camera
-- [ ] 6.4 Realistic Cameras
+- [x] 6.3 Environment Camera
+- [x] 6.4 Realistic Cameras
 
 7 Sampling and Reconstruction ([notes/7 Sampling and Reconstruction](notes/7_Sampling_and_Reconstruction.pdf))
 - [x] 7.1 Sampling Theory
@@ -94,15 +96,15 @@ The sections I've covered are marked next. Each covered section is accompanied b
 - [ ] 7.4 The Halton Sampler
 - [ ] 7.5 (0, 2)-Sequence Sampler
 - [ ] 7.6 Maximized Minimal Distance Sampler
-- [ ] 7.7 Sobol’ Sampler
+- [ ] 7.7 Sobol' Sampler
 - [x] 7.8 Image Reconstruction
 - [x] 7.9 Film and the Imaging Pipeline
 
 8 Reflection Models ([notes/8 Reflection Models](notes/8_Reflection_Models.pdf))
 - [x] 8.1 Basic Interface
-- [ ] 8.2 Specular Reflection and Transmission
+- [x] 8.2 Specular Reflection and Transmission
 - [x] 8.3 Lambertian Reflection
-- [ ] 8.4 Microfacet Models
+- [x] 8.4 Microfacet Models
 - [ ] 8.5 Fresnel Incidence Effects
 - [ ] 8.6 Fourier Basis BSDFs
 
@@ -115,15 +117,15 @@ The sections I've covered are marked next. Each covered section is accompanied b
 - [x] 10.1 Sampling and Antialiasing
 - [x] 10.2 Texture Coordinate Generation
 - [x] 10.3 Texture Interface and Basic Textures
-- [ ] 10.4 Image Texture
-- [ ] 10.5 Solid and Procedural Texturing
+- [x] 10.4 Image Texture
+- [x] 10.5 Solid and Procedural Texturing
 - [ ] 10.6 Noise
 
 11 Volume Scattering
-- [ ] 11.1 Volume Scattering Processes
-- [ ] 11.2 Phase Functions
-- [ ] 11.3 Media
-- [ ] 11.4 The BSSRDF
+- [x] 11.1 Volume Scattering Processes
+- [x] 11.2 Phase Functions
+- [x] 11.3 Media
+- [x] 11.4 The BSSRDF
 
 12 Light Sources ([notes/12 Light Sources](notes/12_Light_Sources.pdf))
 - [x] 12.1 Light Emission
@@ -131,7 +133,7 @@ The sections I've covered are marked next. Each covered section is accompanied b
 - [x] 12.3 Point Lights
 - [ ] 12.4 Distant Lights
 - [x] 12.5 Area Lights
-- [ ] 12.6 Infinite Area Lights
+- [x] 12.6 Infinite Area Lights
 
 13 Monte Carlo Integration ([notes/13 Monte Carlo Integration](notes/13_Monte_Carlo_Integration.pdf))
 - [x] 13.1 Background and Probability Review
@@ -153,10 +155,10 @@ The sections I've covered are marked next. Each covered section is accompanied b
 - [x] 14.5 Path Tracing
 
 15 Light Transport II: Volume Rendering
-- [ ] 15.1 The Equation of Transfer
-- [ ] 15.2 Sampling Volume Scattering
-- [ ] 15.3 Volumetric Light Transport
-- [ ] 15.4 Sampling Subsurface Reflection Functions
+- [x] 15.1 The Equation of Transfer
+- [x] 15.2 Sampling Volume Scattering
+- [x] 15.3 Volumetric Light Transport
+- [x] 15.4 Sampling Subsurface Reflection Functions
 - [ ] 15.5 Subsurface Scattering Using the Diffusion Equation
 
 16 Light Transport III: Bidirectional Methods
