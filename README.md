@@ -1,39 +1,147 @@
-This repository is the result of studying Physically Based Rendering: From Theory to Implementation, by Pharr, Jakob, and Humphreys ([online edition](https://pbrt.org/)).
+**CPBRT** is my physically-based, offline toy renderer. It is the result of studying Physically Based Rendering: From Theory to Implementation, by Pharr, Jakob, and Humphreys ([online edition](https://pbrt.org/)), writing down the code fragments provided by the authors, and filling in the gaps.
 
 A more detailed description is found in [my blog](https://carlos-lopez-garces.github.io/projects/cpbrt/).
 
-The 1st objective was to study the sections that led to a minimal path tracer and write the corresponding code. That objective was reached on July 5th, 2021. Some of the earliest renders include these of the dragon triangle mesh by Christian Schüller:
+## Features
 
-<p align="center">
-  <i>Plastic material w/o specular reflection</i>
-  <img width="640" height="480" src="scenes/dragon/dragonplastic.png">
-</p>
+<table>
+  <tr>
+    <td> <b>Light transport algorithms:</b> Kajiya path tracing (unidirectional, unbiased Monte Carlo estimation of the light transport equation). Direct-lighting (no indirect illumination) and path (full global illumination) integrators. </td>
+    <td> <b>Reflectance models and BRDFs:</b> Lambert diffuse model, Oren-Nayar diffuse model for rough surfaces, Fresnel perfectly specular model, and Fresnel glossy specular model (with Torrance-Sparrow microfacets with Beckmann-Spizzichino or Trowbridge-Reitz distributions). </td>
+  </tr>
+  <tr>
+    <td> <b>Textures:</b> Floating-point and spectrum constant-value textures. Procedural checkerboard texture, antialiased with a box filter. Mipmapping. </td>
+    <td> <b>Materials:</b> Matte with either a perfect diffuse Lambertian BRDF or an Oren-Nayar BRDF for various degrees of roughness; plastic with diffuse and glossy specular BRDFs; mirror with a perfectly-specular BRDF; gold; and glass with perfectly-specular BRDF and BTDF. </td>
+  </tr>
+  <tr>
+    <td> <b>Shapes:</b> Triangle meshes, single triangles, and spherical implicit surfaces. </td>
+    <td> <b>Accelerators:</b> BVH with 5 different primitive (or object) subdivision methods: linear BVH, hierarchical linear BVH, midpoint partitioning, equal counts partitioning, and surface area heuristic (SAH).</td>
+  </tr>
+    <td> <b>Samplers:</b> Uniform or jittered stratified pixel sampling for 1D samples and Latin Hypercube sampling for 2D samples. Samplers rely on a Permuted Congruential Generator (PCG) pseudo-random number generator. </td>
+    <td> <b>Filters:</b> Box, triangle, Gaussian, Mitchell-Netravali, and Lanczos windowed-sinc filters. </td>
+  <tr>
+    <td> <b>Lights:</b> Point and diffuse area light sources. An area light can take the form of any of the supported *shapes*. Infinite area light source backed by environment map. </td>
+    <td> <b>Cameras:</b> Thin lens perspective and orthographic projective cameras with configurable aperture and focal distance (for depth of field) and film aspect ratio. The perspective camera also has a configurable field of view. </td>
+  </tr>
+  <tr>
+    <td> <b>Participating media:</b> Homogeneous-density and grid-based variable-density media. </td>
+    <td> </td>
+  </tr>
+</table>
 
-<p align="center">
-  <i>Matte material with Oren-Nayar reflection</i>
-  <img width="640" height="480" src="scenes/dragon/dragonorennayar.png">
-</p>
+## Select images
 
-<p align="center">
-  <i>Matte material with Lambertian reflection</i>
-  <img width="640" height="480" src="scenes/dragon/dragonlambert.png">
-</p>
+<table>
+  <tr>
+    <td><p align="center">
+      <i>10mm fish-eye lens.</i>
+      <img src="/images/21.png">
+    </p></td>
+    <td><p align="center">
+      <i>Subsurface scattering, skin material.</i>
+      <img src="/images/19.png">
+    </p></td>
+  </tr>
 
-<p align="center">
-  <i>Spherical area light and matte material with Lambertian reflection</i>
-  <img width="640" height="480" src="scenes/dragon/dragonarealight.png">
-</p>
+  <tr>
+    <td><p align="center">
+      <i>Glass material, lit with an infinite area light backed by a latitude-longitude radiance map.</i>
+      <img src="/images/18.png">
+    </p></td>
+    <td><p align="center">
+      <i>Glass material, volumetric path tracing; a bug prevents the environment map from being sampled.</i>
+      <img src="/images/17.png">
+    </p></td>
+  </tr>
 
-<p align="center">
-  <i>Spherical area light and plastic material w/o specular reflection</i>
-  <img width="640" height="480" src="scenes/dragon/dragonplasticarealight.png">
-</p>
+  <tr>
+    <td><p align="center">
+      <i>Metal material, lit with an infinite area light backed by a latitude-longitude radiance map.</i>
+      <img src="/images/16.png">
+    </p></td>
+    <td><p align="center">
+      <i>Gold material, Torrance-Sparrow microfacets with Trowbridge-Reitz distribution.</i>
+      <img src="/images/1.png">
+    </p></td>
+  </tr>
 
-<p align="center">
-  <i>Cornell box</i>
-  <br/>
-  <img width="640" height="480" src="scenes/cornell-box/images/cornell-box-20samples.png">
-</p>
+  <tr>
+    <td><p align="center">
+      <i>Ganesha mesh by Wenzel Jakob; notice the absence of shadows (wrong).</i>
+      <img src="/images/2.png">
+    </p></td>
+    <td><p align="center">
+      <i>Participating media. Not working yet.</i>
+      <img src="/images/3.png">
+    </p></td>
+  </tr>
+
+  <tr>
+    <td><p align="center">
+      <i>Cornell box, direct lighting integrator, stratified sampling, 30 samples per pixel.</i>
+      <img src="/images/15.png">
+    </p></td>
+    <td><p align="center">
+      <i>Cornell box, path integrator, stratified sampling, 10 samples per pixel.</i>
+      <img src="/images/4.png">
+    </p></td>
+  </tr>
+
+  <tr>
+    <td><p align="center">
+      <i>Plastic material with Torrance-Sparrow microfacet BRDF to simulate glossy hard plastic.</i>
+      <img src="/images/5.jpg">
+    </p></td>
+    <td><p align="center">
+      <i>Spherical diffuse area light, matte material with Lambertian reflection.</i>
+      <img src="/images/6.png">
+    </p></td>
+  </tr>
+
+  <tr>
+    <td><p align="center">
+      <i>Spherical diffuse area light, plastic material w/o specular reflection.</i>
+      <img src="/images/7.png">
+    </p></td>
+    <td><p align="center">
+      <i>Matte material with Oren-Nayar diffuse reflection.</i>
+      <img src="/images/8.png">
+    </p></td>
+  </tr>
+
+  <tr>
+    <td><p align="center">
+      <i>Matte material with perfect Lambertian diffuse reflection.</i>
+      <img src="/images/9.png">
+    </p></td>
+    <td><p align="center">
+      <i>Cover of the PBRT book by Yining Karl Li, perspective camera, 2 point lights, mirror material, specular BRDF.</i>
+      <img src="/images/10.jpg">
+    </p></td>
+  </tr>
+
+  <tr>
+    <td><p align="center">
+      <i>Dragon triangle mesh by Christian Schüller, perspective camera, 2 point lights, matte material.</i>
+      <img src="/images/11.png">
+    </p></td>
+    <td><p align="center">
+      <i>Cover of the PBRT book by Yining Karl Li, perspective camera, 2 point lights, matte material.</i>
+      <img src="/images/12.png">
+    </p></td>
+  </tr>
+
+  <tr>
+    <td><p align="center">
+      <i>One triangle of a triangle mesh, matte material.</i>
+      <img src="/images/13.png">
+    </p></td>
+    <td><p align="center">
+      <i>First render, implicitly defined sphere.</i>
+      <img src="/images/14.png">
+    </p></td>
+  </tr>
+</table>
 
 The sections I've covered are marked next. Each covered section is accompanied by my personal **[notes](notes/)**.
 
