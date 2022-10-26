@@ -9,6 +9,7 @@
 #include "accelerators/bvh.h"
 #include "cameras/orthographic.h"
 #include "cameras/perspective.h"
+#include "cameras/realistic.h"
 #include "filters/box.h"
 #include "filters/gaussian.h"
 #include "filters/mitchell.h"
@@ -27,6 +28,7 @@
 #include "materials/mirror.h"
 #include "materials/plastic.h"
 #include "materials/subsurface.h"
+#include "materials/ward.h"
 #include "media/grid.h"
 #include "media/homogeneous.h"
 #include "samplers/stratified.h"
@@ -298,16 +300,15 @@ Camera *MakeCamera(
         transformCache.Lookup(cam2worldSet[0]),
         transformCache.Lookup(cam2worldSet[1])
     };
+
     Transform cam2World(cam2world[0]->GetMatrix());
     if (name == "perspective") {
-        camera
-            = CreatePerspectiveCamera(paramSet, cam2World, film, mediumInterface.outside);
-    }
-    else if (name == "orthographic") {
-        camera
-            = CreateOrthographicCamera(paramSet, cam2World, film, mediumInterface.outside);
-    }
-    else {
+        camera = CreatePerspectiveCamera(paramSet, cam2World, film, mediumInterface.outside);
+    } else if (name == "orthographic") {
+        camera = CreateOrthographicCamera(paramSet, cam2World, film, mediumInterface.outside);
+    } else if (name == "realistic") {
+        camera = CreateRealisticCamera(paramSet, cam2World, film, mediumInterface.outside);
+    } else {
         Warning("Camera \"%s\" unknown.", name.c_str());
     }
     paramSet.ReportUnused();
@@ -431,6 +432,8 @@ std::shared_ptr<Material> MakeMaterial(const std::string &name, const TexturePar
         material = CreateCoatedDiffuseMaterial(mp);
     } else if (name == "subsurface") {
         material = CreateSubsurfaceMaterial(mp);
+    } else if (name == "ward") {
+        material = CreateWardMaterial(mp);
     } else {
         Warning("Material \"%s\" unknown. Using \"matte\".", name.c_str());
         material = CreateMatteMaterial(mp);

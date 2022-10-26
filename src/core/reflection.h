@@ -789,6 +789,24 @@ public:
     Float Pdf(const Vector3f &wo, const Vector3f &wi) const;
 };
 
+class WardReflection : public BxDF {
+public:
+	WardReflection(const Spectrum &Rd, const Spectrum &Rs, const Float Ax, const Float Ay);
+	Spectrum f(const Vector3f &wo, const Vector3f &wi) const;
+	Spectrum f(const Vector3f &wo, const Vector3f &wi, const Vector3f &H) const;
+	Spectrum Sample_f(
+        const Vector3f &wo, Vector3f *wi, const Point2f &u, Float *pdf, BxDFType *sampledType
+    ) const;
+	Float Pdf(const Vector3f &wo, const Vector3f &wi) const;
+private:
+	Spectrum Rd;
+	Spectrum Rs;
+	Float dRatio, sRatio;
+	Float ax, ay;
+	Float invax2, invay2;
+	Float const2;
+};
+
 class BSDF {
 private:
     // Geometric normal.

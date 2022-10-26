@@ -946,6 +946,69 @@ Float TorranceSparrowMicrofacetTransmission::Pdf(const Vector3f &wo, const Vecto
     return distribution->Pdf(wo, wh) * dwh_dwi;
 }
 
+WardReflection::WardReflection(const Spectrum &Rd, const Spectrum &Rs, const Float Ax, const Float Ay)
+	: BxDF(BxDFType(BSDF_REFLECTION | BSDF_GLOSSY)), Rd(Rd), Rs(Rs) {
+	ax = Ax;
+	ay = Ay;
+	invax2 = 1.f/(ax*ax);
+	invay2 = 1.f/(ay*ay);
+	const2 = (4*Pi*ax*ay);
+}
+
+Spectrum WardReflection::f(const Vector3f &wo, const Vector3f &wi) const{
+	Spectrum specular(0.f);
+	Vector3f H = wi + wo;
+	if(H.z <= 0.f) return specular;
+	Float const1 = wi.z*wo.z;
+	if(const1 <= 0.f) return specular;
+	const1 = sqrtf(const1);
+	Float const3 = exp(-1.f * (H.x*H.x*invax2 + H.y*H.y*invay2)/(H.z*H.z) );
+	specular = Rs * const3/(const1*const2); 
+	return specular;
+}
+
+Spectrum WardReflection::f(const Vector3f &wo, const Vector3f &wi, const Vector3f &H) const{
+	Spectrum specular(0.f);
+	
+	if(H.z <= 0.f) return specular;
+	Float const1 = wi.z*wo.z;
+	if(const1 <= 0.f) return specular;
+	const1 = sqrtf(const1);
+	Float const3 = exp(-1.f * (H.x*H.x*invax2 + H.y*H.y*invay2)/(H.z*H.z) );
+	specular = Rs * const3/(const1*const2); 
+	return specular;	
+}
+
+Spectrum WardReflection::Sample_f(
+    const Vector3f &wo, Vector3f *wi, const Point2f &u, Float *pdf, BxDFType *sampledType
+) const {
+	Vector3f h;
+	Float phi = atanf(ay*tan(2*Pi*u[2])/ax);
+	Float cosPhi = cosf(phi);
+	Float sinPhi = sqrtf(1-cosPhi*cosPhi);
+	Float theta = atanf(sqrtf(-logf(u[1])/(cosPhi*cosPhi*invax2 + sinPhi*sinPhi*invay2)));
+	h.z = cosf(theta);
+	Float cosTheta2 = h.z*h.z;
+	Float sinTheta = sqrtf(1-cosTheta2);
+	Float tanTheta2 = (1-cosTheta2)/cosTheta2;
+	h.x = cosPhi*sinTheta;
+	h.y = sinPhi*sinTheta;
+	if(Dot(wo, h) < 0.f) h = -h;
+	*wi = -wo + 2.f * Dot(wo, h) * h;
+	*pdf = expf(-tanTheta2*(cosPhi*cosPhi*invax2 + sinPhi*sinPhi*invay2))/(const2*Dot(h,wo)*cosTheta2*h.z);
+	return f(wo, *wi, h);
+}
+
+Float WardReflection::Pdf(const Vector3f &wo, const Vector3f &wi) const {
+	Vector3f h = Normalize(wi+wo);
+	Float cosTheta2 = h.z*h.z;
+	Float tanTheta2 = (1-cosTheta2)/cosTheta2;
+	Float cosPhi = CosPhi(h);
+	Float sinPhi = SinPhi(h);
+
+	return expf(-tanTheta2*(cosPhi*cosPhi*invax2 + sinPhi*sinPhi*invay2))/(const2*Dot(h,wo)*cosTheta2*h.z);
+}
+
 Spectrum BSDF::f(const Vector3f &woW, const Vector3f &wiW, BxDFType flags) const {
     Vector3f wi = WorldToLocal(wiW);
     Vector3f wo = WorldToLocal(woW);
