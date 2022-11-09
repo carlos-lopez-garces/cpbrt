@@ -789,14 +789,26 @@ public:
     Float Pdf(const Vector3f &wo, const Vector3f &wi) const;
 };
 
+// The Ward BRDF is an "experimental" BRDF: a BRDF obtained using a gonioreflectometer, a device
+// that mechanically varies a light source illuminating a surface and that measures the ratio of
+// radiance reflected from the surface to the incident radiance.
+//
+// With microfacets at the core of the model, the BRDF that Ward formulated has a diffuse component
+// and an anisotropic lobe modeled by an elliptic Gaussian and controlled by a small set of parameters:
+// Rd is the specular reflectance, and Ax and Ay are the standard deviations of the microfacet slopes
+// in the x and y directions, respectively. When Ax=Ay, the model specializes to the isotropic case.
 class WardReflection : public BxDF {
 public:
 	WardReflection(const Spectrum &Rd, const Spectrum &Rs, const Float Ax, const Float Ay);
+
 	Spectrum f(const Vector3f &wo, const Vector3f &wi) const;
+
 	Spectrum f(const Vector3f &wo, const Vector3f &wi, const Vector3f &H) const;
+
 	Spectrum Sample_f(
         const Vector3f &wo, Vector3f *wi, const Point2f &u, Float *pdf, BxDFType *sampledType
     ) const;
+    
 	Float Pdf(const Vector3f &wo, const Vector3f &wi) const;
 private:
 	Spectrum Rd;
