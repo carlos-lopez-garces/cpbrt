@@ -8,7 +8,13 @@
 class DistantLight : public Light {
 private:
     const Spectrum L;
+
+    // Direction in world space. Radiance emitted by this light source arrives at
+    // surfaces in parallel beams in this direction. 
     const Vector3f wLight;
+
+    Point3f worldCenter;
+    Float worldRadius;
 
 public:
     // Unlike PointLight and DiffuseAreaLight, DistantLight cannot be embedded in
@@ -23,6 +29,11 @@ public:
         L(L),
         wLight(Normalize(LightToWorld(wLight)))
     {}
+
+    // Get world bounds.
+    void Preprocess(const Scene &scene) {
+        scene.WorldBound().BoundingSphere(&worldCenter, &worldRadius);
+    }
 };
 
 #endif // CPBRT_LIGHTS_DISTANT_H
