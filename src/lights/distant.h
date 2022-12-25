@@ -7,6 +7,7 @@
 
 class DistantLight : public Light {
 private:
+    // Emitted radiance.
     const Spectrum L;
 
     // Direction in world space. Radiance emitted by this light source arrives at
@@ -50,6 +51,11 @@ public:
         // along the light source's constant direction.
         VisibilityTester *vis
     ) const override;
+
+    // Power, aka radiant flux, is the total amount of energy passing through a surface
+    // per unit time. For distant lights, power is Phi = AL, where L is emitted radiance
+    // and A is total *unoccluded* surface area.  
+    virtual Spectrum Power() const override;
 };
 
 #endif // CPBRT_LIGHTS_DISTANT_H
