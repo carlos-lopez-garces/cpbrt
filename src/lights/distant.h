@@ -34,6 +34,22 @@ public:
     void Preprocess(const Scene &scene) {
         scene.WorldBound().BoundingSphere(&worldCenter, &worldRadius);
     }
+
+    // This kind of light source is not sampled: the incident direction w_i is the light
+    // source's direction with probability 1. The magnitude of L_i is constant too.
+    virtual Spectrum Sample_Li(
+        const Interaction &it,
+        // A random variable is not needed because there's no random sampling done here.
+        // The incident direction and radiance are constant.
+        const Point2f &u,
+        // Always wLight.
+        Vector3f *wi,
+        // Always 1.
+        Float *pdf,
+        // Visibility testing is done by placing a point outside the world/scene bounds
+        // along the light source's constant direction.
+        VisibilityTester *vis
+    ) const override;
 };
 
 #endif // CPBRT_LIGHTS_DISTANT_H
