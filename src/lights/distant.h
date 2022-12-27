@@ -39,7 +39,7 @@ public:
 
     // This kind of light source is not sampled: the incident direction w_i is the light
     // source's direction with probability 1. The magnitude of L_i is constant too.
-    virtual Spectrum Sample_Li(
+    Spectrum Sample_Li(
         const Interaction &it,
         // A random variable is not needed because there's no random sampling done here.
         // The incident direction and radiance are constant.
@@ -56,7 +56,12 @@ public:
     // Power, aka radiant flux, is the total amount of energy passing through a surface
     // per unit time. For distant lights, power is Phi = AL, where L is emitted radiance
     // and A is total *unoccluded* surface area.  
-    virtual Spectrum Power() const override;
+    Spectrum Power() const override;
 };
+
+std::shared_ptr<DistantLight> CreateDistantLight(
+    const Transform &light2world,
+    const ParamSet &paramSet
+);
 
 #endif // CPBRT_LIGHTS_DISTANT_H

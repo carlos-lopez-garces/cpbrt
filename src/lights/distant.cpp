@@ -1,4 +1,5 @@
 #include "distant.h"
+#include "core/paramset.h"
 
 Spectrum DistantLight::Sample_Li(
     const Interaction &it,
@@ -30,4 +31,16 @@ Spectrum DistantLight::Sample_Li(
 // of the light.
 Spectrum DistantLight::Power() const {
     return L * Pi * worldRadius * worldRadius;
+}
+
+std::shared_ptr<DistantLight> CreateDistantLight(
+    const Transform &light2world,
+    const ParamSet &paramSet
+) {
+    Spectrum L = paramSet.FindOneSpectrum("L", Spectrum(1.0));
+    Spectrum scale = paramSet.FindOneSpectrum("scale", Spectrum(1.0));
+    Point3f from = paramSet.FindOnePoint3f("from", Point3f(0, 0, 0));
+    Point3f to = paramSet.FindOnePoint3f("to", Point3f(0, 0, 1));
+    Vector3f direction = from - to;
+    return std::make_shared<DistantLight>(light2world, L*scale, direction);
 }
