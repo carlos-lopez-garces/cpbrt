@@ -6,7 +6,7 @@ Spectrum DistantLight::Sample_Li(
     Vector3f *wi,
     Float *pdf,
     VisibilityTester *vis
-) {
+) const {
     // Constant incident direction.
     *wi = wLight;
     *pdf = 1;

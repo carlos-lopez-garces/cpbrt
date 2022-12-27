@@ -4,6 +4,7 @@
 #include "core/cpbrt.h"
 #include "core/light.h"
 #include "core/medium.h"
+#include "core/scene.h"
 
 class DistantLight : public Light {
 private:
