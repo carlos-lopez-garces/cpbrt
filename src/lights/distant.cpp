@@ -22,6 +22,10 @@ Spectrum DistantLight::Sample_Li(
     return L;
 }
 
+Float DistantLight::Pdf_Li(const Interaction &it, const Vector3f &wi) const {
+    return 1.0;
+}
+
 // Power, aka radiant flux, is the total amount of energy passing through a surface
 // per unit time. For distant lights, power is Phi = AL, where L is emitted radiance
 // and A is total *unoccluded* surface area.

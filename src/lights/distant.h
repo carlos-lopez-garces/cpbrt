@@ -53,6 +53,11 @@ public:
         VisibilityTester *vis
     ) const override;
 
+    // Evaluates the PDF of the distribution of directions of this light source for
+    // the input incident direction. The distribution in this case is constant: wLight
+    // with probability 1.
+    Float Pdf_Li(const Interaction &it, const Vector3f &wi) const;
+
     // Power, aka radiant flux, is the total amount of energy passing through a surface
     // per unit time. For distant lights, power is Phi = AL, where L is emitted radiance
     // and A is total *unoccluded* surface area.  
