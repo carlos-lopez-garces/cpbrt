@@ -19,6 +19,7 @@
 #include "integrators/path.h"
 #include "integrators/volpath.h"
 #include "lights/diffuse.h"
+#include "lights/distant.h"
 #include "lights/infinite.h"
 #include "lights/point.h"
 #include "materials/coateddiffuse.h"
@@ -514,6 +515,8 @@ std::shared_ptr<Light> MakeLight(
         light = CreatePointLight(light2world, mediumInterface.outside, paramSet);
     } else if (name == "infinite") {
         light = CreateInfiniteLight(light2world, paramSet);
+    } else if (name == "distant") {
+        light = CreateDistantLight(light2world, paramSet);
     } else {
         Warning("Light \"%s\" unknown.", name.c_str()); 
     }
