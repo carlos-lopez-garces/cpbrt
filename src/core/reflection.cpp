@@ -1018,6 +1018,33 @@ Spectrum AshikhminShirleyReflection::SchlickFresnel(Float cosTheta) const {
     return Rs + pow5(1 - cosTheta) * (Spectrum(1.f) - Rs);
 }
 
+// Evaluates the Ashikhmin-Shirley BRDF for the input pair of incident and reflected
+// directions. 
+Spectrum AshikhminShirleyReflection::f(const Vector3f &wo, const Vector3f &wi) const {
+    auto pow5 = [](Float v) {
+        return (v*v) * (v*v) * v;
+    };
+
+    // The specular microfacet distribution is a function of the half vector.
+    Vector3f wh = wi + wo;
+    if (wh.x == 0 && wh.y == 0 && wh.z == 0) {
+        return Spectrum(0);
+    }
+    wh = Normalize(wh);
+
+    Spectrum specularTerm = distribution->D(wh)
+        * SchlickFresnel(Dot(wi, wh))
+        / (4 * AbsDot(wi, wh) * std::max(AbsCosTheta(wi), AbsCosTheta(wo)));
+
+    Spectrum diffuseTerm = (28.f / (23.f * Pi)) 
+        * Rd
+        * (Spectrum(1.f) - Rs)
+        * (1 - pow5(1 - 0.5f * AbsCosTheta(wi))) 
+        * (1 - pow5(1 - 0.5f * AbsCosTheta(wo)));
+
+    return diffuseTerm + specularTerm;
+}
+
 Spectrum BSDF::f(const Vector3f &woW, const Vector3f &wiW, BxDFType flags) const {
     Vector3f wi = WorldToLocal(wiW);
     Vector3f wo = WorldToLocal(woW);

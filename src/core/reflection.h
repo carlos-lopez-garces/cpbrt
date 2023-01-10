@@ -845,6 +845,13 @@ public:
 
     // Evaluates Schlick's approximation to the Fresnel equations.
     Spectrum SchlickFresnel(Float cosTheta) const;
+
+    // Evaluates the Ashikhmin-Shirley BRDF for the input pair of incident and reflected
+    // directions. This BRDF is the sum of a diffuse term and a glossy specular term. The
+    // specular term uses a distribution of microfacets and Schlick's approximation to the
+    // Fresnel equations, whereas the diffuse term is formulated in a way such that energy
+    // is conserved.
+    Spectrum f(const Vector3f &wo, const Vector3f &wi) const;
 };
 
 class BSDF {
