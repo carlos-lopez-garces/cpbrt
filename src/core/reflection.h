@@ -842,6 +842,9 @@ public:
         Rs(Rs),
         distribution(distribution)
     {}
+
+    // Evaluates Schlick's approximation to the Fresnel equations.
+    Spectrum SchlickFresnel(Float cosTheta) const;
 };
 
 class BSDF {

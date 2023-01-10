@@ -1009,6 +1009,15 @@ Float WardReflection::Pdf(const Vector3f &wo, const Vector3f &wi) const {
 	return expf(-tanTheta2*(cosPhi*cosPhi*invax2 + sinPhi*sinPhi*invay2))/(const2*Dot(h,wo)*cosTheta2*h.z);
 }
 
+// Evaluates Schlick's approximation to the Fresnel equations.
+Spectrum AshikhminShirleyReflection::SchlickFresnel(Float cosTheta) const {
+    auto pow5 = [](Float v) {
+        return (v*v) * (v*v) * v;
+    };
+
+    return Rs + pow5(1 - cosTheta) * (Spectrum(1.f) - Rs);
+}
+
 Spectrum BSDF::f(const Vector3f &woW, const Vector3f &wiW, BxDFType flags) const {
     Vector3f wi = WorldToLocal(wiW);
     Vector3f wo = WorldToLocal(woW);
