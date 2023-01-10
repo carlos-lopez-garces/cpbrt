@@ -819,6 +819,31 @@ private:
 	Float const2;
 };
 
+// The Ashikhmin-Shirley BRDF is called FresnelBlend in PRBT. Models reflection
+// from a 2-layer material comprised of a diffuse substrate and a glossy coat.
+class AshikhminShirleyReflection : public BxDF {
+private:
+    // Diffuse reflectance.
+    const Spectrum Rd;
+
+    // Glossy specular reflectance.
+    const Spectrum Rs;
+
+    // Microfacet distribution for the glossy coat.
+    MicrofacetDistribution *distribution;
+
+public:
+    AshikhminShirleyReflection(
+        const Spectrum &Rd,
+        const Spectrum &Rs,
+        MicrofacetDistribution *distribution
+    ) : BxDF(BxDFType(BSDF_REFLECTION | BSDF_GLOSSY)),
+        Rd(Rd),
+        Rs(Rs),
+        distribution(distribution)
+    {}
+};
+
 class BSDF {
 private:
     // Geometric normal.
