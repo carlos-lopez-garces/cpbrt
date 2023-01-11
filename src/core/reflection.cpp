@@ -1045,6 +1045,67 @@ Spectrum AshikhminShirleyReflection::f(const Vector3f &wo, const Vector3f &wi) c
     return diffuseTerm + specularTerm;
 }
 
+// Samples the Ashikhmin-Shirley BRDF.
+Spectrum AshikhminShirleyReflection::Sample_f(
+    const Vector3f &wo,
+    Vector3f *wi,
+    const Point2f &u,
+    Float *pdf,
+    BxDFType *sampledType
+) const {
+    Point2f uRemapped = u;
+    if (u[0] < 0.5) {
+        // Sample the diffuse term.
+
+        // The uniform random sample u = (u_0, u_1) is used by CosineSampleHemisphere,
+        // but u_0 < 0.5 at this point because it was used to select the diffuse term
+        // (this conditional branch). Remap u_0 to the range [0,1).
+        uRemapped[0] = std::min(2*u[0], OneMinusEpsilon);
+
+        // Diffuse reflection.
+        *wi = CosineSampleHemisphere(uRemapped);
+        if (wo.z < 0.0) {
+            // CosineSampleHemisphere sampled wi on an arbitrary hemisphere of 
+            // reflection space. Invert wi so that it lies on the same
+            // hemisphere as wo.
+            wi->z *= -1;
+        }
+    } else {
+        // Sample the glossy specular term.
+
+        // The uniform random sample u = (u_0, u_1) is used by distribution->Sample_wh,
+        // but u_0 >= 0.5 at this point because it was used to select the specular term
+        // (this conditional branch). Remap u_0 to the range [0,1).
+        uRemapped[0] = std::min(2 * (u[0] - 0.5f), OneMinusEpsilon);
+
+        Vector3f wh = distribution->Sample_wh(wo, uRemapped);
+        *wi = Reflect(wo, wh);
+        if (!SameHemisphere(wo, *wi)) {
+            return Spectrum(0.f);
+        }
+    }
+
+    *pdf = Pdf(wo, *wi);
+
+    return f(wo, *wi);
+}
+
+// Obtains the probability of sampling wi given wo.
+Float AshikhminShirleyReflection::Pdf(const Vector3f &wo, const Vector3f &wi) const {
+    if (!SameHemisphere(wo, wi)) {
+        return 0.f;
+    }
+
+    // Half vector.
+    Vector3f wh = Normalize(wo + wi);
+
+    Float diffusePdf = AbsCosTheta(wi) * InvPi;
+    Float specularPdf = distribution->Pdf(wo, wh) / (4 * Dot(wo, wh));
+
+    // Average.
+    return 0.5f * (diffusePdf + specularPdf);
+}
+
 Spectrum BSDF::f(const Vector3f &woW, const Vector3f &wiW, BxDFType flags) const {
     Vector3f wi = WorldToLocal(wiW);
     Vector3f wo = WorldToLocal(woW);

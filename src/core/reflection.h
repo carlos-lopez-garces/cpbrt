@@ -852,6 +852,21 @@ public:
     // Fresnel equations, whereas the diffuse term is formulated in a way such that energy
     // is conserved.
     Spectrum f(const Vector3f &wo, const Vector3f &wi) const;
+
+    // Samples the Ashikhmin-Shirley BRDF. A given Sample_f call will only sample one of
+    // the terms. The term to sample is chosen uniformly at random with equal probability:
+    // if less than 0.5, then diffuse; otherwise specular. The pdf is an average of the
+    // diffuse and specular pdfs.
+    Spectrum Sample_f(
+        const Vector3f &wo,
+        Vector3f *wi,
+        const Point2f &u,
+        Float *pdf,
+        BxDFType *sampledType
+    ) const;
+
+    // Obtains the probability of sampling wi given wo.
+    Float Pdf(const Vector3f &wo, const Vector3f &wi) const;
 };
 
 class BSDF {
