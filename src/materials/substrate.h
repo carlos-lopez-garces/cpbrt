@@ -15,8 +15,8 @@ private:
     std::shared_ptr<Texture<Spectrum>> Ks;
 
     // Shading normals.
-    std::shared_ptr<Texture<Float>> nu;
-    std::shared_ptr<Texture<Float>> nv;
+    std::shared_ptr<Texture<Float>> uRoughness;
+    std::shared_ptr<Texture<Float>> vRoughness;
 
     bool remapRoughness;
 
@@ -26,17 +26,25 @@ public:
     SubstrateMaterial(
         const std::shared_ptr<Texture<Spectrum>> &Kd,
         const std::shared_ptr<Texture<Spectrum>> &Ks,
-        const std::shared_ptr<Texture<Float>> &nu,
-        const std::shared_ptr<Texture<Float>> &nv,
+        const std::shared_ptr<Texture<Float>> &uRough,
+        const std::shared_ptr<Texture<Float>> &vRough,
         const std::shared_ptr<Texture<Float>> &bumpMap,
         bool remapRoughness
     )
       : Kd(Kd),
         Ks(Ks),
-        nu(nu),
-        nv(nv),
+        uRoughness(uRough),
+        vRoughness(vRough),
         remapRoughness(remapRoughness)
     {}
+
+    // Evaluates BSDFs at intersection point.
+    void ComputeScatteringFunctions(
+        SurfaceInteraction *si,
+        MemoryArena &arena,
+        TransportMode mode,
+        bool allowMultipleLobes
+    ) const;
 };
 
 #endif // CPBRT_MATERIALS_SUBSTRATE_H
