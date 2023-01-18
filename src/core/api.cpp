@@ -28,6 +28,7 @@
 #include "materials/metal.h"
 #include "materials/mirror.h"
 #include "materials/plastic.h"
+#include "materials/substrate.h"
 #include "materials/subsurface.h"
 #include "materials/ward.h"
 #include "media/grid.h"
@@ -435,6 +436,8 @@ std::shared_ptr<Material> MakeMaterial(const std::string &name, const TexturePar
         material = CreateSubsurfaceMaterial(mp);
     } else if (name == "ward") {
         material = CreateWardMaterial(mp);
+    } else if (name == "substrate") {
+        material = CreateSubstrateMaterial(mp);
     } else {
         Warning("Material \"%s\" unknown. Using \"matte\".", name.c_str());
         material = CreateMatteMaterial(mp);

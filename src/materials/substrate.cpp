@@ -29,3 +29,12 @@ void SubstrateMaterial::ComputeScatteringFunctions(
         si->bsdf->Add(ARENA_ALLOC(arena, AshikhminShirleyReflection)(kd, ks, distrib));
     }
 }
+
+SubstrateMaterial *CreateSubstrateMaterial(const TextureParams &mp) {
+    std::shared_ptr<Texture<Spectrum>> Kd = mp.GetSpectrumTexture("Kd", Spectrum(.5f));
+    std::shared_ptr<Texture<Spectrum>> Ks = mp.GetSpectrumTexture("Ks", Spectrum(.5f));
+    std::shared_ptr<Texture<Float>> uRoughness = mp.GetFloatTexture("uroughness", .1f);
+    std::shared_ptr<Texture<Float>> vRoughness = mp.GetFloatTexture("vroughness", .1f);
+    bool remapRoughness = mp.FindBool("remaproughness", true);
+    return new SubstrateMaterial(Kd, Ks, uRoughness, vRoughness, remapRoughness);
+}

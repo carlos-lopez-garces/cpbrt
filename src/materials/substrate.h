@@ -28,7 +28,6 @@ public:
         const std::shared_ptr<Texture<Spectrum>> &Ks,
         const std::shared_ptr<Texture<Float>> &uRough,
         const std::shared_ptr<Texture<Float>> &vRough,
-        const std::shared_ptr<Texture<Float>> &bumpMap,
         bool remapRoughness
     )
       : Kd(Kd),
@@ -46,5 +45,7 @@ public:
         bool allowMultipleLobes
     ) const;
 };
+
+SubstrateMaterial *CreateSubstrateMaterial(const TextureParams &mp);
 
 #endif // CPBRT_MATERIALS_SUBSTRATE_H
