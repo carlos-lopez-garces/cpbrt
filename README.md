@@ -34,6 +34,17 @@ A more detailed description is found in [my blog](https://carlos-lopez-garces.gi
 <table>
   <tr>
     <td><p align="center">
+      <i>Diffuse substrate and glossy coat with an Ashikhmin-Shirley BRDF. Volumetric path integrator.</i>
+      <img src="/images/25.png">
+    </p></td>
+    <td><p align="center">
+      <i>Diffuse substrate and glossy coat with an Ashikhmin-Shirley BRDF.</i>
+      <img src="/images/24.png">
+    </p></td>
+  </tr>
+
+  <tr>
+    <td><p align="center">
       <i>10mm fish-eye lens.</i>
       <img src="/images/21.png">
     </p></td>
