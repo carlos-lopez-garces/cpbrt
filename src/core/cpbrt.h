@@ -51,6 +51,7 @@ struct Options {
     bool toPly = false;
     // x0, x1, y0, y1.
     Float cropWindow[2][2];
+    bool useGpu = false;
 
     Options() {
         cropWindow[0][0] = 0;
