@@ -1,4 +1,7 @@
 #include "substrate.h"
+#include "core/interaction.h"
+#include "core/reflection.h"
+#include "core/paramset.h"
 
 void SubstrateMaterial::ComputeScatteringFunctions(
     SurfaceInteraction *si,
@@ -18,7 +21,7 @@ void SubstrateMaterial::ComputeScatteringFunctions(
 
     si->bsdf = ARENA_ALLOC(arena, BSDF)(*si);
 
-    if (!d.IsBlack() || !s.IsBlack()) {
+    if (!kd.IsBlack() || !ks.IsBlack()) {
         if (remapRoughness) {
             uRough = TrowbridgeReitzDistribution::RoughnessToAlpha(uRough);
             vRough = TrowbridgeReitzDistribution::RoughnessToAlpha(vRough);
@@ -26,7 +29,7 @@ void SubstrateMaterial::ComputeScatteringFunctions(
 
         MicrofacetDistribution *distribution = ARENA_ALLOC(arena, TrowbridgeReitzDistribution)(uRough, vRough);
 
-        si->bsdf->Add(ARENA_ALLOC(arena, AshikhminShirleyReflection)(kd, ks, distrib));
+        si->bsdf->Add(ARENA_ALLOC(arena, AshikhminShirleyReflection)(kd, ks, distribution));
     }
 }
 

@@ -36,7 +36,7 @@ public:
     // SurfaceInteraction:wo to the incident differential flux at pi from direction wi.
     virtual Spectrum S(const SurfaceInteraction &pi, const Vector3f &wi) = 0;
 
-    // Samples the BSSRDF at the SurfaceInteration. The sample (pi, wi) is returned in the
+    // Samples the BSSRDF at the SurfaceInteraction. The sample (pi, wi) is returned in the
     // SurfaceInteraction: the point of incidence pi = si.p, which is sampled by the spatial
     // component Sp of S; and the direction of incidence wi = is sampled using the BxDF of
     // the material at point pi.

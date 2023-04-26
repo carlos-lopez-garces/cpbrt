@@ -234,7 +234,8 @@ static void TrowbridgeReitzSample11(
 }
 
 static Vector3f TrowbridgeReitzSample(
-    const Vector3f &wi, Float alpha_x, Float alpha_y, Float U1, Float U2) {
+    const Vector3f &wi, Float alpha_x, Float alpha_y, Float U1, Float U2
+) {
     Vector3f wiStretched = Normalize(Vector3f(alpha_x * wi.x, alpha_y * wi.y, wi.z));
     Float slope_x, slope_y;
     TrowbridgeReitzSample11(CosTheta(wiStretched), U1, U2, &slope_x, &slope_y);
