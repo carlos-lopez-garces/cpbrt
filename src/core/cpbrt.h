@@ -46,6 +46,9 @@
     #define CPBRT_CONST const
 #endif
 
+// Adds CUDA execution space qualifiers to lambda functions.
+#define CPBRT_CPU_GPU_LAMBDA(...) [ =, *this ] CPBRT_CPU_GPU(__VA_ARGS__) mutable
+
 // Global macros.
 
 // Dynamic memory allocation on the stack.
