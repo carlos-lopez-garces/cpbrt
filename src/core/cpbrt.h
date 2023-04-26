@@ -27,10 +27,23 @@
     #define CPBRT_IS_GPU_CODE
 #endif
 
+// Execution/memory space qualifiers. The execution space of a function is the
+// GPU when marked with CPBRT_GPU, the CPU and the GPU when marked with CPBRT_CPU_GPU,
+// and the CPU only when none of the qualifiers is used.
 // TODO: it appears that __CUDACC__ is only defined when the compiler is nvcc.
 #if defined(CPBRT_BUILD_GPU_RENDERER) && defined(__CUDACC__)
     #define CPBRT_CPU_GPU __host__ __device__
     #define CPBRT_GPU __device__
+
+    #if defined(CPBRT_IS_GPU_CODE)
+        #define CPBRT_CONST __device__ const
+    #else
+        #define CPBRT_CONST const
+    #endif
+#else
+    #define CPBRT_CPU_GPU
+    #define CPBRT_GPU
+    #define CPBRT_CONST const
 #endif
 
 // Global macros.
