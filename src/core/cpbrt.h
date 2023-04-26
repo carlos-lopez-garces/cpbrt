@@ -20,7 +20,17 @@
 #include "error.h"
 
 #if defined(_WIN32) || defined(_WIN64)
-  #define CPBRT_IS_WINDOWS
+    #define CPBRT_IS_WINDOWS
+#endif
+
+#if defined(__CUDA_ARCH__)
+    #define CPBRT_IS_GPU_CODE
+#endif
+
+// TODO: it appears that __CUDACC__ is only defined when the compiler is nvcc.
+#if defined(CPBRT_BUILD_GPU_RENDERER) && defined(__CUDACC__)
+    #define CPBRT_CPU_GPU __host__ __device__
+    #define CPBRT_GPU __device__
 #endif
 
 // Global macros.
