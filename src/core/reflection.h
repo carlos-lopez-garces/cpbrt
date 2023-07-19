@@ -118,6 +118,18 @@ inline bool Refract(const Vector3f &wi, const Normal3f &n, Float eta, Vector3f *
     return true;
 }
 
+// Weight in Schlick's Fresnel approximation as used in Burley's base diffuse model in 
+// Physically Based Shading at Disney. Note that this is just one of the factors in Schlick's
+// expression; the full expression is:
+//
+// F = F(0) + (1 - F(0)) (1 - cos(theta))^5
+//
+// (See https://media.disneyanimation.com/uploads/production/publication_asset/48/asset/s2012_pbs_disney_brdf_notes_v3.pdf.)
+inline Float SchlickWeight(Float cosTheta) {
+    Float m = Clamp(1 - cosTheta, 0, 1);
+    return (m * m) * (m * m) * m;
+}
+
 // Evaluates the Fresnel reflectance equation between 2 dielectric media, assuming that light is
 // unpolarized. cosThetaI is the angle of incidence measured from the normal; etaI is the refraction
 // index of the medium that light is traveling through before reaching the interface with the
@@ -867,6 +879,32 @@ public:
 
     // Obtains the probability of sampling wi given wo.
     Float Pdf(const Vector3f &wo, const Vector3f &wi) const;
+};
+
+class DisneyDiffuseReflection : public BxDF {
+private:
+    Spectrum R;
+
+public:
+    DisneyDiffuseReflection(
+        const Spectrum &R
+    ) : BxDF(BxDFType(BSDF_REFLECTION | BSDF_DIFFUSE)), 
+        R(R)
+    {}
+
+    Spectrum f(const Vector3f &wo, const Vector3f &wi) const;
+
+    // The hemispherical-directional reflectance is constant across the entire
+    // hemisphere of outgoing directions.
+    Spectrum rho(const Vector3f &wo, int nSamples, const Point2f *samples) const {
+        return R;
+    }
+
+    // The hemispherical-hemispherical reflectance is constant for all pairs of
+    // incident and outgoing directions in the hemisphere.
+    Spectrum rho(int nSamples, const Point2f *samples1, const Point2f *samples2) const {
+        return R;
+    }
 };
 
 class BSDF {
