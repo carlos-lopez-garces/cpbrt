@@ -124,6 +124,10 @@ inline bool Refract(const Vector3f &wi, const Normal3f &n, Float eta, Vector3f *
 //
 // F = F(0) + (1 - F(0)) (1 - cos(theta))^5
 //
+// where F(0) gives the specular reflectance at normal incidence (theta = 0); it is
+// achromatic for dielectrics and chromatic (tinted) for metals. In general, F approaches
+// unity at grazing angles and becomes achromatic as all light is reflected. 
+//
 // (See https://media.disneyanimation.com/uploads/production/publication_asset/48/asset/s2012_pbs_disney_brdf_notes_v3.pdf.)
 inline Float SchlickWeight(Float cosTheta) {
     Float m = Clamp(1 - cosTheta, 0, 1);
@@ -144,6 +148,13 @@ Float FrDielectric(Float cosThetaI, Float etaI, Float etaT);
 // and transmission media, respectively; and k is the imaginary part of the index of refraction of
 // the incident medium (assumed to be a conductor) also known as absorption coefficient.
 Spectrum FrConductor(Float cosThetaI, const Spectrum &etaI, const Spectrum &etaT, const Spectrum &k);
+
+// Interpolates non-linearly between the given reflectance R0 and unity to give the Fresnel reflectance
+// that corresponds to the given implicit theta angle. R0 is typically the reflectance at normal
+// incidence.
+inline Spectrum FrSchlickDisney(const Spectrum &R0, Float cosTheta) {
+    return Lerp(SchlickWeight(cosTheta), R0, Spectrum(1.));
+}
 
 class Fresnel {
 public:
@@ -192,6 +203,38 @@ class FresnelNoOp : public Fresnel {
 public:
     Spectrum Evaluate(Float) const {
         return Spectrum(1.);
+    }
+};
+
+// A Fresnel function designed by Disney for specular reflectance. 
+// See Physically Based Shading at Disney by Burley.
+// https://media.disneyanimation.com/uploads/production/publication_asset/48/asset/s2012_pbs_disney_brdf_notes_v3.pdf.
+class FresnelDisney : public Fresnel {
+private:
+    // Specular reflectance at normal incidence.
+    const Spectrum R0;
+    // In [0,1], with dielectric=0 and metallic=1.
+    const Float metallic;
+    // Index of refraction IOR of the inside of the object (transmission medium).
+    const Float eta;
+
+public:
+    FresnelDisney(const Spectrum &R0, Float metallic, Float eta)
+        : R0(R0), metallic(metallic), eta(eta)
+    {}
+
+    Spectrum Evaluate(Float cosThetaI) const {
+        // Interpolate between dielectric Fresnel reflectance and general Fresnel
+        // reflectance (as approximated by Schlick). Per Burley: [the metallic parameter is]
+        // a linear blend between two different models.
+        return Lerp(
+            metallic,
+            // With IOR=1 for incident medium and IOR=eta for transmission medium
+            Spectrum(FrDielectric(cosThetaI, 1, eta)),
+            // Non-linear interpolation between specular Fresnel reflectance at normal incidence (R0)
+            // and unity, corresponding to the given implicit incidence angle.
+            FrSchlickDisney(R0, cosThetaI)
+        );
     }
 };
 

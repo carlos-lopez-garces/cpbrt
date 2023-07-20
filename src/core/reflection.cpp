@@ -1111,7 +1111,7 @@ Spectrum DisneyDiffuseReflection::f(const Vector3f &wo, const Vector3f &wi) cons
     Float Fi = SchlickWeight(AbsCosTheta(wi));
     // Reflectance R can be seen as the base color.
     // TODO: this expression is different from the one in the base diffuse model in 
-    // Burley's Physically Based Shading at Disney. 
+    // Burley's Physically Based Shading at Disney.
     return R * InvPi * (1 - Fo / 2) * (1 - Fi / 2);   
 }
 
