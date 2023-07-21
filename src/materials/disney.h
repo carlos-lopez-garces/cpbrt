@@ -8,6 +8,10 @@
 class DisneyMaterial : public Material {
 private:
     std::shared_ptr<Texture<Spectrum>> color;
+    // In [0, 1], where 0 = dielectric and 1 = metallic. (Most parameters are in [0,1].)
+    std::shared_ptr<Texture<Float>> metallic;
+    // Index of refraction IOR of the inside of the object.
+    std::shared_ptr<Texture<Float>> eta;
 
 public:
     DisneyMaterial(
