@@ -12,21 +12,18 @@ void DisneyMaterial::ComputeScatteringFunctions(
     // Compute diffuse component.
     
     Spectrum colour = color->Evaluate(*si).Clamp();
-    // Float metal = metallic->Evaluate(*si);
+    Float metallicWeight = metallic->Evaluate(*si);
+    Float diffuseWeight = 1.f - metallicWeight;
     // Float IOR = eta->Evaluate(*si);
 
     si->bsdf->Add(ARENA_ALLOC(arena, DisneyDiffuseReflection)(
-        colour
-    ));
-
-    si->bsdf->Add(ARENA_ALLOC(arena, LambertianTransmission)(
-        colour
+        colour * diffuseWeight
     ));
 }
 
 DisneyMaterial *CreateDisneyMaterial(const TextureParams &mp) {
     std::shared_ptr<Texture<Spectrum>> color = mp.GetSpectrumTexture("color", Spectrum(0.5f));
-    // std::shared_ptr<Texture<Float>> metallic = mp.GetFloatTexture("metallic", 0.f);
+    std::shared_ptr<Texture<Float>> metallic = mp.GetFloatTexture("metallic", 0.f);
     // std::shared_ptr<Texture<Float>> eta = mp.GetFloatTexture("eta", 1.5f);
-    return new DisneyMaterial(color);
+    return new DisneyMaterial(color, metallic);
 }

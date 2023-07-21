@@ -15,8 +15,11 @@ private:
 
 public:
     DisneyMaterial(
-        const std::shared_ptr<Texture<Spectrum>> &color
-    ) : color(color) {}
+        const std::shared_ptr<Texture<Spectrum>> &color,
+        const std::shared_ptr<Texture<Float>> &metallic
+    ) : color(color),
+        metallic(metallic)
+    {}
 
     // Evaluates BSDFs at intersection point. PathIntegrator and VolPathIntegrator
     // pass allowMultipleLobes=true. DirectLightingIntegrator passes allowMultipleLobes=false. 
