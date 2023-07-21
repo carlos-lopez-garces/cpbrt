@@ -25,4 +25,6 @@ public:
     ) const;
 };
 
+DisneyMaterial *CreateDisneyMaterial(const TextureParams &mp);
+
 #endif // CPBRT_MATERIALS_DISNEY_H
