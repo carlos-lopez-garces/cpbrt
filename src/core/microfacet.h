@@ -119,4 +119,24 @@ inline Float TrowbridgeReitzDistribution::RoughnessToAlpha(Float roughness) {
     return 1.62142f + 0.819955f * x + 0.1734f * x * x + 0.0171201f * x * x * x + 0.000640711f * x * x * x * x;
 }
 
+// Disney's microfacet distribution.
+class DisneyMicrofacetDistribution : public TrowbridgeReitzDistribution {
+    DisneyMicrofacetDistribution(Float alphaX, Float alphaY)
+     : TrowbridgeReitzDistribution(alphaX, alphaY)
+    {}
+
+    // Smith's geometric attenuation factor G(wo, wi) gives the fraction of microfacets in a
+    // differential area dA that are visible from both directions wo and wi. We assume that
+    // visibility is more likely the higher up a given point on a microfacet is.
+    Float G(const Vector3f &wo, const Vector3f &wi) const {
+        // 0 <= G1(w) <= 1 is Smith's masking-shadowing function that gives the fraction of
+        // normalized and projected microfacet area that is visible from the direction w.
+        //
+        // Separable: G(wo, wi) = G1(wo)G1(wi)
+        //            G(wo, wi)/G1(wo) = G1(wi)
+        //            G(wo, wi)/G1(wi) = G1(wo)
+        return G1(wo) * G1(wi);
+    }
+};
+
 #endif // CPBRT_CORE_MICROFACET_H
