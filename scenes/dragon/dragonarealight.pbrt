@@ -1,5 +1,5 @@
 Sampler "stratified"
-Film "image" "string filename" "..\\scenes\\dragon\\dragonarealight.png"
+Film "image" "string filename" "..\\scenes\\dragon\\images\\dragonarealight.png"
     "integer yresolution" [ 480 ]
     "integer xresolution" [ 640 ]
 LookAt 0 0 4.5  0 0 0   0 1 0

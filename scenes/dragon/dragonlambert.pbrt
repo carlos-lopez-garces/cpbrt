@@ -1,5 +1,5 @@
 Sampler "stratified"
-Film "image" "string filename" "..\\scenes\\dragon\\dragonlambert1.png"
+Film "image" "string filename" "..\\scenes\\dragon\\images\\dragonlambert3.png"
     "integer yresolution" [ 480 ]
     "integer xresolution" [ 640 ]
 LookAt 0 0 3.5  0 0 0   0 1 0
@@ -7,8 +7,7 @@ Camera "perspective" "float fov" [ 33 ]
 
 WorldBegin
 
-LightSource "point" "rgb I" [8 8 8] "point from" [-0.5 0 4.7]
-LightSource "point" "rgb I" [10 10 10] "point from" [0.5 0 4.7]
+LightSource "point" "rgb I" [10 10 10] "point from" [0 0 3.5]
 
 AttributeBegin
     # sigma is standard deviation of microfacet orientation angle in degrees. 0 for Lambert.

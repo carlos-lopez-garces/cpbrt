@@ -34,13 +34,13 @@ AttributeBegin
 AttributeEnd
 
 AttributeBegin
-    Material "matte" "rgb Kd" [1 1 1]
+    Material "matte" "rgb Kd" [1 0 0]
     Translate -2 4 0
     Shape "sphere" "float radius" 0.5
 AttributeEnd
 
 AttributeBegin
-    Material "matte" "rgb Kd" [1 1 1]
+    Material "matte" "rgb Kd" [0 0 1]
     Translate -1.5 2.5 1
     Shape "sphere" "float radius" 0.5
 AttributeEnd

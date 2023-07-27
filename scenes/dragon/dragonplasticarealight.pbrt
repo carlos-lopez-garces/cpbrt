@@ -1,7 +1,7 @@
 Sampler "stratified"
-Film "image" "string filename" "..\\scenes\\dragon\\dragonplasticarealight.png"
-    "integer yresolution" [ 480 ]
-    "integer xresolution" [ 640 ]
+Film "image" "string filename" "..\\scenes\\dragon\\images\\dragonplasticarealight1.png"
+    "integer yresolution" [ 1440 ]
+    "integer xresolution" [ 1920 ]
 LookAt 0 0 4.5  0 0 0   0 1 0
 Camera "perspective" "float fov" [ 33 ]
 
@@ -9,7 +9,7 @@ WorldBegin
 
 AttributeBegin
     AreaLightSource "diffuse" "rgb L" [10 10 10]
-    Translate 1.5 1 1
+    Translate 1.8 1 1
     Shape "sphere" "float radius" [0.25]
 AttributeEnd
 
