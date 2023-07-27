@@ -1110,9 +1110,37 @@ Spectrum DisneyDiffuseReflection::f(const Vector3f &wo, const Vector3f &wi) cons
     Float Fo = SchlickWeight(AbsCosTheta(wo));
     Float Fi = SchlickWeight(AbsCosTheta(wi));
     // Reflectance R can be seen as the base color.
-    // TODO: this expression is different from the one in the base diffuse model in 
-    // Burley's Physically Based Shading at Disney.
+    // This expression is different from the one in the base diffuse model in 
+    // Burley's Physically Based Shading at Disney. In Extending the Disney BRDF to
+    // a BSDF with Integrated Subsurface Scattering, Burley explains that the previous
+    // model produces an unnaturally dark grazing response (because F(90), the
+    // Fresnel response when Theta_i = 90, is 0). This expression corresponds to
+    // f_Lambert * (1 - 0.5F_V) * (1 - 0.5F_L) in equation (4).
     return R * InvPi * (1 - Fo / 2) * (1 - Fi / 2);   
+}
+
+Spectrum DisneyRetroReflection::f(const Vector3f &wo, const Vector3f &wi) const {
+    // Half vector.
+    Vector3f wh = wi + wo;
+    if (wh.x == 0 && wh.y == 0 && wh.z == 0) {
+        // wo and wi are parallel and opposite.
+        return Spectrum(0.f);
+    }
+    wh = Normalize(wh);
+
+    // Theta_d is the difference angle between the angle of incidence Theta_i and
+    // the half vector (or between Theta_o and the half vector).
+    Float cosThetaD = Dot(wi, wh);
+
+    // Weights in Schlick's Fresnel approximation corresponding to wo and wi.
+    Float Fo = SchlickWeight(AbsCosTheta(wo));
+    Float Fi = SchlickWeight(AbsCosTheta(wi));
+
+    // R_R in equation (4).
+    Float Rr = 2 * roughness * cosThetaD * cosThetaD;
+
+    // f_retro-reflection in equation (4).
+    return R * InvPi * Rr * (Fo + Fi + Fo * Fi * (Rr - 1));
 }
 
 Spectrum BSDF::f(const Vector3f &woW, const Vector3f &wiW, BxDFType flags) const {

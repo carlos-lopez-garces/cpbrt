@@ -924,6 +924,12 @@ public:
     Float Pdf(const Vector3f &wo, const Vector3f &wi) const;
 };
 
+// The diffuse term of the Disney diffuse model. Corresponds to 
+//
+//   f_Lambert * (1 - 0.5F_V) * (1 - 0.5F_L) 
+//
+// in equation (4) in Extending the Disney BRDF to a BSDF with Integrated Subsurface
+// Scattering by Burley.
 class DisneyDiffuseReflection : public BxDF {
 private:
     Spectrum R;
@@ -948,6 +954,36 @@ public:
     Spectrum rho(int nSamples, const Point2f *samples1, const Point2f *samples2) const {
         return R;
     }
+};
+
+// The retro-reflection term of the Disney diffuse model. Corresponds to f_retro-reflection
+// in equation (4) in Extending the Disney BRDF to a BSDF with Integrated Subsurface
+// Scattering by Burley.
+class DisneyRetroReflection : public BxDF {
+public:
+    DisneyRetroReflection(const Spectrum &R, Float roughness)
+      : BxDF(BxDFType(BSDF_REFLECTION | BSDF_DIFFUSE)),
+        R(R),
+        roughness(roughness)
+    {}
+
+    Spectrum f(const Vector3f &wo, const Vector3f &wi) const;
+
+    // The hemispherical-directional reflectance is constant across the entire
+    // hemisphere of outgoing directions.
+    Spectrum rho(const Vector3f &wo, int nSamples, const Point2f *samples) const {
+        return R;
+    }
+
+    // The hemispherical-hemispherical reflectance is constant for all pairs of
+    // incident and outgoing directions in the hemisphere.
+    Spectrum rho(int nSamples, const Point2f *samples1, const Point2f *samples2) const {
+        return R;
+    }
+
+private:
+    Spectrum R;
+    Float roughness;
 };
 
 class BSDF {
