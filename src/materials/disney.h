@@ -11,19 +11,26 @@ private:
     // In [0, 1], where 0 = dielectric and 1 = metallic. (Most parameters are in [0,1].)
     std::shared_ptr<Texture<Float>> metallic;
     // Degree of roughness, in [0, 1], where 0 is smooth. Influences both the diffuse
-    // and specular responses.
+    // and specular responses; in the diffuse response, it influences diffuse retro-
+    // reflection, specifically.
     std::shared_ptr<Texture<Float>> roughness;
-    // Index of refraction IOR of the inside of the object.
-    std::shared_ptr<Texture<Float>> eta;
+    // A soft luster visible at grazing angles, especially on cloth. In [0, 1].
+    std::shared_ptr<Texture<Float>> sheen;
+    // Controls how much the sheen term's color is tinted by the base color. In [0, 1].
+    std::shared_ptr<Texture<Float>> sheenTint;
 
 public:
     DisneyMaterial(
         const std::shared_ptr<Texture<Spectrum>> &color,
         const std::shared_ptr<Texture<Float>> &metallic,
-        const std::shared_ptr<Texture<Float>> &roughness
+        const std::shared_ptr<Texture<Float>> &roughness,
+        const std::shared_ptr<Texture<Float>> &sheen,
+        const std::shared_ptr<Texture<Float>> &sheenTint
     ) : color(color),
         metallic(metallic),
-        roughness(roughness)
+        roughness(roughness),
+        sheen(sheen),
+        sheenTint(sheenTint)
     {}
 
     // Evaluates BSDFs at intersection point. PathIntegrator and VolPathIntegrator

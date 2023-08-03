@@ -16,6 +16,10 @@ void DisneyMaterial::ComputeScatteringFunctions(
     Float metallicWeight = metallic->Evaluate(*si);
     Float diffuseWeight = 1.f - metallicWeight;
     Float rough = roughness->Evaluate(*si);
+    // The CIE Y curve is luminance.
+    Float luminance = colour.y();
+    // TODO: explain?
+    Spectrum colourTint = luminance > 0 ? colour / luminance : Spectrum(1.f);
 
     if (diffuseWeight) {
         // DisneyDiffuseReflection implements the diffuse term of the f_d equation (4) in
@@ -32,6 +36,19 @@ void DisneyMaterial::ComputeScatteringFunctions(
             colour * diffuseWeight,
             rough
         ));
+
+        // TODO: didn't make a difference.
+        Float sheenWeight = sheen->Evaluate(*si);
+        if (sheenWeight > 0.f) {
+            // The larger the tint weight, the stronger the influence of the base color is on
+            // the sheen color.
+            Float sheenTintWeight = sheenTint->Evaluate(*si);
+            Spectrum sheenColour = Lerp(sheenTintWeight, Spectrum(1.f), colourTint);
+            si->bsdf->Add(ARENA_ALLOC(arena, DisneySheenReflection)(
+                // sheenColour * sheenWeight * diffuseWeight
+                Spectrum(1.f) 
+            ));
+        }
     }
 }
 
@@ -39,5 +56,7 @@ DisneyMaterial *CreateDisneyMaterial(const TextureParams &mp) {
     std::shared_ptr<Texture<Spectrum>> color = mp.GetSpectrumTexture("color", Spectrum(0.5f));
     std::shared_ptr<Texture<Float>> metallic = mp.GetFloatTexture("metallic", 0.f);
     std::shared_ptr<Texture<Float>> roughness = mp.GetFloatTexture("roughness", 0.5f);
-    return new DisneyMaterial(color, metallic, roughness);
+    std::shared_ptr<Texture<Float>> sheen = mp.GetFloatTexture("sheen", 0.f);
+    std::shared_ptr<Texture<Float>> sheenTint = mp.GetFloatTexture("sheenTint", 0.5f);
+    return new DisneyMaterial(color, metallic, roughness, sheen, sheenTint);
 }

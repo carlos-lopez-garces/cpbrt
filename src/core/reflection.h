@@ -986,6 +986,32 @@ private:
     Float roughness;
 };
 
+// TODO: doesn't seem to have an effect.
+class DisneySheenReflection : public BxDF {
+private:
+    Spectrum R;
+
+public:
+    DisneySheenReflection(const Spectrum &R)
+     : BxDF(BxDFType(BSDF_REFLECTION | BSDF_DIFFUSE)),
+       R(R)
+    {}
+
+    Spectrum f(const Vector3f &wo, const Vector3f &wi) const;
+
+    // The hemispherical-directional reflectance is constant across the entire
+    // hemisphere of outgoing directions.
+    Spectrum rho(const Vector3f &wo, int nSamples, const Point2f *samples) const {
+        return R;
+    }
+
+    // The hemispherical-hemispherical reflectance is constant for all pairs of
+    // incident and outgoing directions in the hemisphere.
+    Spectrum rho(int nSamples, const Point2f *samples1, const Point2f *samples2) const {
+        return R;
+    }
+};
+
 class BSDF {
 private:
     // Geometric normal.
