@@ -121,6 +121,7 @@ inline Float TrowbridgeReitzDistribution::RoughnessToAlpha(Float roughness) {
 
 // Disney's microfacet distribution.
 class DisneyMicrofacetDistribution : public TrowbridgeReitzDistribution {
+public:
     DisneyMicrofacetDistribution(Float alphaX, Float alphaY)
      : TrowbridgeReitzDistribution(alphaX, alphaY)
     {}
