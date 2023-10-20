@@ -156,6 +156,8 @@ public:
     void AddSplat(const Point2f &p, const Spectrum &v);
 
     void WriteImage(Float splatScale = 1);
+
+    std::unique_ptr<uint8_t[]> GetPixels(Float splatScale = 1);
 };
 
 class FilmTile {

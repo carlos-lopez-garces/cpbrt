@@ -144,6 +144,69 @@ void Film::WriteImage(Float splatScale) {
     ::WriteImage(filename, &rgb[0], croppedPixelBounds, fullResolution);
 }
 
+// TODO: shares a lot of code with Film::WriteImage.
+std::unique_ptr<uint8_t[]> Film::GetPixels(Float splatScale) {
+    // Convert image to RGB and compute final pixel values.
+    std::unique_ptr<Float[]> rgb(new Float[4 * croppedPixelBounds.Area()]);
+    int offset = 0;
+    for (Point2i p : croppedPixelBounds) {
+        // Convert pixel XYZ color to RGB. The pixel's XYZ color comes from the numerator
+        // of the pixel reconstruction/filtering equation, which is a Spectrum built up from
+        // filtered sample contributions.
+        Pixel &pixel = GetPixel(p);
+        XYZToRGB(pixel.xyz, &rgb[4 * offset]);
+
+        // Complete the computation of the pixel reconstruction/filtering equation by dividing by
+        // the sum of the sample filter weights.
+        Float filterWeightSum = pixel.filterWeightSum;
+        if (filterWeightSum != 0) {
+            Float reciprocalFilterWeight = (Float) 1 / filterWeightSum;
+            // Clamp to 0 because reciprocalFilterWeight may be negative because some filters have
+            // negative intervals (MitchellFilter, for example, has negative lobes intended to give
+            // sharpness to edges).
+            rgb[4 * offset  ] = std::max((Float) 0, rgb[4 * offset  ] * reciprocalFilterWeight);
+            rgb[4 * offset+1] = std::max((Float) 0, rgb[4 * offset+1] * reciprocalFilterWeight);
+            rgb[4 * offset+2] = std::max((Float) 0, rgb[4 * offset+2] * reciprocalFilterWeight);
+            rgb[4 * offset+3] = 1;
+        }
+
+        // TODO: Explain splatting.
+        // Add splat value at pixel.
+        Float splatRGB[3];
+        Float splatXYZ[3] = {pixel.splatXYZ[0], pixel.splatXYZ[1], pixel.splatXYZ[2]};
+        XYZToRGB(splatXYZ, splatRGB);
+        rgb[4 * offset  ] += splatScale * splatRGB[0];
+        rgb[4 * offset+1] += splatScale * splatRGB[1];
+        rgb[4 * offset+2] += splatScale * splatRGB[2];
+
+        // Scale pixel value by user-supplied scale.
+        rgb[4 * offset  ] *= scale;
+        rgb[4 * offset+1] *= scale;
+        rgb[4 * offset+2] *= scale;
+
+        ++offset;
+    }
+    
+    // 8-bit formats; apply gamma
+    Vector2i resolution = croppedPixelBounds.Diagonal();
+    std::unique_ptr<uint8_t[]> rgb8(
+        new uint8_t[4 * resolution.x * resolution.y]);
+    uint8_t *dst = rgb8.get();
+    for (int y = 0; y < resolution.y; ++y) {
+        for (int x = 0; x < resolution.x; ++x) {
+#define TO_BYTE(v) (uint8_t) Clamp(255.f * GammaCorrect(v) + 0.5f, 0.f, 255.f)
+            dst[0] = TO_BYTE(rgb[4 * (y * resolution.x + x) + 0]);
+            dst[1] = TO_BYTE(rgb[4 * (y * resolution.x + x) + 1]);
+            dst[2] = TO_BYTE(rgb[4 * (y * resolution.x + x) + 2]);
+            dst[3] = 1;
+#undef TO_BYTE
+            dst += 4;
+        }
+    }
+
+    return rgb8;
+}
+
 Film *CreateFilm(const ParamSet &params, std::unique_ptr<Filter> filter) {
     std::string filename;
     if (CpbrtOptions.imageFile != "") {
