@@ -349,6 +349,9 @@ void SamplerIntegrator::Render(const Scene &scene) {
 
     UI ui;
     ui.film = camera->film;
+    ui.image = camera->film->GetPixels();
+    ui.imageWidth = camera->film->croppedPixelBounds.pMax.x - camera->film->croppedPixelBounds.pMin.x;
+    ui.imageHeight = camera->film->croppedPixelBounds.Diagonal().y;
 
     try {
         ui.run();

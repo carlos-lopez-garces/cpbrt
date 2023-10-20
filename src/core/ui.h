@@ -22,8 +22,6 @@
 #include <optional>
 #include <set>
 
-#include "core/film.h"
-
 const uint32_t WIDTH = 800;
 const uint32_t HEIGHT = 600;
 
@@ -129,7 +127,9 @@ const std::vector<uint16_t> indices = {
 
 class UI {
 public:
-    Film *film;
+    std::unique_ptr<uint8_t[]> image;
+    int imageWidth;
+    int imageHeight;
 
     void run() {
         initWindow();
@@ -733,9 +733,10 @@ private:
         // stbi_uc* pixels = stbi_load("C:\\Users\\carlo\\Code\\src\\github.com\\carlos-lopez-garces\\cpbrt\\scenes\\material-testball\\images\\material-testball-diffuse-retroreflective-sheen-3.png", &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
         // VkDeviceSize imageSize = texWidth * texHeight * 4;
 
-        std::unique_ptr<uint8_t[]> pixels = film->GetPixels();
-        texWidth = film->croppedPixelBounds.pMax.x - film->croppedPixelBounds.pMin.x;
-        texHeight = film->croppedPixelBounds.Diagonal().y;
+        uint8_t *pixels = image.get();
+        texWidth = imageWidth;
+        texHeight = imageHeight;
+
         VkDeviceSize imageSize = 4 * texWidth * texHeight;
         std::cout << "texWidth " << texWidth << '\n';
         std::cout << "texHeight " << texHeight << '\n';
@@ -751,7 +752,7 @@ private:
 
         void* data;
         vkMapMemory(device, stagingBufferMemory, 0, imageSize, 0, &data);
-        memcpy(data, pixels.get(), static_cast<size_t>(imageSize));
+        memcpy(data, pixels, static_cast<size_t>(imageSize));
         vkUnmapMemory(device, stagingBufferMemory);
 
         // stbi_image_free(pixels);
