@@ -7,6 +7,7 @@
 #include "sampler.h"
 #include "integrator.h"
 #include "camera.h"
+#include "ui.h"
 
 Spectrum UniformSampleAllLights(
     const Interaction &it,
@@ -202,7 +203,7 @@ Spectrum EstimateDirect(
             // surface, the scattering equation includes the cosine of the theta angle as a factor,
             // measured from the surface normal to the direction of incidence. 
             f *= AbsDot(wi, si.shading.n);
-            sampledSpecular = sampledType & BSDF_SPECULAR;
+            sampledSpecular = (sampledType & BSDF_SPECULAR) != 0;
         } else {
             // Sample scattered direction for medium interactions.
             const MediumInteraction &mi = (const MediumInteraction &)it;
@@ -224,7 +225,7 @@ Spectrum EstimateDirect(
                     // As computed with the light source sample only.
                     return Ld;
                 }
-                // Obtain the MIS weight of this sample. 
+                // Obtain the MIS weight of this sample.
                 weight = PowerHeuristic(1, scatteringPdf, 1, lightPdf);
             }
 
@@ -340,6 +341,21 @@ void SamplerIntegrator::Render(const Scene &scene) {
         nTiles
     );
 
+    // Parallel(
+    //     [&]() {
+        
+    //     }
+    // );
+
+    UI ui;
+    ui.film = camera->film;
+
+    try {
+        ui.run();
+    } catch (const std::exception& e) {
+        std::cerr << e.what() << std::endl;
+    }
+
     // Save final image after rendering.
     camera->film->WriteImage();
 }
@@ -359,7 +375,7 @@ Spectrum SamplerIntegrator::SpecularReflect(
     Vector3f wi;
     Float pdf;
     // Only interested in evaluating specular BRDFs.
-    BxDFType type = BxDFType(BSDF_REFLECTION |  BSDF_SPECULAR);
+    BxDFType type = BxDFType(BSDF_REFLECTION | BSDF_SPECULAR);
     Spectrum f = si.bsdf->Sample_f(wo, &wi, sampler.Get2D(), &pdf, type);
 
     // Return contribution of specular reflection.
