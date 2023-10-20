@@ -1,4 +1,9 @@
-build
+build/*
+!build/cpbrt_exe.vcxproj
+!build/cpbrt.vcxproj
 .vscode
 out
 .vs
+scenes/*
+x64/
+src/ext/*
