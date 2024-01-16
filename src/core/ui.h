@@ -22,9 +22,6 @@
 #include <optional>
 #include <set>
 
-const uint32_t WIDTH = 800;
-const uint32_t HEIGHT = 600;
-
 const int MAX_FRAMES_IN_FLIGHT = 2;
 
 const std::vector<const char*> validationLayers = {
@@ -196,7 +193,7 @@ private:
 
         glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
 
-        window = glfwCreateWindow(WIDTH, HEIGHT, "CPBRT live viewer", nullptr, nullptr);
+        window = glfwCreateWindow(imageWidth, imageHeight, "CPBRT live viewer", nullptr, nullptr);
         glfwSetWindowUserPointer(window, this);
         glfwSetFramebufferSizeCallback(window, framebufferResizeCallback);
     }
