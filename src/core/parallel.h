@@ -2,7 +2,11 @@
 #define CPBRT_CORE_PARALLEL_H
 
 #include <atomic>
+#include <condition_variable>
 #include <functional>
+#include <memory>
+#include <mutex>
+#include <queue>
 
 #include "cpbrt.h"
 #include "geometry.h"
@@ -46,6 +50,32 @@ public:
            // If bits == oldBits, set bits = newBits. Otherwise retry.
         } while (!bits.compare_exchange_weak(oldBits, newBits));
     }
+};
+
+// A thread-safe, general purpose queue.
+template<typename T>
+class ConcurrentQueue {
+public:
+    ConcurrentQueue() {}
+
+    ConcurrentQueue(ConcurrentQueue const &other);
+
+    void push(T item);
+
+    // Pop an item from the queue, if there's any, without waiting.
+    bool tryPop(T &poppedItem);
+
+    // Pop an item from the queue, waiting until there's one.
+    void waitAndPop(T &poppedItem);
+
+    bool empty() const;
+
+private:
+    mutable std::mutex m_mutex;
+
+    std::queue<T> m_dataQueue;
+
+    std::condition_variable m_condition;
 };
 
 // Thread-local variable that tells the thread what its identity is.

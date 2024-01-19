@@ -6,6 +6,49 @@
 
 CPBRT_THREAD_LOCAL int ThreadIndex;
 
+template<typename T>
+ConcurrentQueue<T>::ConcurrentQueue(ConcurrentQueue const &other) {
+    std::lock_guard<std::mutex> lk(other.m_mutex);
+    m_dataQueue = other.m_dataQueue;
+}
+
+template<typename T>
+void ConcurrentQueue<T>::push(T item) {
+    std::lock_guard<std::mutex> lk(m_mutex);
+    m_dataQueue.push(item);
+    m_condition.notify_one();
+}
+
+// Pop an item from the queue, if there's any, without waiting.
+template<typename T>
+bool ConcurrentQueue<T>::tryPop(T &poppedItem) {
+    std::lock_guard<std::mutex> lk(m_mutex);
+    if (m_dataQueue.empty()) {
+        return false;
+    }
+    poppedItem = m_dataQueue.front();
+    m_dataQueue.pop();
+    return true;
+}
+
+// Pop an item from the queue, waiting until there's one.
+template<typename T>
+void ConcurrentQueue<T>::waitAndPop(T &poppedItem) {
+    std::unique_lock<std::mutex> lk(m_mutex);
+    m_condition.wait(
+        lk,
+        [this]{return !m_dataQueue.empty();}
+    );
+    poppedItem = m_dataQueue.front();
+    m_dataQueue.pop();
+}
+
+template<typename T>
+bool ConcurrentQueue<T>::empty() const {
+    std::lock_guard<std::mutex> lk(m_mutex);
+    return m_dataQueue.empty();
+}
+
 // Local definitions.
 
 class ParallelForLoop {
