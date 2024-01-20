@@ -1,8 +1,10 @@
 #ifndef CPBRT_CAMERAS_REALISTIC_H
-#define CPBRT_CAMERAS_realistic_H
+#define CPBRT_CAMERAS_REALISTIC_H
 
 #include "core/cpbrt.h"
 #include "core/camera.h"
+
+Float RadicalInverse(int baseIndex, uint64_t a);
 
 class RealisticCamera : public Camera {
 private:
