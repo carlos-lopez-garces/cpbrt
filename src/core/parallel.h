@@ -82,6 +82,11 @@ private:
 // External linkage so that other translation units can reference it.
 extern CPBRT_THREAD_LOCAL int ThreadIndex;
 
+void Parallel(
+    // Wraps a callable: a lambda expression, a function, a pointer to a function, etc.
+    const std::function<void()> &func
+);
+
 void ParallelFor(
     // Wraps a callable: a lambda expression, a function, a pointer to a function, etc.
     // The callable receives the iteration's index.

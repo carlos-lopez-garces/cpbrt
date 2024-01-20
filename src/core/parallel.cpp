@@ -170,6 +170,13 @@ static void workerThreadFunc(int tIndex) {
 
 // Definitions.
 
+void Parallel(
+    // Wraps a callable: a lambda expression, a function, a pointer to a function, etc.
+    const std::function<void()> &func
+) {
+    std::thread t(func);
+}
+
 void ParallelFor(
     // Wraps a callable: a lambda expression, a function, a pointer to a function, etc.
     // The callable receives the iteration's index.
