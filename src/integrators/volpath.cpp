@@ -126,7 +126,8 @@ Spectrum VolPathIntegrator::Li(
 VolPathIntegrator *CreateVolPathIntegrator(
     const ParamSet &params, 
     std::shared_ptr<Sampler> sampler,
-    std::shared_ptr<const Camera> camera
+    std::shared_ptr<const Camera> camera,
+    Film *film
 ) {
     int maxDepth = params.FindOneInt("maxdepth", 5);
     int np;
@@ -145,5 +146,5 @@ VolPathIntegrator *CreateVolPathIntegrator(
     }
     Float rrThreshold = params.FindOneFloat("rrthreshold", 1.);
     std::string lightStrategy = params.FindOneString("lightsamplestrategy", "uniform");
-    return new VolPathIntegrator(maxDepth, camera, sampler, pixelBounds, rrThreshold, lightStrategy);
+    return new VolPathIntegrator(maxDepth, camera, sampler, film, pixelBounds, rrThreshold, lightStrategy);
 }

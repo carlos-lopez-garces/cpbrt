@@ -10,6 +10,7 @@
 #include "reflection.h"
 #include "sampler.h"
 #include "material.h"
+#include "film.h"
 
 // Evaluates the direct lighting outgoing radiance / scattering equation at the 
 // intersection point with direct lighting contributions from all light sources in
@@ -66,14 +67,17 @@ private:
     // Supplies sample points on the image at which to compute radiance.
     std::shared_ptr<Sampler> sampler;
 
+    Film *uiFilm;
+
 protected:
     std::shared_ptr<const Camera> camera;
 
 public:
     SamplerIntegrator(
         std::shared_ptr<const Camera> camera,
-        std::shared_ptr<Sampler> sampler
-    ) : camera(camera), sampler(sampler) {}
+        std::shared_ptr<Sampler> sampler,
+        Film *film
+    ) : camera(camera), sampler(sampler), uiFilm(film) {}
 
     void Render(const Scene &scene);
 

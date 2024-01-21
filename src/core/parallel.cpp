@@ -175,6 +175,7 @@ void Parallel(
     const std::function<void()> &func
 ) {
     std::thread t(func);
+    t.detach();
 }
 
 void ParallelFor(
@@ -283,7 +284,8 @@ void ParallelFor2D(
         ThreadIndex = 0;
         // Create 1 fewer thread than there are cores: the thread executing this ParallelFor
         // call also counts.
-        for (int i = 0; i < NumSystemCores() - 1; ++i) {
+        int nOtherThreads = 1 + CpbrtOptions.nUIThreads;
+        for (int i = 0; i < NumSystemCores() - nOtherThreads; ++i) {
             threads.push_back(std::thread(workerThreadFunc, i+1));
         }
     }

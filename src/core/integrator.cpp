@@ -277,6 +277,20 @@ void SamplerIntegrator::Render(const Scene &scene) {
         (sampleExtent.y + tileSize - 1) / tileSize
     );
 
+    Parallel(
+        [&]() {
+            UI ui(uiFilm);
+            ui.image = camera->film->GetPixels();
+            ui.imageWidth = camera->film->croppedPixelBounds.pMax.x - camera->film->croppedPixelBounds.pMin.x;
+            ui.imageHeight = camera->film->croppedPixelBounds.Diagonal().y;
+            try {
+                ui.run();
+            } catch (const std::exception& e) {
+                std::cerr << e.what() << std::endl;
+            }
+        }
+    );
+
     // Render image tiles in parallel.
     ParallelFor2D(
         [&](Point2i tile) {
@@ -330,6 +344,8 @@ void SamplerIntegrator::Render(const Scene &scene) {
                     // Add camera ray's contribution to image.
                     filmTile->AddSample(cameraSample.pFilm, L, rayWeight);
 
+                    uiFilm->MergeFilmTile(filmTile.get());
+
                     // Free MemoryArena memory from computing image sample value.
                     arena.Reset();
                 } while (tileSampler->StartNextSample());
@@ -340,24 +356,6 @@ void SamplerIntegrator::Render(const Scene &scene) {
         },
         nTiles
     );
-
-    // Parallel(
-    //     [&]() {
-        
-    //     }
-    // );
-
-    UI ui;
-    ui.film = camera->film;
-    ui.image = camera->film->GetPixels();
-    ui.imageWidth = camera->film->croppedPixelBounds.pMax.x - camera->film->croppedPixelBounds.pMin.x;
-    ui.imageHeight = camera->film->croppedPixelBounds.Diagonal().y;
-
-    try {
-        ui.run();
-    } catch (const std::exception& e) {
-        std::cerr << e.what() << std::endl;
-    }
 
     // Save final image after rendering.
     camera->film->WriteImage();

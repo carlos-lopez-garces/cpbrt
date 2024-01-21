@@ -14,8 +14,9 @@ public:
     PathIntegrator(
         int maxDepth,
         std::shared_ptr<const Camera> camera,
-        std::shared_ptr<Sampler> sampler
-    ) : SamplerIntegrator(camera, sampler),
+        std::shared_ptr<Sampler> sampler,
+        Film *film
+    ) : SamplerIntegrator(camera, sampler, film),
         maxDepth(maxDepth)
     {}
 
@@ -31,7 +32,8 @@ public:
 PathIntegrator *CreatePathIntegrator(
     const ParamSet &params,
     std::shared_ptr<Sampler> sampler,
-    std::shared_ptr<const Camera> camera
+    std::shared_ptr<const Camera> camera,
+    Film *film
 );
 
 #endif // CPBRT_INTEGRATORS_PATH_H

@@ -98,8 +98,11 @@ Spectrum DirectLightingIntegrator::Li(
 }
 
 DirectLightingIntegrator *CreateDirectLightingIntegrator(
-    const ParamSet &params, std::shared_ptr<Sampler> sampler,
-    std::shared_ptr<const Camera> camera) {
+    const ParamSet &params, 
+    std::shared_ptr<Sampler> sampler,
+    std::shared_ptr<const Camera> camera,
+    Film *film
+) {
     int maxDepth = params.FindOneInt("maxdepth", 5);
     LightStrategy strategy;
     std::string st = params.FindOneString("strategy", "all");
@@ -128,5 +131,5 @@ DirectLightingIntegrator *CreateDirectLightingIntegrator(
                 Error("Degenerate \"pixelbounds\" specified.");
         }
     }
-    return new DirectLightingIntegrator(strategy, maxDepth, camera, sampler);
+    return new DirectLightingIntegrator(strategy, maxDepth, camera, sampler, film);
 }

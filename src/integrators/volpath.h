@@ -18,10 +18,11 @@ public:
         int maxDepth,
         std::shared_ptr<const Camera> camera,
         std::shared_ptr<Sampler> sampler,
+        Film *film,
         const Bounds2i &pixelBounds,
         Float rrThreshold = 1,
         const std::string &lightSampleStrategy = "uniform"
-    ) : SamplerIntegrator(camera, sampler),
+    ) : SamplerIntegrator(camera, sampler, film),
         maxDepth(maxDepth),
         rrThreshold(rrThreshold),
         lightSampleStrategy(lightSampleStrategy)
@@ -41,7 +42,8 @@ public:
 VolPathIntegrator *CreateVolPathIntegrator(
     const ParamSet &params, 
     std::shared_ptr<Sampler> sampler,
-    std::shared_ptr<const Camera> camera
+    std::shared_ptr<const Camera> camera,
+    Film *film
 );
 
 #endif // CPBRT_INTEGRATORS_VOLPATH_H

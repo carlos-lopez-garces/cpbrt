@@ -167,8 +167,9 @@ Spectrum PathIntegrator::Li(
 PathIntegrator *CreatePathIntegrator(
     const ParamSet &params,
     std::shared_ptr<Sampler> sampler,
-    std::shared_ptr<const Camera> camera
+    std::shared_ptr<const Camera> camera,
+    Film *film
 ) {
     int maxDepth = params.FindOneInt("maxdepth", 5);
-    return new PathIntegrator(maxDepth, camera, sampler);
+    return new PathIntegrator(maxDepth, camera, sampler, film);
 }

@@ -34,8 +34,9 @@ public:
         LightStrategy strategy,
         int maxDepth,
         std::shared_ptr<const Camera> camera,
-        std::shared_ptr<Sampler> sampler
-    ) : SamplerIntegrator(camera, sampler),
+        std::shared_ptr<Sampler> sampler,
+        Film *film
+    ) : SamplerIntegrator(camera, sampler, film),
         strategy(strategy),
         maxDepth(maxDepth) {}
 
@@ -60,7 +61,8 @@ public:
 DirectLightingIntegrator *CreateDirectLightingIntegrator(
     const ParamSet &params, 
     std::shared_ptr<Sampler> sampler,
-    std::shared_ptr<const Camera> camera
+    std::shared_ptr<const Camera> camera,
+    Film *film
 );
 
 #endif // CPBRT_INTEGRATORS_DIRECT_LIGHTING_H

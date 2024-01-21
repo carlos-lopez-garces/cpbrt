@@ -1,3 +1,6 @@
+#ifndef CPBRT_CORE_UI_H
+#define CPBRT_CORE_UI_H
+
 #define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>
 
@@ -21,6 +24,7 @@
 #include <array>
 #include <optional>
 #include <set>
+#include <chrono>
 
 const int MAX_FRAMES_IN_FLIGHT = 2;
 
@@ -127,6 +131,11 @@ public:
     std::unique_ptr<uint8_t[]> image;
     int imageWidth;
     int imageHeight;
+    Film *film;
+
+    UI() {}
+
+    UI(Film *film) : film(film) {}
 
     void run() {
         initWindow();
@@ -136,7 +145,7 @@ public:
     }
 
 private:
-    GLFWwindow* window;
+    GLFWwindow *window;
 
     VkInstance instance;
     VkDebugUtilsMessengerEXT debugMessenger;
@@ -229,8 +238,17 @@ private:
     }
 
     void mainLoop() {
+        using namespace std::chrono_literals;
+
         while (!glfwWindowShouldClose(window)) {
             glfwPollEvents();
+
+            std::this_thread::sleep_for(200ms);
+            image = film->GetPixels();
+            createTextureImage();
+            createTextureImageView();
+            updateDescriptorSets();
+
             drawFrame();
         }
 
@@ -1035,6 +1053,40 @@ private:
         }
     }
 
+    void updateDescriptorSets() {
+        for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
+            VkDescriptorBufferInfo bufferInfo{};
+            bufferInfo.buffer = uniformBuffers[i];
+            bufferInfo.offset = 0;
+            bufferInfo.range = sizeof(UniformBufferObject);
+
+            VkDescriptorImageInfo imageInfo{};
+            imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+            imageInfo.imageView = textureImageView;
+            imageInfo.sampler = textureSampler;
+
+            std::array<VkWriteDescriptorSet, 2> descriptorWrites{};
+
+            descriptorWrites[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+            descriptorWrites[0].dstSet = descriptorSets[i];
+            descriptorWrites[0].dstBinding = 0;
+            descriptorWrites[0].dstArrayElement = 0;
+            descriptorWrites[0].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+            descriptorWrites[0].descriptorCount = 1;
+            descriptorWrites[0].pBufferInfo = &bufferInfo;
+
+            descriptorWrites[1].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+            descriptorWrites[1].dstSet = descriptorSets[i];
+            descriptorWrites[1].dstBinding = 1;
+            descriptorWrites[1].dstArrayElement = 0;
+            descriptorWrites[1].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+            descriptorWrites[1].descriptorCount = 1;
+            descriptorWrites[1].pImageInfo = &imageInfo;
+
+            vkUpdateDescriptorSets(device, static_cast<uint32_t>(descriptorWrites.size()), descriptorWrites.data(), 0, nullptr);
+        }
+    }
+
     void createBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer& buffer, VkDeviceMemory& bufferMemory) {
         VkBufferCreateInfo bufferInfo{};
         bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
@@ -1491,3 +1543,5 @@ private:
         return VK_FALSE;
     }
 };
+
+#endif // CPBRT_CORE_UI_H

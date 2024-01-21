@@ -149,6 +149,8 @@ public:
 
     void MergeFilmTile(std::unique_ptr<FilmTile> tile);
 
+    void MergeFilmTile(FilmTile *tile);
+
     // ?
     void SetImage(const Spectrum *image) const;
 

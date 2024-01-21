@@ -67,6 +67,8 @@ typedef float Float;
 struct Options {
     // Number of worker threads for parallel for loops.
     int nThreads = 0;
+    // Number of UI threads.
+    int nUIThreads = 1;
     bool quickRender = false;
     bool quiet = false;
     bool verbose = false;

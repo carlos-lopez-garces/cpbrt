@@ -53,6 +53,10 @@ std::unique_ptr<FilmTile> Film::GetFilmTile(const Bounds2i &sampleBounds) {
 // tile from the caller. Upon return, when the std::unique_ptr goes out of scope, the tile gets
 // freed.
 void Film::MergeFilmTile(std::unique_ptr<FilmTile> tile) {
+    MergeFilmTile(tile.get());
+}
+
+void Film::MergeFilmTile(FilmTile *tile) {
     std::lock_guard<std::mutex> lock(mutex);
     for (Point2i pixel : tile->GetPixelBounds()) {
         // Merge pixel into Film::pixels.
@@ -146,6 +150,7 @@ void Film::WriteImage(Float splatScale) {
 
 // TODO: shares a lot of code with Film::WriteImage.
 std::unique_ptr<uint8_t[]> Film::GetPixels(Float splatScale) {
+    std::lock_guard<std::mutex> lock(mutex);
     // Convert image to RGB and compute final pixel values.
     std::unique_ptr<Float[]> rgb(new Float[4 * croppedPixelBounds.Area()]);
     int offset = 0;

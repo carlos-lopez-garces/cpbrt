@@ -616,14 +616,21 @@ Integrator *RenderOptions::MakeIntegrator() const {
         return nullptr;
     }
 
+    std::unique_ptr<Filter> filter = MakeFilter(FilterName, FilterParams);
+    Film *film = MakeFilm(FilmName, FilmParams, std::move(filter));
+    if (!film) {
+        Error("Unable to create film for UI.");
+        return nullptr;
+    }
+
     Integrator *integrator = nullptr;
     if (IntegratorName == "directlighting") {
-        integrator = CreateDirectLightingIntegrator(IntegratorParams, sampler, camera);
+        integrator = CreateDirectLightingIntegrator(IntegratorParams, sampler, camera, film);
     }
     else if (IntegratorName == "path") {
-        integrator = CreatePathIntegrator(IntegratorParams, sampler, camera);
+        integrator = CreatePathIntegrator(IntegratorParams, sampler, camera, film);
     } else if (IntegratorName == "volpath") {
-        integrator = CreateVolPathIntegrator(IntegratorParams, sampler, camera);
+        integrator = CreateVolPathIntegrator(IntegratorParams, sampler, camera, film);
     } else {
         Error("Integrator \"%s\" unknown.", IntegratorName.c_str());
         return nullptr;
